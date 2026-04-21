@@ -1,0 +1,13 @@
+<%
+  const _langs   = settings.enabled_languages || ['en', 'es'];
+  const _primary = settings.primary_language   || 'en';
+%>
+<div class="lang-selector">
+  <% _langs.forEach((lang, i) => { %>
+    <% if (i > 0) { %><span class="lang-selector__divider">|</span><% } %>
+    <button class="lang-selector__btn <%= lang === _primary ? 'lang-selector__btn--active' : '' %>"
+            onclick="toggleLang(this)">
+      <%= lang.toUpperCase() %>
+    </button>
+  <% }) %>
+</div>

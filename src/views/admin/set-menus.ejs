@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Set Menus', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<%
+  const primary = settings.primary_language || 'en';
+  const langs   = settings.enabled_languages || ['en', 'es'];
+
+  function t(translations) {
+    if (!translations || !translations.length) return {};
+    const m = {};
+    translations.forEach(x => m[x.lang] = x);
+    return m[primary] || translations[0] || {};
+  }
+  function tName(translations)  { return t(translations).name  || '—'; }
+  function tNotes(notes, lang)  {
+    if (!notes || !notes.length) return '';
+    const n = notes.find(n => n.lang === lang) || notes[0];
+    return n ? n.notes : '';
+  }
+  function catName(cat) { return tName(cat.translations); }
+%>
+
+<div class="main">
+  <header class="page-header">
+    <h2 class="page-header__title">Set Menus</h2>
+    <%- include('../partials/lang-selector') %>
+    <div class="header-actions">
+      <a href="/admin/courses" class="btn btn--secondary">Manage Courses</a>
+      <button onclick="openAddModal()" class="btn btn--primary">+ Add Set Menu</button>
+    </div>
+  </header>
+
+  <main class="page-body">
+    <% if (setMenus.length === 0) { %>
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state__icon">📋</div>
+          <p class="empty-state__text">No set menus yet</p>
+          <button onclick="openAddModal()" class="empty-state__action">Create your first set menu →</button>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="category-list">
+        <% setMenus.forEach(sm => { %>
+          <div class="card">
+            <div class="set-menu-header">
+              <% if (sm.image_url) { %>
+                <img src="<%= sm.image_url %>" alt="" class="set-menu-thumb" />
+              <% } else { %>
+                <div class="set-menu-thumb-placeholder">📋</div>
+              <% } %>
+              <div class="set-menu-info">
+                <div class="set-menu-info__name">
+                  <%= tName(sm.translations) %>
+                  <% if (!sm.is_available) { %><span class="badge badge--gray">Unavailable</span><% } %>
+                </div>
+                <%
+                  const smDesc = t(sm.translations).description;
+                  if (smDesc) {
+                %>
+                  <p class="set-menu-info__desc"><%= smDesc %></p>
+                <% } %>
+                <div class="set-menu-info__meta">
+                  <span class="set-menu-info__price">€<%= Number(sm.price).toFixed(2) %></span>
+                  <% if (sm.categories.length > 0) { %>
+                    <div class="tag-list">
+                      <% sm.categories.forEach(c => { %>
+                        <span class="badge badge--primary"><%= catName(c.category) %></span>
+                      <% }) %>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+              <div class="set-menu-actions">
+                <button onclick='openEditModal(<%- JSON.stringify(sm) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
+                <button onclick="openDishesModal(<%= sm.id %>, '<%= tName(sm.translations).replace(/'/g, "\\'") %>')" class="btn btn--secondary btn--sm">Manage Dishes</button>
+                <button onclick="deleteSetMenu(<%= sm.id %>, '<%= tName(sm.translations).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
+              </div>
+            </div>
+
+            <!-- Dishes grouped by course -->
+            <% if (sm.set_menu_dishes.length > 0) { %>
+              <%
+                const byCourse = {};
+                sm.set_menu_dishes.forEach(smd => {
+                  const courseName = tName(smd.course && smd.course.translations) !== '—'
+                    ? tName(smd.course && smd.course.translations)
+                    : 'Uncategorised';
+                  if (!byCourse[courseName]) byCourse[courseName] = [];
+                  byCourse[courseName].push(smd);
+                });
+              %>
+              <div class="set-menu-body">
+                <% Object.entries(byCourse).forEach(([course, dishes]) => { %>
+                  <div class="course-block">
+                    <p class="course-block__title"><%= course %></p>
+                    <% dishes.forEach(smd => { %>
+                      <div class="course-item">
+                        <span class="course-item__name"><%= tName(smd.dish.translations) %></span>
+                        <%
+                          const dishNotes = tNotes(smd.notes, primary);
+                          if (dishNotes) {
+                        %><span class="course-item__notes">— <%= dishNotes %></span><% } %>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="set-menu-empty">
+                No dishes added yet —
+                <button onclick="openDishesModal(<%= sm.id %>, '<%= tName(sm.translations).replace(/'/g, "\\'") %>')"
+                  class="btn--link">Add dishes</button>
+              </div>
+            <% } %>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+</div>
+
+<!-- ── Add / Edit Set Menu Modal ──────────────────────────────────────────── -->
+<div id="setMenuModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 id="setMenuModalTitle" class="modal__title">Add Set Menu</h3>
+      <button onclick="closeModal('setMenuModal')" class="modal__close">&times;</button>
+    </div>
+    <form id="setMenuForm" onsubmit="submitSetMenu(event)" enctype="multipart/form-data">
+      <div class="modal__body">
+        <input type="hidden" id="setMenuId" value="" />
+
+        <!-- Language tabs -->
+        <div data-lang-container>
+          <div class="lang-tabs">
+            <% langs.forEach((lang, i) => { %>
+              <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+                data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+                <%= lang.toUpperCase() %>
+              </button>
+            <% }) %>
+          </div>
+          <% langs.forEach((lang, i) => { %>
+            <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+              <div class="form-group">
+                <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+                <input type="text" name="name_<%= lang %>" id="smName_<%= lang %>" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
+                <textarea name="description_<%= lang %>" id="smDesc_<%= lang %>" rows="2" class="form-textarea"></textarea>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Price (€) <span class="required">*</span></label>
+            <input type="number" id="smPrice" name="price" required step="0.01" min="0" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Image</label>
+            <input type="file" name="image" accept="image/*" class="form-file" />
+          </div>
+        </div>
+        <div id="smCurrentImageWrap" class="image-preview hidden">
+          <img id="smCurrentImage" src="" alt="" />
+          <span class="image-preview__label">Upload new to replace</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categories</label>
+          <div class="check-list">
+            <% categories.forEach(cat => { %>
+              <label class="form-check">
+                <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="sm-cat-cb" />
+                <span class="form-check__label"><%= catName(cat) %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+        <label class="form-check">
+          <input type="checkbox" id="smIsAvailable" name="is_available" checked />
+          <span class="form-check__label">Available (visible on menu)</span>
+        </label>
+      </div>
+      <div class="modal__footer">
+        <button type="button" onclick="closeModal('setMenuModal')" class="btn btn--secondary">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Manage Dishes Modal ────────────────────────────────────────────────── -->
+<div id="dishesModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 id="dishesModalTitle" class="modal__title">Manage Dishes</h3>
+      <button onclick="closeModal('dishesModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <!-- Current dishes list -->
+      <div id="currentDishesList" class="manage-items-list"></div>
+
+      <!-- Add dish form -->
+      <div class="manage-dish-add">
+        <p class="manage-section-title">Add a dish</p>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Dish</label>
+            <select id="addDishSelect" class="form-select">
+              <% dishes.forEach(d => { %>
+                <option value="<%= d.id %>"><%= tName(d.translations) %> (€<%= Number(d.price).toFixed(2) %>)</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Course</label>
+            <select id="addDishCourse" class="form-select">
+              <option value="">— No course —</option>
+              <% courses.forEach(c => { %>
+                <option value="<%= c.id %>"><%= tName(c.translations) %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+        <!-- Notes per language -->
+        <div class="form-group" data-lang-container>
+          <label class="form-label">Customer Notes (optional)</label>
+          <div class="lang-tabs">
+            <% langs.forEach((lang, i) => { %>
+              <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+                data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+                <%= lang.toUpperCase() %>
+              </button>
+            <% }) %>
+          </div>
+          <% langs.forEach((lang, i) => { %>
+            <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+              <input type="text" id="addDishNotes_<%= lang %>" placeholder="e.g. Served with seasonal garnish"
+                class="form-input" />
+            </div>
+          <% }) %>
+        </div>
+        <button onclick="addDishToSetMenu()" class="btn btn--primary btn--full">Add Dish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+
+<script>
+  const LANGS   = <%- JSON.stringify(langs) %>;
+  const PRIMARY = '<%= primary %>';
+  let activeSetMenuId = null;
+
+  function openAddModal() {
+    document.getElementById('setMenuModalTitle').textContent = 'Add Set Menu';
+    document.getElementById('setMenuId').value = '';
+    document.getElementById('setMenuForm').reset();
+    document.getElementById('smIsAvailable').checked = true;
+    document.getElementById('smCurrentImageWrap').classList.add('hidden');
+    document.querySelectorAll('.sm-cat-cb').forEach(cb => cb.checked = false);
+    const container = document.querySelector('#setMenuModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('setMenuModal');
+  }
+
+  function openEditModal(sm) {
+    document.getElementById('setMenuModalTitle').textContent = 'Edit Set Menu';
+    document.getElementById('setMenuId').value = sm.id;
+    document.getElementById('smPrice').value   = Number(sm.price).toFixed(2);
+    document.getElementById('smIsAvailable').checked = sm.is_available;
+
+    // Populate translations
+    const byLang = {};
+    (sm.translations || []).forEach(t => byLang[t.lang] = t);
+    LANGS.forEach(lang => {
+      const n = document.getElementById(`smName_${lang}`); if (n) n.value = (byLang[lang]||{}).name || '';
+      const d = document.getElementById(`smDesc_${lang}`); if (d) d.value = (byLang[lang]||{}).description || '';
+    });
+
+    if (sm.image_url) {
+      document.getElementById('smCurrentImage').src = sm.image_url;
+      document.getElementById('smCurrentImageWrap').classList.remove('hidden');
+    } else {
+      document.getElementById('smCurrentImageWrap').classList.add('hidden');
+    }
+
+    const catIds = sm.categories.map(c => String(c.category_id));
+    document.querySelectorAll('.sm-cat-cb').forEach(cb => { cb.checked = catIds.includes(cb.value); });
+
+    const container = document.querySelector('#setMenuModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('setMenuModal');
+  }
+
+  async function submitSetMenu(e) {
+    e.preventDefault();
+    const id     = document.getElementById('setMenuId').value;
+    const fd     = new FormData(e.target);
+    const url    = id ? `/api/set-menus/${id}` : '/api/set-menus';
+    const method = id ? 'PUT' : 'POST';
+    try {
+      await api(method, url, fd);
+      showToast(id ? 'Set menu updated' : 'Set menu created');
+      closeModal('setMenuModal');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteSetMenu(id, name) {
+    confirmDelete(`Delete set menu "${name}"?`, async () => {
+      try {
+        await api('DELETE', `/api/set-menus/${id}`);
+        showToast('Set menu deleted');
+        reloadAfter();
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+  }
+
+  async function openDishesModal(setMenuId, name) {
+    activeSetMenuId = setMenuId;
+    document.getElementById('dishesModalTitle').textContent = `Dishes — ${name}`;
+    await refreshDishesList();
+    openModal('dishesModal');
+  }
+
+  async function refreshDishesList() {
+    const res    = await api('GET', `/api/set-menus/${activeSetMenuId}`);
+    const dishes = res.data.setMenu.set_menu_dishes;
+    const list   = document.getElementById('currentDishesList');
+
+    if (!dishes || dishes.length === 0) {
+      list.innerHTML = '<p class="card__note">No dishes added yet.</p>';
+      return;
+    }
+
+    // Group by course
+    const byCourse = {};
+    dishes.forEach(smd => {
+      const courseName = smd.course && smd.course.translations && smd.course.translations.length
+        ? (smd.course.translations.find(t => t.lang === PRIMARY) || smd.course.translations[0]).name
+        : 'Uncategorised';
+      if (!byCourse[courseName]) byCourse[courseName] = [];
+      byCourse[courseName].push(smd);
+    });
+
+    list.innerHTML = Object.entries(byCourse).map(([course, items]) => `
+      <div style="margin-bottom:12px;">
+        <p class="manage-course-label">${course}</p>
+        ${items.map(smd => {
+          const dishT = (smd.dish.translations || []);
+          const dishName = (dishT.find(t => t.lang === PRIMARY) || dishT[0] || {}).name || '—';
+          const note = (smd.notes || []).find(n => n.lang === PRIMARY);
+          return `
+            <div class="manage-item-row">
+              <div class="manage-item-row__info">
+                <p class="manage-item-row__name">${dishName}</p>
+                ${note ? `<p class="manage-item-row__meta">${note.notes}</p>` : ''}
+              </div>
+              <button onclick="removeDishFromSetMenu(${smd.dish_id})" class="btn btn--outline-danger btn--xs">Remove</button>
+            </div>`;
+        }).join('')}
+      </div>
+    `).join('');
+  }
+
+  async function addDishToSetMenu() {
+    const dish_id   = document.getElementById('addDishSelect').value;
+    const course_id = document.getElementById('addDishCourse').value;
+    const body = {
+      dish_id:   parseInt(dish_id),
+      course_id: course_id ? parseInt(course_id) : undefined,
+    };
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`addDishNotes_${lang}`)?.value.trim();
+      if (val) body[`notes_${lang}`] = val;
+    });
+    try {
+      await api('POST', `/api/set-menus/${activeSetMenuId}/dishes`, body);
+      showToast('Dish added');
+      LANGS.forEach(lang => {
+        const el = document.getElementById(`addDishNotes_${lang}`);
+        if (el) el.value = '';
+      });
+      await refreshDishesList();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function removeDishFromSetMenu(dishId) {
+    try {
+      await api('DELETE', `/api/set-menus/${activeSetMenuId}/dishes/${dishId}`);
+      showToast('Dish removed');
+      await refreshDishesList();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+</script>
+
+</body>
+</html>

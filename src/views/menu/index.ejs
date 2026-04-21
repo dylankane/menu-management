@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= restaurantName %></title>
+  <link rel="stylesheet" href="/css/menu.css" />
+</head>
+<body>
+
+  <header class="menu-header">
+    <div class="menu-header__inner">
+      <h1 class="menu-header__name"><%= restaurantName %></h1>
+    </div>
+  </header>
+
+  <main class="menu-main">
+
+    <%
+      function isVisible(mic) {
+        const mi = mic && mic.menu_item;
+        return mi && mi.is_available;
+      }
+      function catHasContent(cat) {
+        return (cat.menu_item_categories || []).some(isVisible) ||
+               (cat.children || []).some(child => (child.menu_item_categories || []).some(isVisible));
+      }
+    %>
+
+    <% categories.forEach(cat => {
+      if (!catHasContent(cat)) return;
+      const catT = pickT(cat.translations);
+    %>
+      <section class="menu-section">
+        <h2 class="menu-section__title"><%= catT.name || cat.slug %></h2>
+        <% if (catT.description) { %>
+          <p class="menu-section__desc"><%= catT.description %></p>
+        <% } %>
+
+        <!-- Direct items in this category -->
+        <% const directItems = (cat.menu_item_categories || []).filter(isVisible); %>
+        <% if (directItems.length > 0) { %>
+          <div class="menu-items">
+            <% directItems.forEach(mic => {
+              const item = mic.menu_item;
+            %>
+              <% if (item.is_set_menu) { %>
+                <%- include('../partials/menu-set', { setMenu: item }) %>
+              <% } else { %>
+                <%- include('../partials/menu-item', { item }) %>
+              <% } %>
+            <% }) %>
+          </div>
+        <% } %>
+
+        <!-- Subcategories -->
+        <% if (cat.children) { %>
+          <% cat.children.forEach(child => {
+            const childItems = (child.menu_item_categories || []).filter(isVisible);
+            if (childItems.length === 0) return;
+            const childT = pickT(child.translations);
+          %>
+            <h3 class="menu-subsection__title"><%= childT.name || child.slug %></h3>
+            <div class="menu-items">
+              <% childItems.forEach(mic => {
+                const item = mic.menu_item;
+              %>
+                <% if (item.is_set_menu) { %>
+                  <%- include('../partials/menu-set', { setMenu: item }) %>
+                <% } else { %>
+                  <%- include('../partials/menu-item', { item }) %>
+                <% } %>
+              <% }) %>
+            </div>
+          <% }) %>
+        <% } %>
+      </section>
+    <% }) %>
+
+    <% if (categories.length === 0) { %>
+      <div class="menu-empty">
+        <div class="menu-empty__icon">🍽️</div>
+        <p class="menu-empty__text">Menu coming soon</p>
+      </div>
+    <% } %>
+
+  </main>
+
+  <footer class="menu-footer">
+    <p><%= restaurantName %></p>
+  </footer>
+
+</body>
+</html>

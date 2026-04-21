@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Courses', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<%
+  const primary = settings.primary_language || 'en';
+  const langs   = settings.enabled_languages || ['en', 'es'];
+
+  function courseName(course) {
+    const t = (course.translations || []).find(t => t.lang === primary) || (course.translations || [])[0];
+    return t ? (t.name || '—') : '—';
+  }
+%>
+
+<div class="main">
+  <header class="page-header">
+    <h2 class="page-header__title">Courses</h2>
+    <%- include('../partials/lang-selector') %>
+    <button onclick="openModal('addCourseModal')" class="btn btn--primary">+ Add Course</button>
+  </header>
+
+  <main class="page-body">
+    <p class="page-intro">
+      Courses group dishes within a set menu (e.g. Starter, Main, Dessert).
+    </p>
+
+    <% if (courses.length === 0) { %>
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state__icon">🍽️</div>
+          <p class="empty-state__text">No courses yet</p>
+          <button onclick="openModal('addCourseModal')" class="empty-state__action">Add your first course →</button>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card">
+        <% courses.forEach(c => { %>
+          <div class="tag-row">
+            <div class="tag-row__info">
+              <span class="tag-row__name"><%= courseName(c) %></span>
+              <% if (c.translations.length > 1) { %>
+                <span class="tag-row__system">(<%= c.translations.map(t=>t.lang).join(', ') %>)</span>
+              <% } %>
+              <span class="tag-row__system">#<%= c.display_order %></span>
+            </div>
+            <div class="tag-row__actions">
+              <button onclick='openEditCourseModal(<%- JSON.stringify(c) %>)' class="btn btn--outline-primary btn--xs">Edit</button>
+              <button onclick="deleteCourse(<%= c.id %>, '<%= courseName(c).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--xs">Delete</button>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+</div>
+
+<!-- ── Add Course Modal ───────────────────────────────────────────────────── -->
+<div id="addCourseModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title">Add Course</h3>
+      <button onclick="closeModal('addCourseModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body" data-lang-container>
+      <div class="lang-tabs">
+        <% langs.forEach((lang, i) => { %>
+          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+            <%= lang.toUpperCase() %>
+          </button>
+        <% }) %>
+      </div>
+      <% langs.forEach((lang, i) => { %>
+        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+          <div class="form-group">
+            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+            <input type="text" id="addCourseName_<%= lang %>" class="form-input" />
+          </div>
+        </div>
+      <% }) %>
+      <div class="form-group">
+        <label class="form-label">Display Order</label>
+        <input type="number" id="addCourseOrder" class="form-input" value="0" min="0" />
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('addCourseModal')" class="btn btn--secondary">Cancel</button>
+      <button type="button" onclick="submitAddCourse()" class="btn btn--primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit Course Modal ──────────────────────────────────────────────────── -->
+<div id="editCourseModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title">Edit Course</h3>
+      <button onclick="closeModal('editCourseModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body" data-lang-container>
+      <input type="hidden" id="editCourseId" />
+      <div class="lang-tabs">
+        <% langs.forEach((lang, i) => { %>
+          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+            <%= lang.toUpperCase() %>
+          </button>
+        <% }) %>
+      </div>
+      <% langs.forEach((lang, i) => { %>
+        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+          <div class="form-group">
+            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+            <input type="text" id="editCourseName_<%= lang %>" class="form-input" />
+          </div>
+        </div>
+      <% }) %>
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Display Order</label>
+        <input type="number" id="editCourseOrder" class="form-input" min="0" style="width:100px;" />
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('editCourseModal')" class="btn btn--secondary">Cancel</button>
+      <button type="button" onclick="submitEditCourse()" class="btn btn--primary">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+  const LANGS   = <%- JSON.stringify(langs) %>;
+  const PRIMARY = '<%= primary %>';
+
+  function openEditCourseModal(c) {
+    document.getElementById('editCourseId').value    = c.id;
+    document.getElementById('editCourseOrder').value = c.display_order;
+    const byLang = {};
+    (c.translations || []).forEach(t => byLang[t.lang] = t);
+    LANGS.forEach(lang => {
+      const el = document.getElementById(`editCourseName_${lang}`);
+      if (el) el.value = (byLang[lang] || {}).name || '';
+    });
+    const container = document.querySelector('#editCourseModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('editCourseModal');
+  }
+
+  async function submitAddCourse() {
+    const body = { display_order: parseInt(document.getElementById('addCourseOrder').value) || 0 };
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`addCourseName_${lang}`)?.value.trim();
+      if (val) body[`name_${lang}`] = val;
+    });
+    try {
+      await api('POST', '/api/courses', body);
+      showToast('Course added');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function submitEditCourse() {
+    const id   = document.getElementById('editCourseId').value;
+    const body = { display_order: parseInt(document.getElementById('editCourseOrder').value) || 0 };
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`editCourseName_${lang}`)?.value.trim();
+      if (val) body[`name_${lang}`] = val;
+    });
+    try {
+      await api('PUT', `/api/courses/${id}`, body);
+      showToast('Course updated');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteCourse(id, name) {
+    confirmDelete(`Delete course "${name}"?`, async () => {
+      try {
+        await api('DELETE', `/api/courses/${id}`);
+        showToast('Course deleted');
+        reloadAfter();
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Dashboard', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<div class="main">
+  <header class="page-header">
+    <h2 class="page-header__title">Dashboard</h2>
+    <%- include('../partials/lang-selector') %>
+    <span class="page-header__meta"><%= new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+  </header>
+
+  <main class="page-body">
+
+    <!-- Stats cards -->
+    <div class="stats-grid">
+      <div class="card dash-card stat-card">
+        <div class="stat-card__body">
+          <p class="stat-card__label">Total Dishes</p>
+          <p class="stat-card__value"><%= stats.totalDishes %></p>
+          <a href="/admin/menu-items" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+        </div>
+      </div>
+      <div class="card dash-card stat-card">
+        <div class="stat-card__body">
+          <p class="stat-card__label">Set Menus</p>
+          <p class="stat-card__value"><%= stats.totalSetMenus %></p>
+          <a href="/admin/set-menus" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+        </div>
+      </div>
+      <div class="card dash-card stat-card">
+        <div class="stat-card__body">
+          <p class="stat-card__label">Specials</p>
+          <p class="stat-card__value"><%= stats.totalSpecials %></p>
+          <a href="/admin/menu-items" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+        </div>
+      </div>
+      <div class="card dash-card stat-card">
+        <div class="stat-card__body">
+          <p class="stat-card__label">Categories</p>
+          <p class="stat-card__value"><%= stats.totalCategories %></p>
+          <a href="/admin/categories" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="card dash-card qr-section">
+      <img src="<%= qrDataUrl %>" alt="Menu QR Code" />
+      <div>
+        <h3 class="qr-section__title">Customer Menu QR Code</h3>
+        <p class="qr-section__desc">Customers scan this to view your menu. Print it and place it on tables.</p>
+        <p class="qr-section__url"><%= menuUrl %></p>
+        <div class="qr-section__actions">
+          <a href="<%= menuUrl %>" target="_blank" class="btn btn--pill btn--outline-accent btn--sm">Preview Menu</a>
+          <a href="<%= qrDataUrl %>" download="menu-qr-code.png" class="btn btn--pill btn--outline-brand btn--sm">Download QR</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="actions-grid">
+      <a href="/admin/menu-items" class="card dash-card action-card">
+        <svg class="icon action-card__icon"><use href="/icons/sprite.svg#menu-items"></use></svg>
+        <div>
+          <p class="action-card__title">Manage Menu Items</p>
+          <p class="action-card__sub">Add, edit, or remove dishes</p>
+        </div>
+      </a>
+      <a href="/admin/categories" class="card dash-card action-card">
+        <svg class="icon action-card__icon"><use href="/icons/sprite.svg#categories"></use></svg>
+        <div>
+          <p class="action-card__title">Manage Categories</p>
+          <p class="action-card__sub">Organise your menu sections</p>
+        </div>
+      </a>
+      <a href="/admin/set-menus" class="card dash-card action-card">
+        <svg class="icon action-card__icon"><use href="/icons/sprite.svg#set-menus"></use></svg>
+        <div>
+          <p class="action-card__title">Manage Set Menus</p>
+          <p class="action-card__sub">Daily menus and tasting menus</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Recent items -->
+    <%
+      function dashItemName(item) {
+        const primary = settings.primary_language || 'en';
+        const t = (item.translations || []).find(t => t.lang === primary)
+               || (item.translations || [])[0];
+        return t ? (t.name || '—') : '—';
+      }
+    %>
+    <div class="card table-controls">
+      <div class="card__header card__header--brand">
+        <h3 class="card__title">Recently Added Dishes</h3>
+        <a href="/admin/menu-items" class="card__action btn--pill link--slide link--slide--accent">View all <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+      </div>
+    </div>
+    <% if (recentItems.length === 0) { %>
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state__icon">🍽️</div>
+          <p class="empty-state__text">No dishes yet</p>
+          <a href="/admin/menu-items" class="empty-state__action">Add your first dish →</a>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Dish</th>
+              <th>Added</th>
+              <th>Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% recentItems.forEach(item => { %>
+              <tr>
+                <td>
+                  <div class="table-item">
+                    <% if (item.image_url) { %>
+                      <img src="<%= item.image_url %>" alt="" class="table-thumb table-thumb--clickable"
+                           onclick="openLightbox('<%= item.image_url %>')" />
+                    <% } else { %>
+                      <div class="table-thumb-placeholder">🍴</div>
+                    <% } %>
+                    <p class="table-item__name"><%= dashItemName(item) %></p>
+                  </div>
+                </td>
+                <td><%= new Date(item.created_at).toLocaleDateString('en-GB') %></td>
+                <td><span class="item-price">€<%= Number(item.price).toFixed(2) %></span></td>
+                <td>
+                  <label class="avail-toggle">
+                    <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
+                    <span class="avail-toggle__label <%= item.is_available ? 'avail-toggle__label--active' : 'avail-toggle__label--inactive' %>">
+                      <%= item.is_available ? 'Active' : 'Inactive' %>
+                    </span>
+                  </label>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+  </main>
+</div>
+
+<!-- ── Image Lightbox ─────────────────────────────────────────────────────── -->
+<div id="imageLightbox" class="lightbox hidden" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="" class="lightbox__img" onclick="event.stopPropagation()" />
+  <button class="lightbox__close" onclick="closeLightbox()">&times;</button>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('imageLightbox').classList.remove('hidden');
+  }
+
+  function closeLightbox() {
+    document.getElementById('imageLightbox').classList.add('hidden');
+    document.getElementById('lightboxImg').src = '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+</body>
+</html>

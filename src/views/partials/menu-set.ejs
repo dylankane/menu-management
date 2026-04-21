@@ -1,0 +1,50 @@
+<%
+  // setMenu.translations, setMenu.set_menu_dishes
+  const smT   = pickT(setMenu.translations);
+  const name  = smT.name        || '';
+  const desc  = smT.description || '';
+
+  // Group dishes by course
+  const byCourse = {};
+  (setMenu.set_menu_dishes || []).forEach(smd => {
+    const courseT = pickT((smd.course && smd.course.translations) || []);
+    const key = courseT.name || 'Included';
+    if (!byCourse[key]) byCourse[key] = [];
+    byCourse[key].push(smd);
+  });
+%>
+<div class="set-menu-card">
+  <div class="set-menu-card__header">
+    <div class="set-menu-card__info">
+      <h3 class="set-menu-card__name"><%= name %></h3>
+      <% if (desc) { %>
+        <p class="set-menu-card__desc"><%= desc %></p>
+      <% } %>
+    </div>
+    <span class="set-menu-card__price">€<%= Number(setMenu.price).toFixed(2) %></span>
+  </div>
+
+  <% if (Object.keys(byCourse).length > 0) { %>
+    <div class="set-menu-card__courses">
+      <% Object.entries(byCourse).forEach(([course, dishes]) => { %>
+        <div>
+          <p class="set-course__title"><%= course %></p>
+          <div class="set-course__items">
+            <% dishes.forEach(smd => {
+              const dishT  = pickT(smd.dish.translations);
+              const noteT  = (smd.notes || []).find(n => n.lang === lang) ||
+                             (smd.notes || []).find(n => n.lang === primaryLang) ||
+                             (smd.notes || [])[0];
+            %>
+              <div class="set-course__item">
+                <span class="set-course__dot">•</span>
+                <span class="set-course__name"><%= dishT.name || '' %></span>
+                <% if (noteT) { %><span class="set-course__note"> — <%= noteT.notes %></span><% } %>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>

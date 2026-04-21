@@ -1,0 +1,94 @@
+<!-- Shared JS utilities — included at the bottom of every admin page -->
+
+<!-- Toast notification container -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  // ── Toast notification ────────────────────────────────────────────────────
+  function showToast(message, type = 'success') {
+    const el = document.getElementById('toast');
+    el.textContent = message;
+    el.className = 'toast toast--' + (type === 'success' ? 'success' : 'error');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(() => el.classList.add('hidden'), 3500);
+  }
+
+  // ── Modal helpers ─────────────────────────────────────────────────────────
+  function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  // Close modal when clicking the dark overlay
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // ── API helper ────────────────────────────────────────────────────────────
+  // Sends a fetch request to the API.
+  // Pass a FormData for multipart (file uploads), or a plain object for JSON.
+  async function api(method, url, data) {
+    const opts = { method };
+    if (data instanceof FormData) {
+      opts.body = data;
+      // Let the browser set Content-Type (includes boundary for multipart)
+    } else if (data) {
+      opts.headers = { 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(data);
+    }
+    const res  = await fetch(url, opts);
+    const json = await res.json();
+    if (!res.ok) {
+      // Show field-level errors if present
+      if (json.errors) throw new Error(json.errors.map(e => e.message).join(', '));
+      throw new Error(json.error || 'Something went wrong');
+    }
+    return json;
+  }
+
+  // ── Confirm delete ────────────────────────────────────────────────────────
+  function confirmDelete(message, callback) {
+    if (window.confirm(message || 'Are you sure you want to delete this?')) {
+      callback();
+    }
+  }
+
+  // ── Reload after short delay (lets toast show first) ─────────────────────
+  function reloadAfter(ms = 600) {
+    setTimeout(() => location.reload(), ms);
+  }
+
+  // ── Lang selector toggle (cosmetic only — no backend wiring) ─────────────
+  function toggleLang(btn) {
+    const selector = btn.closest('.lang-selector');
+    selector.querySelectorAll('.lang-selector__btn').forEach(b => b.classList.remove('lang-selector__btn--active'));
+    btn.classList.add('lang-selector__btn--active');
+  }
+
+  // ── Language tab switcher ─────────────────────────────────────────────────
+  // Scoped to the nearest [data-lang-container] ancestor.
+  function switchLangTab(btn, lang) {
+    const container = btn.closest('[data-lang-container]');
+    container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('lang-tab--active'));
+    btn.classList.add('lang-tab--active');
+    container.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('lang-panel--active'));
+    const panel = container.querySelector(`.lang-panel[data-lang="${lang}"]`);
+    if (panel) panel.classList.add('lang-panel--active');
+  }
+
+  // Reset all lang tabs in a container to show the primary language panel
+  function resetLangTabs(container, primaryLang) {
+    container.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('lang-tab--active'));
+    const primaryTab = container.querySelector(`.lang-tab[data-lang="${primaryLang}"]`);
+    if (primaryTab) primaryTab.classList.add('lang-tab--active');
+    container.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('lang-panel--active'));
+    const primaryPanel = container.querySelector(`.lang-panel[data-lang="${primaryLang}"]`);
+    if (primaryPanel) primaryPanel.classList.add('lang-panel--active');
+  }
+</script>

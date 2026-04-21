@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Menu Items', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<%
+  const primary = settings.primary_language || 'en';
+  const langs   = settings.enabled_languages || ['en', 'es'];
+
+  function itemName(item) {
+    const t = (item.translations || []).find(t => t.lang === primary)
+           || (item.translations || [])[0];
+    return t ? (t.name || '—') : '—';
+  }
+  function tagName(translations) {
+    const t = (translations || []).find(t => t.lang === primary) || (translations || [])[0];
+    return t ? (t.name || '') : '';
+  }
+  function catName(cat) {
+    return tagName(cat.translations);
+  }
+  // Returns the parent category object for a subcategory, or null
+  function parentCat(cat) {
+    if (!cat.parent_id) return null;
+    return categories.find(c => c.id === cat.parent_id) || null;
+  }
+%>
+
+<div class="main">
+  <header class="page-header">
+    <h2 class="page-header__title">Menu Items</h2>
+    <%- include('../partials/lang-selector') %>
+  </header>
+
+  <main class="page-body">
+    <!-- Title + search card -->
+    <div class="card table-controls">
+      <div class="card__header card__header--brand">
+        <h3 class="card__title">All Dishes</h3>
+        <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search & filter">
+          <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/icons/sprite.svg#search"></use></svg>
+        </button>
+        <button onclick="openAddModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add Dish</button>
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <input type="text" id="searchInput" placeholder="Search by name..." oninput="filterItems()" class="form-input" style="width:15rem;" />
+        <select id="categoryFilter" onchange="filterItems()" class="form-select" style="width:auto;">
+          <option value="">All categories</option>
+          <% categories.filter(c => !c.parent_id).forEach(cat => { %>
+            <option value="<%= cat.id %>"><%= catName(cat) %></option>
+            <% if (cat.children) cat.children.forEach(child => { %>
+              <option value="<%= child.id %>">&nbsp;&nbsp;↳ <%= catName(child) %></option>
+            <% }) %>
+          <% }) %>
+        </select>
+        <div class="filter-radios">
+          <label class="form-check">
+            <input type="radio" name="availFilter" value="all" onchange="filterItems()" checked />
+            <span class="form-check__label">All</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="availFilter" value="active" onchange="filterItems()" />
+            <span class="form-check__label">Active</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="availFilter" value="inactive" onchange="filterItems()" />
+            <span class="form-check__label">Inactive</span>
+          </label>
+        </div>
+        <span id="itemCount" class="filter-bar__count"></span>
+      </div>
+    </div>
+
+    <% if (items.length === 0) { %>
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-state__icon">🍽️</div>
+          <p class="empty-state__text">No dishes yet</p>
+          <button onclick="openAddModal()" class="empty-state__action">Add your first dish →</button>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="card table-card">
+        <table class="data-table" id="itemsTable">
+          <thead>
+            <tr>
+              <th>Dish</th>
+              <th>Categories</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+              <th>View</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody">
+            <% items.forEach(item => { %>
+              <tr class="item-row"
+                  data-name="<%= itemName(item).toLowerCase() %>"
+                  data-categories="<%= item.categories.map(c => c.category_id).join(',') %>"
+                  data-available="<%= item.is_available %>">
+                <td>
+                  <div class="table-item">
+                    <% if (item.image_url) { %>
+                      <img src="<%= item.image_url %>" alt="" class="table-thumb table-thumb--clickable"
+                           onclick="openLightbox('<%= item.image_url %>')" />
+                    <% } else { %>
+                      <div class="table-thumb-placeholder">🍴</div>
+                    <% } %>
+                    <div>
+                      <p class="table-item__name"><%= itemName(item) %></p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="tag-list tag-list--vertical">
+                    <% if (item.is_special) { %>
+                      <span class="tag tag--special">Chef's Special</span>
+                    <% } %>
+                    <% item.categories.forEach(c => { %>
+                      <% const parent = parentCat(c.category); %>
+                      <% if (parent) { %>
+                        <span class="tag tag--category"><%= catName(parent) %></span>
+                      <% } %>
+                      <span class="tag <%= c.category.parent_id ? 'tag--subcategory' : 'tag--category' %>"><%= catName(c.category) %></span>
+                    <% }) %>
+                    <% if (!item.is_special && item.categories.length === 0) { %><span class="cell-empty">—</span><% } %>
+                  </div>
+                </td>
+                <td>
+                  <span class="item-price">€<%= Number(item.price).toFixed(2) %></span>
+                  <% if (item.has_discount && item.discount_value) { %>
+                    <br/><span class="item-discount">
+                      -<%= item.discount_type === 'percent' ? item.discount_value + '%' : '€' + Number(item.discount_value).toFixed(2) %>
+                    </span>
+                  <% } %>
+                </td>
+                <td>
+                  <label class="avail-toggle" onclick="toggleAvailability(<%= item.id %>, <%= item.is_available %>)">
+                    <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
+                    <span class="avail-toggle__label <%= item.is_available ? 'avail-toggle__label--active' : 'avail-toggle__label--inactive' %>">
+                      <%= item.is_available ? 'Active' : 'Inactive' %>
+                    </span>
+                  </label>
+                </td>
+                <td>
+                  <div class="table-actions">
+                    <button onclick='openEditModal(<%- JSON.stringify(item) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
+                    <button onclick="deleteItem(<%= item.id %>, '<%= itemName(item).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn-info" onclick="openViewModal(<%= item.id %>)" title="View details">
+                    <svg class="icon"><use href="/icons/sprite.svg#info"></use></svg>
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </main>
+</div>
+
+<!-- ── Add / Edit Item Modal ──────────────────────────────────────────────── -->
+<div id="itemModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 id="itemModalTitle" class="modal__title">Add Dish</h3>
+      <button onclick="closeModal('itemModal')" class="modal__close">&times;</button>
+    </div>
+
+    <form id="itemForm" onsubmit="submitItem(event)" enctype="multipart/form-data">
+      <div class="modal__body">
+        <input type="hidden" id="itemId" value="" />
+
+        <!-- Language tabs for translatable fields -->
+        <div data-lang-container>
+          <div class="lang-tabs">
+            <% langs.forEach((lang, i) => { %>
+              <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+                data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+                <%= lang.toUpperCase() %>
+              </button>
+            <% }) %>
+          </div>
+          <% langs.forEach((lang, i) => { %>
+            <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+              <div class="form-group">
+                <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+                <input type="text" name="name_<%= lang %>" id="itemName_<%= lang %>" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
+                <textarea name="description_<%= lang %>" id="itemDesc_<%= lang %>" rows="2" class="form-textarea"></textarea>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+
+        <!-- Internal notes — single field, not translated -->
+        <div class="form-group">
+          <label class="form-label">Internal Notes <span class="hint">(admin only — not shown to customers)</span></label>
+          <textarea name="notes" id="itemNotes" rows="2" class="form-textarea"></textarea>
+        </div>
+
+        <!-- Price & image -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Price (€) <span class="required">*</span></label>
+            <input type="number" id="itemPrice" name="price" required step="0.01" min="0" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Image</label>
+            <input type="file" id="itemImage" name="image" accept="image/*" class="form-file" />
+            <div id="currentImagePreview" class="image-preview hidden">
+              <img id="currentImage" src="" alt="" />
+              <span class="image-preview__label">Current image (upload new to replace)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discount -->
+        <div class="discount-group">
+          <label class="form-check">
+            <input type="checkbox" id="itemHasDiscount" name="has_discount" onchange="toggleDiscount()" />
+            <span class="form-check__label">Apply a discount</span>
+          </label>
+          <div id="discountFields" class="discount-fields hidden">
+            <div class="form-group">
+              <label class="form-label">Discount type</label>
+              <select id="itemDiscountType" name="discount_type" class="form-select">
+                <option value="percent">Percentage (%)</option>
+                <option value="flat">Flat amount (€)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Value</label>
+              <input type="number" id="itemDiscountValue" name="discount_value" step="0.01" min="0" class="form-input" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Flags -->
+        <div class="inline-checks">
+          <label class="form-check">
+            <input type="checkbox" id="itemIsAvailable" name="is_available" checked />
+            <span class="form-check__label">Available on menu</span>
+          </label>
+          <label class="form-check">
+            <input type="checkbox" id="itemIsSpecial" name="is_special" />
+            <span class="form-check__label">Chef's Special ⭐</span>
+          </label>
+        </div>
+
+        <!-- Categories -->
+        <div class="form-group">
+          <label class="form-label">Categories</label>
+          <div class="check-list">
+            <% categories.filter(c => !c.parent_id).forEach(cat => { %>
+              <label class="form-check">
+                <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="item-category-cb" />
+                <span class="form-check__label"><%= catName(cat) %></span>
+              </label>
+              <% if (cat.children) cat.children.forEach(child => { %>
+                <label class="form-check">
+                  <input type="checkbox" name="category_ids" value="<%= child.id %>" class="item-category-cb" />
+                  <span class="form-check__label">↳ <%= catName(child) %></span>
+                </label>
+              <% }) %>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Allergens -->
+        <div class="form-group">
+          <label class="form-label">Allergens</label>
+          <div class="check-list">
+            <% allergens.forEach(a => { %>
+              <label class="form-check">
+                <input type="checkbox" name="allergen_ids" value="<%= a.id %>" class="item-allergen-cb" />
+                <span class="form-check__label"><%= tagName(a.translations) %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+
+        <!-- Dietary -->
+        <div class="form-group">
+          <label class="form-label">Dietary Tags</label>
+          <div class="check-list">
+            <% dietaryTags.forEach(d => { %>
+              <label class="form-check">
+                <input type="checkbox" name="dietary_ids" value="<%= d.id %>" class="item-dietary-cb" />
+                <span class="form-check__label"><%= tagName(d.translations) %></span>
+              </label>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__footer">
+        <button type="button" onclick="closeModal('itemModal')" class="btn btn--secondary">Cancel</button>
+        <button type="submit" class="btn btn--primary">Save Dish</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Image Lightbox ─────────────────────────────────────────────────────── -->
+<div id="imageLightbox" class="lightbox hidden" onclick="closeLightbox()">
+  <img id="lightboxImg" src="" alt="" class="lightbox__img" onclick="event.stopPropagation()" />
+  <button class="lightbox__close" onclick="closeLightbox()">&times;</button>
+</div>
+
+<%- include('../partials/scripts') %>
+
+<script>
+  const LANGS   = <%- JSON.stringify(langs) %>;
+  const PRIMARY = '<%= primary %>';
+
+  function toggleFilterBar() {
+    const bar    = document.getElementById('filterBar');
+    const toggle = document.getElementById('filterToggle');
+    const open   = bar.classList.toggle('filter-bar--open');
+    toggle.classList.toggle('filter-toggle--active', open);
+    if (open) document.getElementById('searchInput')?.focus();
+  }
+
+  function filterItems() {
+    const search    = document.getElementById('searchInput').value.toLowerCase();
+    const catId     = document.getElementById('categoryFilter').value;
+    const availFilter = document.querySelector('input[name="availFilter"]:checked').value;
+    const rows      = document.querySelectorAll('.item-row');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const nameMatch  = !search || row.dataset.name.includes(search);
+      const catMatch   = !catId  || row.dataset.categories.split(',').includes(catId);
+      const avail      = row.dataset.available === 'true';
+      const availMatch = availFilter === 'all'
+                      || (availFilter === 'active'   &&  avail)
+                      || (availFilter === 'inactive' && !avail);
+      const show = nameMatch && catMatch && availMatch;
+      row.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+
+    document.getElementById('itemCount').textContent = `${visible} dish${visible !== 1 ? 'es' : ''}`;
+  }
+
+  function toggleDiscount() {
+    const checked = document.getElementById('itemHasDiscount').checked;
+    document.getElementById('discountFields').classList.toggle('hidden', !checked);
+  }
+
+  function openAddModal() {
+    document.getElementById('itemModalTitle').textContent = 'Add Dish';
+    document.getElementById('itemId').value = '';
+    document.getElementById('itemForm').reset();
+    document.getElementById('currentImagePreview').classList.add('hidden');
+    document.getElementById('discountFields').classList.add('hidden');
+    const container = document.querySelector('#itemModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('itemModal');
+  }
+
+  function openEditModal(item) {
+    document.getElementById('itemModalTitle').textContent = 'Edit Dish';
+    document.getElementById('itemId').value              = item.id;
+    document.getElementById('itemPrice').value           = Number(item.price).toFixed(2);
+    document.getElementById('itemIsAvailable').checked  = item.is_available;
+    document.getElementById('itemIsSpecial').checked    = item.is_special;
+    document.getElementById('itemHasDiscount').checked  = item.has_discount;
+    document.getElementById('itemDiscountType').value   = item.discount_type || 'percent';
+    document.getElementById('itemDiscountValue').value  = item.discount_value ? Number(item.discount_value).toFixed(2) : '';
+    document.getElementById('discountFields').classList.toggle('hidden', !item.has_discount);
+
+    // Populate translations
+    const byLang = {};
+    (item.translations || []).forEach(t => byLang[t.lang] = t);
+    LANGS.forEach(lang => {
+      const t = byLang[lang] || {};
+      const n = document.getElementById(`itemName_${lang}`); if (n) n.value = t.name        || '';
+      const d = document.getElementById(`itemDesc_${lang}`); if (d) d.value = t.description || '';
+    });
+    document.getElementById('itemNotes').value = item.notes || '';
+
+    if (item.image_url) {
+      document.getElementById('currentImage').src = item.image_url;
+      document.getElementById('currentImagePreview').classList.remove('hidden');
+    } else {
+      document.getElementById('currentImagePreview').classList.add('hidden');
+    }
+
+    const catIds      = item.categories.map(c => String(c.category_id));
+    const allergenIds = item.allergens.map(a => String(a.allergen_id));
+    const dietaryIds  = item.dietary.map(d => String(d.dietary_id));
+
+    document.querySelectorAll('.item-category-cb').forEach(cb => { cb.checked = catIds.includes(cb.value); });
+    document.querySelectorAll('.item-allergen-cb').forEach(cb => { cb.checked = allergenIds.includes(cb.value); });
+    document.querySelectorAll('.item-dietary-cb').forEach(cb => { cb.checked = dietaryIds.includes(cb.value); });
+
+    const container = document.querySelector('#itemModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('itemModal');
+  }
+
+  async function submitItem(e) {
+    e.preventDefault();
+    const id  = document.getElementById('itemId').value;
+    const fd  = new FormData(e.target);
+    const url    = id ? `/api/menu-items/${id}` : '/api/menu-items';
+    const method = id ? 'PUT' : 'POST';
+    try {
+      await api(method, url, fd);
+      showToast(id ? 'Dish updated' : 'Dish created');
+      closeModal('itemModal');
+      reloadAfter();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteItem(id, name) {
+    confirmDelete(`Delete "${name}"? This cannot be undone.`, async () => {
+      try {
+        await api('DELETE', `/api/menu-items/${id}`);
+        showToast('Dish deleted');
+        reloadAfter();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+  }
+
+  async function toggleAvailability(id, current) {
+    try {
+      await api('PUT', `/api/menu-items/${id}`, { is_available: !current });
+      reloadAfter(100);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  filterItems();
+
+  function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('imageLightbox').classList.remove('hidden');
+  }
+
+  function closeLightbox() {
+    document.getElementById('imageLightbox').classList.add('hidden');
+    document.getElementById('lightboxImg').src = '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+</script>
+
+</body>
+</html>

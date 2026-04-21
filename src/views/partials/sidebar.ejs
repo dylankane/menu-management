@@ -1,0 +1,55 @@
+<!-- Fixed left sidebar navigation -->
+<aside class="sidebar bg-dark">
+  <div class="sidebar__header">
+    <img src="/media/logo-light.png" alt="<%= restaurantName %>" class="sidebar__logo">
+    <h1 class="sidebar__restaurant-name"><%= restaurantName %></h1>
+    <p class="sidebar__label">Admin Dashboard</p>
+  </div>
+
+  <nav class="sidebar__nav">
+    <a href="/admin" class="sidebar__link <%= current === 'dashboard' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#dashboard"></use></svg>
+      Dashboard
+    </a>
+    <a href="/admin/menu-items" class="sidebar__link <%= current === 'menu-items' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#menu-items"></use></svg>
+      Menu Items
+    </a>
+    <a href="/admin/set-menus" class="sidebar__link <%= current === 'set-menus' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#set-menus"></use></svg>
+      Set Menus
+    </a>
+    <a href="/admin/categories" class="sidebar__link <%= current === 'categories' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#categories"></use></svg>
+      Categories
+    </a>
+    <a href="/admin/tags" class="sidebar__link <%= current === 'tags' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#tags"></use></svg>
+      Allergens &amp; Dietary
+    </a>
+
+    <hr />
+
+    <a href="/menu" target="_blank" class="sidebar__link">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#eye"></use></svg>
+      Preview Menu
+    </a>
+    <a href="/admin/settings" class="sidebar__link <%= current === 'settings' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#settings"></use></svg>
+      Settings
+    </a>
+    <a href="/admin/profile" class="sidebar__link <%= current === 'profile' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#user"></use></svg>
+      Profile
+    </a>
+    <a href="/admin/logout" class="sidebar__link sidebar__link--danger">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#logout"></use></svg>
+      Logout
+    </a>
+  </nav>
+
+  <div class="sidebar__footer">
+    <p class="sidebar__footer-label">Logged in as</p>
+    <p class="sidebar__footer-name"><%= user.name || user.email %></p>
+  </div>
+</aside>

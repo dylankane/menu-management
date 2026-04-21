@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Profile', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<div class="main">
+  <header class="page-header">
+    <h2 class="page-header__title">Profile Settings</h2>
+    <%- include('../partials/lang-selector') %>
+  </header>
+
+  <main class="page-body">
+    <div class="profile-layout">
+
+      <!-- Update profile -->
+      <div class="card">
+        <div class="card__header card__header--accent">
+          <h3 class="card__title">Account Details</h3>
+        </div>
+        <div class="card__body form-stack">
+          <form onsubmit="updateProfile(event)" class="form-stack">
+            <div class="form-group">
+              <label class="form-label">Name</label>
+              <input type="text" id="profileName" value="<%= user.name %>" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" id="profileEmail" value="<%= user.email %>" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <input type="text" value="<%= user.role %>" disabled class="form-input" />
+            </div>
+            <div class="form-footer">
+              <button type="submit" class="btn btn--primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Change password -->
+      <div class="card">
+        <div class="card__header card__header--accent">
+          <h3 class="card__title">Change Password</h3>
+        </div>
+        <div class="card__body">
+          <form onsubmit="changePassword(event)" class="form-stack">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" id="currentPassword" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" id="newPassword" minlength="8" class="form-input" />
+              <p class="form-hint">Minimum 8 characters</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" id="confirmPassword" class="form-input" />
+            </div>
+            <div class="form-footer">
+              <button type="submit" class="btn btn--primary">Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+  async function updateProfile(e) {
+    e.preventDefault();
+    try {
+      await api('PUT', '/api/users/me', {
+        name:  document.getElementById('profileName').value,
+        email: document.getElementById('profileEmail').value,
+      });
+      showToast('Profile updated');
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function changePassword(e) {
+    e.preventDefault();
+    const newPw   = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    if (newPw !== confirm) {
+      return showToast('New passwords do not match', 'error');
+    }
+    try {
+      await api('PUT', '/api/users/me/password', {
+        current_password: document.getElementById('currentPassword').value,
+        new_password:     newPw,
+      });
+      showToast('Password updated');
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value     = '';
+      document.getElementById('confirmPassword').value = '';
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+</script>
+
+</body>
+</html>

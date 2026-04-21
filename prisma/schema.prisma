@@ -1,0 +1,265 @@
+// Prisma schema for Restaurant Menu Management System
+// White-label product — one instance per client, each with its own PostgreSQL database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7: connection URL is configured in prisma.config.ts (for CLI/migrations)
+// and passed via datasourceUrl in the PrismaClient constructor (see src/config/database.js).
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USERS ────────────────────────────────────────────────────────────────────
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  name       String
+  role       String   @default("admin")
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ─── RESTAURANT SETTINGS ──────────────────────────────────────────────────────
+// Singleton row (always id = 1). Stores restaurant-level config including
+// language preferences. enabled_languages is a JSON array of BCP-47 codes.
+// primary_language must always be included in enabled_languages.
+// 'en' and 'es' are locked and cannot be removed.
+model RestaurantSettings {
+  id                Int      @id @default(1)
+  restaurant_name   String   @default("My Restaurant")
+  primary_language  String   @default("en")
+  enabled_languages Json     @default("[\"en\",\"es\"]")
+  logo_url          String?
+  address           String?
+  phone             String?
+  website           String?
+  social_links      Json?
+  updated_at        DateTime @updatedAt
+
+  @@map("restaurant_settings")
+}
+
+// ─── ALLERGEN TAGS ────────────────────────────────────────────────────────────
+// ID only — all user-facing text lives in AllergenTagTranslation.
+model AllergenTag {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now())
+
+  translations AllergenTagTranslation[]
+  menu_items   MenuItemAllergen[]
+
+  @@map("allergen_tags")
+}
+
+model AllergenTagTranslation {
+  allergen_id Int
+  lang        String
+  name        String
+
+  allergen AllergenTag @relation(fields: [allergen_id], references: [id], onDelete: Cascade)
+
+  @@id([allergen_id, lang])
+  @@map("allergen_tag_translations")
+}
+
+// ─── DIETARY TAGS ─────────────────────────────────────────────────────────────
+// ID only — all user-facing text lives in DietaryTagTranslation.
+model DietaryTag {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now())
+
+  translations DietaryTagTranslation[]
+  menu_items   MenuItemDietary[]
+
+  @@map("dietary_tags")
+}
+
+model DietaryTagTranslation {
+  dietary_id Int
+  lang       String
+  name       String
+
+  dietary_tag DietaryTag @relation(fields: [dietary_id], references: [id], onDelete: Cascade)
+
+  @@id([dietary_id, lang])
+  @@map("dietary_tag_translations")
+}
+
+// ─── COURSES ──────────────────────────────────────────────────────────────────
+// A course within a set menu (e.g. Starter, Main, Dessert).
+// display_order controls the default order courses appear.
+model Course {
+  id            Int      @id @default(autoincrement())
+  display_order Int      @default(0)
+  created_at    DateTime @default(now())
+
+  translations    CourseTranslation[]
+  set_menu_dishes SetMenuDish[]
+
+  @@map("courses")
+}
+
+model CourseTranslation {
+  course_id Int
+  lang      String
+  name      String
+
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@id([course_id, lang])
+  @@map("course_translations")
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+// Self-referencing hierarchy: parent_id = null → top-level, parent_id → subcategory.
+// is_protected = true prevents deletion (e.g. Chef's Suggestions).
+// slug is used for public URL routing (/menu/starters).
+model Category {
+  id            Int      @id @default(autoincrement())
+  slug          String   @unique
+  display_order Int      @default(0)
+  is_protected  Boolean  @default(false)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  parent_id Int?
+  parent    Category?  @relation("CategoryChildren", fields: [parent_id], references: [id])
+  children  Category[] @relation("CategoryChildren")
+
+  translations         CategoryTranslation[]
+  menu_item_categories MenuItemCategory[]
+
+  @@map("categories")
+}
+
+model CategoryTranslation {
+  category_id Int
+  lang        String
+  name        String?
+  description String?
+
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@id([category_id, lang])
+  @@map("category_translations")
+}
+
+// ─── MENU ITEMS ───────────────────────────────────────────────────────────────
+// Handles both regular dishes (is_set_menu = false) and set menus (is_set_menu = true).
+// All user-facing text lives in MenuItemTranslation.
+// Set menus link to their component dishes via SetMenuDish.
+model MenuItem {
+  id             Int      @id @default(autoincrement())
+  price          Decimal  @db.Decimal(10, 2)
+  image_url      String?
+  has_discount   Boolean  @default(false)
+  discount_type  String?  // "flat" | "percent"
+  discount_value Decimal? @db.Decimal(10, 2)
+  is_available   Boolean  @default(true)
+  is_special     Boolean  @default(false)
+  is_set_menu    Boolean  @default(false)
+  notes          String?  // Internal admin notes — not shown to customers
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  translations MenuItemTranslation[]
+  categories   MenuItemCategory[]
+  allergens    MenuItemAllergen[]
+  dietary      MenuItemDietary[]
+
+  // Set menu relationships (only relevant when is_set_menu = true / false respectively)
+  set_menu_dishes SetMenuDish[] @relation("SetMenuDishes")   // dishes in this set menu
+  in_set_menus    SetMenuDish[] @relation("SetMenuDishItem") // set menus this dish appears in
+
+  @@map("menu_items")
+}
+
+model MenuItemTranslation {
+  menu_item_id Int
+  lang         String
+  name         String?
+  description  String?
+
+  menu_item MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+
+  @@id([menu_item_id, lang])
+  @@map("menu_item_translations")
+}
+
+// ─── JUNCTION: MenuItem ↔ Category ───────────────────────────────────────────
+// Applies to both regular dishes and set menus (is_set_menu=true) since both
+// are MenuItem rows.
+model MenuItemCategory {
+  menu_item_id  Int
+  category_id   Int
+  display_order Int @default(0)
+
+  menu_item MenuItem  @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@id([menu_item_id, category_id])
+  @@map("menu_item_categories")
+}
+
+// ─── JUNCTION: MenuItem ↔ AllergenTag ────────────────────────────────────────
+model MenuItemAllergen {
+  menu_item_id Int
+  allergen_id  Int
+
+  menu_item MenuItem    @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+  allergen  AllergenTag @relation(fields: [allergen_id], references: [id], onDelete: Cascade)
+
+  @@id([menu_item_id, allergen_id])
+  @@map("menu_item_allergens")
+}
+
+// ─── JUNCTION: MenuItem ↔ DietaryTag ─────────────────────────────────────────
+model MenuItemDietary {
+  menu_item_id Int
+  dietary_id   Int
+
+  menu_item   MenuItem   @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
+  dietary_tag DietaryTag @relation(fields: [dietary_id], references: [id], onDelete: Cascade)
+
+  @@id([menu_item_id, dietary_id])
+  @@map("menu_item_dietary")
+}
+
+// ─── SET MENU DISHES ──────────────────────────────────────────────────────────
+// Links a set menu (MenuItem with is_set_menu=true) to its component dishes.
+// display_order is per-course (resets for each course_id).
+// Customer-facing notes per dish are stored in SetMenuDishNotes.
+model SetMenuDish {
+  id            Int  @id @default(autoincrement())
+  set_menu_id   Int
+  dish_id       Int
+  course_id     Int?
+  display_order Int  @default(0)
+
+  set_menu MenuItem  @relation("SetMenuDishes",   fields: [set_menu_id], references: [id], onDelete: Cascade)
+  dish     MenuItem  @relation("SetMenuDishItem", fields: [dish_id],     references: [id], onDelete: Cascade)
+  course   Course?   @relation(fields: [course_id], references: [id], onDelete: SetNull)
+
+  notes SetMenuDishNotes[]
+
+  @@unique([set_menu_id, dish_id])
+  @@map("set_menu_dishes")
+}
+
+model SetMenuDishNotes {
+  set_menu_dish_id Int
+  lang             String
+  notes            String
+
+  set_menu_dish SetMenuDish @relation(fields: [set_menu_dish_id], references: [id], onDelete: Cascade)
+
+  @@id([set_menu_dish_id, lang])
+  @@map("set_menu_dish_notes")
+}

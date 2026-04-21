@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment — never commit real credentials
+.env
+
+# Prisma generated client
+generated/
+
+# Uploaded images — each client has their own; don't version-control them
+public/uploads/*
+!public/uploads/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/

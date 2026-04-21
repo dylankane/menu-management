@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Settings', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<%
+  const s       = settings;
+  const primary = s.primary_language || 'en';
+  const langs   = s.enabled_languages || ['en', 'es'];
+  const LOCKED  = ['en', 'es'];
+
+  const ALL_LANGS = [
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'fr', label: 'French' },
+    { code: 'de', label: 'German' },
+    { code: 'it', label: 'Italian' },
+    { code: 'pt', label: 'Portuguese' },
+    { code: 'nl', label: 'Dutch' },
+    { code: 'pl', label: 'Polish' },
+    { code: 'ru', label: 'Russian' },
+    { code: 'zh', label: 'Chinese' },
+    { code: 'ja', label: 'Japanese' },
+    { code: 'ar', label: 'Arabic' },
+  ];
+  const available = ALL_LANGS.filter(l => !langs.includes(l.code));
+%>
+
+<div class="main">
+  <header class="page-header">
+    <h2 class="page-header__title">Settings</h2>
+    <%- include('../partials/lang-selector') %>
+  </header>
+
+  <main class="page-body">
+    <div class="two-col">
+
+      <!-- ── Restaurant details ────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="card__header card__header--accent">
+          <h3 class="card__title">Restaurant Details</h3>
+        </div>
+        <div class="card__body form-stack">
+          <div class="form-group">
+            <label class="form-label">Restaurant Name</label>
+            <input type="text" id="settingName" class="form-input" value="<%= s.restaurant_name || '' %>" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Address</label>
+            <input type="text" id="settingAddress" class="form-input" value="<%= s.address || '' %>" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="text" id="settingPhone" class="form-input" value="<%= s.phone || '' %>" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Website</label>
+            <input type="text" id="settingWebsite" class="form-input" value="<%= s.website || '' %>" />
+          </div>
+        </div>
+        <div class="card__footer form-footer">
+          <button onclick="saveDetails()" class="btn btn--primary">Save Details</button>
+        </div>
+      </div>
+
+      <!-- ── Language management ───────────────────────────────────────────── -->
+      <div class="card">
+        <div class="card__header card__header--accent">
+          <h3 class="card__title">Languages</h3>
+          <span class="card__meta">Max <%= maxLanguages %> on your plan</span>
+        </div>
+        <div class="card__body form-stack">
+          <p class="card__note">
+            <strong>en</strong> and <strong>es</strong> are always enabled and cannot be removed.
+          </p>
+
+          <div class="lang-list">
+            <% langs.forEach(lang => { %>
+              <div class="tag-row">
+                <div class="tag-row__info">
+                  <span class="tag-row__name" style="text-transform:uppercase;"><%= lang %></span>
+                  <% if (lang === primary) { %><span class="badge badge--primary">Primary</span><% } %>
+                  <% if (LOCKED.includes(lang)) { %><span class="tag-row__system">(locked)</span><% } %>
+                </div>
+                <div class="tag-row__actions">
+                  <% if (lang !== primary) { %>
+                    <button onclick="setPrimary('<%= lang %>')" class="btn btn--outline-primary btn--xs">Set Primary</button>
+                  <% } %>
+                  <% if (!LOCKED.includes(lang)) { %>
+                    <button onclick="removeLang('<%= lang %>')" class="btn btn--outline-danger btn--xs">Remove</button>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+
+          <% if (available.length > 0 && langs.length < maxLanguages) { %>
+            <div class="input-row">
+              <select id="addLangSelect" class="form-select">
+                <% available.forEach(l => { %>
+                  <option value="<%= l.code %>"><%= l.code.toUpperCase() %> — <%= l.label %></option>
+                <% }) %>
+              </select>
+              <button onclick="addLang()" class="btn btn--primary btn--sm">Add</button>
+            </div>
+          <% } else if (langs.length >= maxLanguages) { %>
+            <p class="card__note">
+              You've reached the <%= maxLanguages %>-language limit on your plan.
+            </p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── Remove language warning modal ─────────────────────────────────────── -->
+<div id="removeLangModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title">Remove Language</h3>
+      <button onclick="closeModal('removeLangModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <p>You are about to remove <strong id="removeLangCode"></strong> from enabled languages.</p>
+      <p class="text-danger">
+        <strong>Warning:</strong> All translations in this language (menu item names, descriptions,
+        category names, allergen labels, etc.) will become inaccessible from the admin UI.
+        The data is <em>not deleted</em> from the database, but it will be hidden.
+      </p>
+      <p>Are you sure you want to continue?</p>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('removeLangModal')" class="btn btn--secondary">Cancel</button>
+      <button type="button" id="confirmRemoveLangBtn" class="btn btn--outline-danger">Remove Language</button>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+  async function saveDetails() {
+    const body = {
+      restaurant_name: document.getElementById('settingName').value,
+      address:         document.getElementById('settingAddress').value || null,
+      phone:           document.getElementById('settingPhone').value   || null,
+      website:         document.getElementById('settingWebsite').value || null,
+    };
+    try {
+      await api('PUT', '/api/settings', body);
+      showToast('Settings saved');
+      reloadAfter(800);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function setPrimary(lang) {
+    try {
+      await api('PUT', '/api/settings', { primary_language: lang });
+      showToast(`Primary language set to ${lang.toUpperCase()}`);
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function addLang() {
+    const lang = document.getElementById('addLangSelect').value;
+    try {
+      await api('POST', '/api/settings/languages', { lang });
+      showToast(`${lang.toUpperCase()} added`);
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  let pendingRemoveLang = null;
+
+  function removeLang(lang) {
+    pendingRemoveLang = lang;
+    document.getElementById('removeLangCode').textContent = lang.toUpperCase();
+    document.getElementById('confirmRemoveLangBtn').onclick = confirmRemoveLang;
+    openModal('removeLangModal');
+  }
+
+  async function confirmRemoveLang() {
+    if (!pendingRemoveLang) return;
+    try {
+      await api('DELETE', `/api/settings/languages/${pendingRemoveLang}`);
+      showToast(`${pendingRemoveLang.toUpperCase()} removed`);
+      closeModal('removeLangModal');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,357 @@
+/* ============================================================
+   menu.css — Restaurant Menu Management System
+   Customer-facing menu styles. Edit CSS variables at the top
+   to rebrand for a new client without touching anything else.
+   ============================================================ */
+
+/* ── Variables ─────────────────────────────────────────────── */
+:root {
+  /* Brand colours — change these per client */
+  --color-primary:       #111827;
+  --color-accent:        #d97706;
+  --color-accent-light:  #fffbeb;
+
+  /* Semantic colours */
+  --color-success:       #16a34a;
+  --color-success-light: #f0fdf4;
+  --color-warning:       #d97706;
+  --color-warning-light: #fffbeb;
+
+  /* Grays */
+  --gray-50:  #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* Layout */
+  --content-width: 680px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow:    0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
+
+  /* Typography */
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs:   11px;
+  --font-size-sm:   13px;
+  --font-size-base: 15px;
+  --font-size-lg:   17px;
+  --font-size-xl:   20px;
+  --font-size-2xl:  26px;
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
+
+body {
+  font-family: var(--font);
+  font-size: var(--font-size-base);
+  color: var(--gray-900);
+  background: var(--gray-50);
+  min-height: 100%;
+  line-height: 1.5;
+}
+
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+ul, ol { list-style: none; }
+
+/* ── Header ────────────────────────────────────────────────── */
+.menu-header {
+  background: #fff;
+  border-bottom: 1px solid var(--gray-100);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+}
+
+.menu-header__inner {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 16px 20px;
+  text-align: center;
+}
+
+.menu-header__name {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  letter-spacing: -0.01em;
+}
+
+/* ── Main content ───────────────────────────────────────────── */
+.menu-main {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+/* ── Section (category) ─────────────────────────────────────── */
+.menu-section {
+  margin-bottom: 40px;
+}
+
+.menu-section:last-child {
+  margin-bottom: 0;
+}
+
+.menu-section__title {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--gray-900);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--gray-200);
+  margin-bottom: 16px;
+}
+
+.menu-section__desc {
+  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+  margin-bottom: 14px;
+  margin-top: -10px;
+}
+
+/* Subcategory heading */
+.menu-subsection__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 20px 0 10px;
+}
+
+/* ── Item list ─────────────────────────────────────────────── */
+.menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Item card ─────────────────────────────────────────────── */
+.menu-item {
+  background: #fff;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.menu-item__inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px;
+}
+
+.menu-item__image {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--gray-100);
+}
+
+.menu-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-item__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.menu-item__info { flex: 1; }
+
+.menu-item__name {
+  font-weight: 600;
+  color: var(--gray-900);
+  font-size: var(--font-size-base);
+  line-height: 1.35;
+}
+
+.menu-item__special {
+  color: var(--color-warning);
+  margin-left: 4px;
+}
+
+.menu-item__desc {
+  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+  margin-top: 3px;
+  line-height: 1.45;
+}
+
+/* Pricing */
+.menu-item__price {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.menu-item__price-original {
+  font-size: var(--font-size-xs);
+  color: var(--gray-400);
+  text-decoration: line-through;
+}
+
+.menu-item__price-current {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+/* Tags row */
+.menu-item__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.menu-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.menu-tag--dietary {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.menu-tag--allergen {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+/* ── Set menu card ─────────────────────────────────────────── */
+.set-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.set-menu-card {
+  background: #fff;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.set-menu-card__header {
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.set-menu-card__info { flex: 1; }
+
+.set-menu-card__name {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.set-menu-card__desc {
+  font-size: var(--font-size-sm);
+  color: var(--gray-500);
+  margin-top: 3px;
+}
+
+.set-menu-card__price {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--gray-900);
+  flex-shrink: 0;
+}
+
+.set-menu-card__courses {
+  border-top: 1px solid var(--gray-100);
+  background: var(--gray-50);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.set-course__title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.set-course__items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.set-course__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+}
+
+.set-course__dot {
+  color: var(--gray-400);
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.set-course__dot--default { color: var(--gray-600); }
+
+.set-course__name { color: var(--gray-700); }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.menu-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--gray-400);
+}
+
+.menu-empty__icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.menu-empty__text {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.menu-footer {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--gray-300);
+}

@@ -1,0 +1,254 @@
+// src/routes/adminPages.js
+// Server-rendered admin page routes.
+// Each route fetches the data it needs from Prisma and passes it to an EJS template.
+// CRUD operations are handled client-side via fetch to the API (src/routes/*.js).
+
+const express           = require('express');
+const bcrypt            = require('bcryptjs');
+const QRCode            = require('qrcode');
+const prisma            = require('../config/database');
+const { signToken, verifyToken } = require('../utils/jwt');
+const { requireAuth }   = require('../middleware/auth');
+const loadSettings      = require('../middleware/loadSettings');
+
+const router = express.Router();
+
+// ── Login ─────────────────────────────────────────────────────────────────────
+
+router.get('/login', (req, res) => {
+  const token = req.cookies?.token;
+  if (token) {
+    try { verifyToken(token); return res.redirect('/admin'); } catch {}
+  }
+  res.render('admin/login', { error: req.query.error || null });
+});
+
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.is_active) {
+      return res.redirect('/admin/login?error=Invalid email or password');
+    }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.redirect('/admin/login?error=Invalid email or password');
+    }
+    const token = signToken({ id: user.id, email: user.email, name: user.name, role: user.role });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 8 * 60 * 60 * 1000,
+    });
+    res.redirect('/admin');
+  } catch {
+    res.redirect('/admin/login?error=Something went wrong, please try again');
+  }
+});
+
+router.get('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.redirect('/admin/login');
+});
+
+// ── All routes below require auth and restaurant settings ─────────────────────
+router.use(requireAuth);
+router.use(loadSettings);
+
+function restaurantName(res) {
+  return res.locals.settings?.restaurant_name || process.env.RESTAURANT_NAME || 'My Restaurant';
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+router.get(['/', '/dashboard'], async (req, res, next) => {
+  try {
+    const menuUrl = `${process.env.APP_URL || 'http://localhost:3000'}/menu`;
+
+    const [[totalDishes, totalCategories, totalSubCategories, totalSetMenus, totalSpecials], qrDataUrl] = await Promise.all([
+      Promise.all([
+        prisma.menuItem.count({ where: { is_set_menu: false } }),
+        prisma.category.count({ where: { parent_id: null } }),
+        prisma.category.count({ where: { parent_id: { not: null } } }),
+        prisma.menuItem.count({ where: { is_set_menu: true } }),
+        prisma.menuItem.count({ where: { is_special: true } }),
+      ]),
+      QRCode.toDataURL(menuUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }),
+    ]);
+
+    const recentItems = await prisma.menuItem.findMany({
+      where: { is_set_menu: false },
+      take: 5,
+      orderBy: { created_at: 'desc' },
+      select: { id: true, price: true, is_available: true, created_at: true, translations: true },
+    });
+
+    res.render('admin/dashboard', {
+      user: req.user,
+      stats: { totalDishes, totalCategories, totalSubCategories, totalSetMenus, totalSpecials },
+      recentItems,
+      qrDataUrl,
+      menuUrl,
+      current: 'dashboard',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Categories ────────────────────────────────────────────────────────────────
+router.get('/categories', async (req, res, next) => {
+  try {
+    const categories = await prisma.category.findMany({
+      where: { parent_id: null },
+      include: {
+        translations: true,
+        children: {
+          include: { translations: true },
+          orderBy: { display_order: 'asc' },
+        },
+      },
+      orderBy: { display_order: 'asc' },
+    });
+    res.render('admin/categories', {
+      user: req.user, categories, current: 'categories',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Menu Items ────────────────────────────────────────────────────────────────
+router.get('/menu-items', async (req, res, next) => {
+  try {
+    const [items, categories, allergens, dietaryTags] = await Promise.all([
+      prisma.menuItem.findMany({
+        where: { is_set_menu: false },
+        include: {
+          translations: true,
+          categories: { include: { category: { include: { translations: true } } } },
+          allergens:   { include: { allergen: { include: { translations: true } } } },
+          dietary:     { include: { dietary_tag: { include: { translations: true } } } },
+        },
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.category.findMany({
+        include: {
+          translations: true,
+          children: { include: { translations: true }, orderBy: { display_order: 'asc' } },
+        },
+        orderBy: [{ parent_id: 'asc' }, { display_order: 'asc' }],
+      }),
+      prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+    ]);
+    res.render('admin/menu-items', {
+      user: req.user, items, categories, allergens, dietaryTags,
+      current: 'menu-items',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Set Menus ─────────────────────────────────────────────────────────────────
+router.get('/set-menus', async (req, res, next) => {
+  try {
+    const [setMenus, categories, dishes, courses] = await Promise.all([
+      prisma.menuItem.findMany({
+        where: { is_set_menu: true },
+        include: {
+          translations: true,
+          categories: { include: { category: { include: { translations: true } } } },
+          set_menu_dishes: {
+            include: {
+              dish:   { include: { translations: true } },
+              course: { include: { translations: true } },
+              notes:  true,
+            },
+            orderBy: [{ course_id: 'asc' }, { display_order: 'asc' }],
+          },
+        },
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.category.findMany({
+        include: { translations: true },
+        orderBy: [{ parent_id: 'asc' }, { display_order: 'asc' }],
+      }),
+      prisma.menuItem.findMany({
+        where: { is_set_menu: false },
+        include: { translations: true },
+        orderBy: { created_at: 'desc' },
+      }),
+      prisma.course.findMany({
+        include: { translations: true },
+        orderBy: { display_order: 'asc' },
+      }),
+    ]);
+    res.render('admin/set-menus', {
+      user: req.user, setMenus, categories, dishes, courses,
+      current: 'set-menus',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Courses ───────────────────────────────────────────────────────────────────
+router.get('/courses', async (req, res, next) => {
+  try {
+    const courses = await prisma.course.findMany({
+      include: { translations: true },
+      orderBy: { display_order: 'asc' },
+    });
+    res.render('admin/courses', {
+      user: req.user, courses, current: 'courses',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Tags (allergens + dietary) ────────────────────────────────────────────────
+router.get('/tags', async (req, res, next) => {
+  try {
+    const [allergens, dietaryTags] = await Promise.all([
+      prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+    ]);
+    res.render('admin/tags', {
+      user: req.user, allergens, dietaryTags, current: 'tags',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+router.get('/settings', async (req, res, next) => {
+  try {
+    res.render('admin/settings', {
+      user: req.user, current: 'settings',
+      restaurantName: restaurantName(res),
+      maxLanguages: parseInt(process.env.MAX_LANGUAGES || '3', 10),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+router.get('/profile', async (req, res, next) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, email: true, name: true, role: true },
+    });
+    res.render('admin/profile', {
+      user, current: 'profile',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+module.exports = router;
