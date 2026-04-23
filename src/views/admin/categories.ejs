@@ -34,7 +34,7 @@
         <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search & filter">
           <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/icons/sprite.svg#search"></use></svg>
         </button>
-        <button onclick="openAddModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add Category</button>
+        <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add Category</button>
       </div>
       <div class="filter-bar" id="filterBar">
         <input type="text" id="searchInput" placeholder="Search by name..." oninput="filterCategories()" class="form-input" style="width:15rem;" />
@@ -50,9 +50,11 @@
     <% if (categories.length === 0) { %>
       <div class="card">
         <div class="empty-state">
-          <div class="empty-state__icon">📁</div>
+          <div class="empty-state__icon">
+            <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#categories"></use></svg>
+          </div>
           <p class="empty-state__text">No categories yet</p>
-          <button onclick="openAddModal()" class="empty-state__action">Add your first category →</button>
+          <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Category</button>
         </div>
       </div>
     <% } else { %>
@@ -100,7 +102,7 @@
                 </td>
                 <td>
                   <div class="table-actions">
-                    <button onclick='openEditModal(<%- JSON.stringify(cat) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
+                    <button onclick='openEditCategoryModal(<%- JSON.stringify(cat) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
                     <% if (!cat.is_protected) { %>
                       <button onclick="deleteCategory(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
                     <% } %>
@@ -137,7 +139,7 @@
                   </td>
                   <td>
                     <div class="table-actions">
-                      <button onclick='openEditModal(<%- JSON.stringify(child) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
+                      <button onclick='openEditCategoryModal(<%- JSON.stringify(child) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
                       <% if (!child.is_protected) { %>
                         <button onclick="deleteCategory(<%= child.id %>, '<%= catName(child).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
                       <% } %>
@@ -153,95 +155,7 @@
   </main>
 </div>
 
-<!-- ── Add Category Modal ─────────────────────────────────────────────────── -->
-<div id="addModal" class="modal-overlay hidden">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 class="modal__title" id="addModalTitle">Add Category</h3>
-      <button onclick="closeModal('addModal')" class="modal__close">&times;</button>
-    </div>
-    <div class="modal__body">
-      <input type="hidden" id="addParentId" value="" />
-      <div data-lang-container>
-        <div class="lang-tabs">
-          <% langs.forEach((lang, i) => { %>
-            <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-              data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-              <%= lang.toUpperCase() %>
-            </button>
-          <% }) %>
-        </div>
-        <% langs.forEach((lang, i) => { %>
-          <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-            <div class="form-group">
-              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-              <input type="text" id="addName_<%= lang %>" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
-              <input type="text" id="addDesc_<%= lang %>" class="form-input" placeholder="Optional" />
-            </div>
-          </div>
-        <% }) %>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Slug <span class="hint">(auto-generated, can override)</span></label>
-        <input type="text" id="addSlug" class="form-input" placeholder="e.g. starters" />
-      </div>
-    </div>
-    <div class="modal__footer">
-      <button type="button" onclick="closeModal('addModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitAdd()" class="btn btn--primary">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Edit Category Modal ────────────────────────────────────────────────── -->
-<div id="editModal" class="modal-overlay hidden">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 class="modal__title">Edit Category</h3>
-      <button onclick="closeModal('editModal')" class="modal__close">&times;</button>
-    </div>
-    <div class="modal__body">
-      <input type="hidden" id="editId" />
-      <div data-lang-container>
-        <div class="lang-tabs">
-          <% langs.forEach((lang, i) => { %>
-            <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-              data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-              <%= lang.toUpperCase() %>
-            </button>
-          <% }) %>
-        </div>
-        <% langs.forEach((lang, i) => { %>
-          <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-            <div class="form-group">
-              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-              <input type="text" id="editName_<%= lang %>" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
-              <input type="text" id="editDesc_<%= lang %>" class="form-input" />
-            </div>
-          </div>
-        <% }) %>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Slug</label>
-        <input type="text" id="editSlug" class="form-input" />
-      </div>
-      <label class="form-check">
-        <input type="checkbox" id="editIsActive" />
-        <span class="form-check__label">Active (visible on menu)</span>
-      </label>
-    </div>
-    <div class="modal__footer">
-      <button type="button" onclick="closeModal('editModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitEdit()" class="btn btn--primary">Save Changes</button>
-    </div>
-  </div>
-</div>
+<%- include('../partials/modals/category', { langs, primary, categories }) %>
 
 <%- include('../partials/scripts') %>
 
@@ -255,93 +169,6 @@
       (c.children || []).map(ch => ({ id: ch.id, display_order: ch.display_order }))
     ]))
   ) %>;
-
-  // Auto-generate slug from primary-language name field
-  document.getElementById('addName_' + PRIMARY)?.addEventListener('input', function () {
-    const slug = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').replace(/-+/g,'-');
-    document.getElementById('addSlug').value = slug;
-  });
-
-  function openAddModal() {
-    document.getElementById('addParentId').value = '';
-    document.getElementById('addModalTitle').textContent = 'Add Category';
-    LANGS.forEach(lang => {
-      const n = document.getElementById(`addName_${lang}`); if (n) n.value = '';
-      const d = document.getElementById(`addDesc_${lang}`); if (d) d.value = '';
-    });
-    document.getElementById('addSlug').value = '';
-    const container = document.querySelector('#addModal [data-lang-container]');
-    resetLangTabs(container, PRIMARY);
-    openModal('addModal');
-  }
-
-  function openAddSubModal(parentId, parentName) {
-    openAddModal();
-    document.getElementById('addParentId').value = parentId;
-    document.getElementById('addModalTitle').textContent = `Add Subcategory under "${parentName}"`;
-  }
-
-  function openEditModal(cat) {
-    document.getElementById('editId').value        = cat.id;
-    document.getElementById('editSlug').value      = cat.slug;
-    document.getElementById('editIsActive').checked = cat.is_active;
-    const byLang = {};
-    (cat.translations || []).forEach(t => byLang[t.lang] = t);
-    LANGS.forEach(lang => {
-      const n = document.getElementById(`editName_${lang}`); if (n) n.value = (byLang[lang]||{}).name || '';
-      const d = document.getElementById(`editDesc_${lang}`); if (d) d.value = (byLang[lang]||{}).description || '';
-    });
-    const container = document.querySelector('#editModal [data-lang-container]');
-    resetLangTabs(container, PRIMARY);
-    openModal('editModal');
-  }
-
-  async function submitAdd() {
-    const body = { slug: document.getElementById('addSlug').value || undefined };
-    const parentId = document.getElementById('addParentId').value;
-    if (parentId) body.parent_id = parseInt(parentId);
-    LANGS.forEach(lang => {
-      const n = document.getElementById(`addName_${lang}`)?.value.trim();
-      const d = document.getElementById(`addDesc_${lang}`)?.value.trim();
-      if (n) body[`name_${lang}`] = n;
-      if (d) body[`description_${lang}`] = d;
-    });
-    try {
-      await api('POST', '/api/categories', body);
-      showToast('Category created');
-      reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function submitEdit() {
-    const id   = document.getElementById('editId').value;
-    const body = {
-      slug:      document.getElementById('editSlug').value,
-      is_active: document.getElementById('editIsActive').checked,
-    };
-    LANGS.forEach(lang => {
-      const n = document.getElementById(`editName_${lang}`)?.value.trim();
-      const d = document.getElementById(`editDesc_${lang}`)?.value.trim();
-      if (n !== undefined) body[`name_${lang}`] = n;
-      if (d !== undefined) body[`description_${lang}`] = d;
-    });
-    try {
-      await api('PUT', `/api/categories/${id}`, body);
-      showToast('Category updated');
-      reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function deleteCategory(id, name) {
-    confirmDelete(`Delete category "${name}"? This cannot be undone.`, async () => {
-      try {
-        await api('DELETE', `/api/categories/${id}`);
-        showToast('Category deleted');
-        reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
-    });
-  }
 
   function toggleFilterBar() {
     const bar    = document.getElementById('filterBar');

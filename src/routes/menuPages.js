@@ -48,14 +48,6 @@ const CATEGORY_INCLUDE = (lang, primary) => ({
                 translations: true,
                 allergens: { include: { allergen: { include: { translations: true } } } },
                 dietary:   { include: { dietary_tag: { include: { translations: true } } } },
-                set_menu_dishes: {
-                  include: {
-                    dish:   { include: { translations: true } },
-                    course: { include: { translations: true } },
-                    notes:  true,
-                  },
-                  orderBy: [{ course_id: 'asc' }, { display_order: 'asc' }],
-                },
               },
             },
           },
@@ -70,14 +62,6 @@ const CATEGORY_INCLUDE = (lang, primary) => ({
             translations: true,
             allergens: { include: { allergen: { include: { translations: true } } } },
             dietary:   { include: { dietary_tag: { include: { translations: true } } } },
-            set_menu_dishes: {
-              include: {
-                dish:   { include: { translations: true } },
-                course: { include: { translations: true } },
-                notes:  true,
-              },
-              orderBy: [{ course_id: 'asc' }, { display_order: 'asc' }],
-            },
           },
         },
       },
@@ -103,7 +87,7 @@ router.get('/', async (req, res, next) => {
 
     // Filter to categories that have at least one visible item
     function isVisible(mi) {
-      return mi && (mi.is_available || mi.is_set_menu);
+      return mi && mi.is_available;
     }
     function catHasContent(cat) {
       const directVisible = (cat.menu_item_categories || []).some(mic => isVisible(mic.menu_item));

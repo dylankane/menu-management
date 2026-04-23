@@ -46,7 +46,6 @@ model RestaurantSettings {
 }
 
 // ─── ALLERGEN TAGS ────────────────────────────────────────────────────────────
-// ID only — all user-facing text lives in AllergenTagTranslation.
 model AllergenTag {
   id         Int      @id @default(autoincrement())
   created_at DateTime @default(now())
@@ -69,7 +68,6 @@ model AllergenTagTranslation {
 }
 
 // ─── DIETARY TAGS ─────────────────────────────────────────────────────────────
-// ID only — all user-facing text lives in DietaryTagTranslation.
 model DietaryTag {
   id         Int      @id @default(autoincrement())
   created_at DateTime @default(now())
@@ -92,15 +90,16 @@ model DietaryTagTranslation {
 }
 
 // ─── COURSES ──────────────────────────────────────────────────────────────────
-// A course within a set menu (e.g. Starter, Main, Dessert).
-// display_order controls the default order courses appear.
+// Global library of reusable course names (e.g. Starter, Main, Dessert).
+// Chefs pick from this library when building a set menu.
+// display_order controls the default order in the course library UI.
 model Course {
   id            Int      @id @default(autoincrement())
   display_order Int      @default(0)
   created_at    DateTime @default(now())
 
-  translations    CourseTranslation[]
-  set_menu_dishes SetMenuDish[]
+  translations     CourseTranslation[]
+  set_menu_courses SetMenuCourse[]
 
   @@map("courses")
 }
@@ -118,7 +117,8 @@ model CourseTranslation {
 
 // ─── CATEGORIES ───────────────────────────────────────────────────────────────
 // Self-referencing hierarchy: parent_id = null → top-level, parent_id → subcategory.
-// is_protected = true prevents deletion (e.g. Chef's Suggestions).
+// is_protected = true prevents deletion (e.g. Chef's Specials, Set Menus).
+// is_active = false hides the category from the front-end menu.
 // slug is used for public URL routing (/menu/starters).
 model Category {
   id            Int      @id @default(autoincrement())
@@ -135,6 +135,7 @@ model Category {
 
   translations         CategoryTranslation[]
   menu_item_categories MenuItemCategory[]
+  set_menu_categories  SetMenuCategory[]
 
   @@map("categories")
 }
@@ -152,9 +153,8 @@ model CategoryTranslation {
 }
 
 // ─── MENU ITEMS ───────────────────────────────────────────────────────────────
-// Handles both regular dishes (is_set_menu = false) and set menus (is_set_menu = true).
+// Regular dishes only. Set menus are now a separate model (SetMenu).
 // All user-facing text lives in MenuItemTranslation.
-// Set menus link to their component dishes via SetMenuDish.
 model MenuItem {
   id             Int      @id @default(autoincrement())
   price          Decimal  @db.Decimal(10, 2)
@@ -164,7 +164,6 @@ model MenuItem {
   discount_value Decimal? @db.Decimal(10, 2)
   is_available   Boolean  @default(true)
   is_special     Boolean  @default(false)
-  is_set_menu    Boolean  @default(false)
   notes          String?  // Internal admin notes — not shown to customers
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
@@ -173,10 +172,7 @@ model MenuItem {
   categories   MenuItemCategory[]
   allergens    MenuItemAllergen[]
   dietary      MenuItemDietary[]
-
-  // Set menu relationships (only relevant when is_set_menu = true / false respectively)
-  set_menu_dishes SetMenuDish[] @relation("SetMenuDishes")   // dishes in this set menu
-  in_set_menus    SetMenuDish[] @relation("SetMenuDishItem") // set menus this dish appears in
+  set_menu_dishes SetMenuDish[]     // set menus this dish appears in
 
   @@map("menu_items")
 }
@@ -194,8 +190,6 @@ model MenuItemTranslation {
 }
 
 // ─── JUNCTION: MenuItem ↔ Category ───────────────────────────────────────────
-// Applies to both regular dishes and set menus (is_set_menu=true) since both
-// are MenuItem rows.
 model MenuItemCategory {
   menu_item_id  Int
   category_id   Int
@@ -232,34 +226,111 @@ model MenuItemDietary {
   @@map("menu_item_dietary")
 }
 
-// ─── SET MENU DISHES ──────────────────────────────────────────────────────────
-// Links a set menu (MenuItem with is_set_menu=true) to its component dishes.
-// display_order is per-course (resets for each course_id).
-// Customer-facing notes per dish are stored in SetMenuDishNotes.
-model SetMenuDish {
-  id            Int  @id @default(autoincrement())
+// ─── SET MENUS ────────────────────────────────────────────────────────────────
+// A set menu is its own entity — not a MenuItem. It has its own price,
+// availability, categories, and internal course/dish structure.
+model SetMenu {
+  id            Int      @id @default(autoincrement())
+  price         Decimal  @db.Decimal(10, 2)
+  image_url     String?
+  is_available  Boolean  @default(true)
+  display_order Int      @default(0)
+  notes         String?  // Internal admin notes — not shown to customers
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  translations SetMenuTranslation[]
+  categories   SetMenuCategory[]
+  courses      SetMenuCourse[]
+  dishes       SetMenuDish[]
+
+  @@map("set_menus")
+}
+
+model SetMenuTranslation {
+  set_menu_id Int
+  lang        String
+  name        String?
+  description String?
+
+  set_menu SetMenu @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
+
+  @@id([set_menu_id, lang])
+  @@map("set_menu_translations")
+}
+
+// ─── JUNCTION: SetMenu ↔ Category ────────────────────────────────────────────
+// A set menu can appear in any number of categories (e.g. "Set Menus" protected
+// category plus any seasonal or special categories).
+model SetMenuCategory {
   set_menu_id   Int
-  dish_id       Int
-  course_id     Int?
-  display_order Int  @default(0)
+  category_id   Int
+  display_order Int @default(0)
 
-  set_menu MenuItem  @relation("SetMenuDishes",   fields: [set_menu_id], references: [id], onDelete: Cascade)
-  dish     MenuItem  @relation("SetMenuDishItem", fields: [dish_id],     references: [id], onDelete: Cascade)
-  course   Course?   @relation(fields: [course_id], references: [id], onDelete: SetNull)
+  set_menu SetMenu  @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
-  notes SetMenuDishNotes[]
+  @@id([set_menu_id, category_id])
+  @@map("set_menu_categories")
+}
+
+// ─── JUNCTION: SetMenu ↔ Course ───────────────────────────────────────────────
+// Records which courses from the global library are used in a specific set menu,
+// and in what order. A course section can exist here before any dishes are added.
+// Translations hold a customer-facing note unique to this set menu / course pairing.
+model SetMenuCourse {
+  id            Int @id @default(autoincrement())
+  set_menu_id   Int
+  course_id     Int
+  display_order Int @default(0)
+
+  set_menu     SetMenu                  @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
+  course       Course                   @relation(fields: [course_id],   references: [id], onDelete: Restrict)
+  translations SetMenuCourseTranslation[]
+  dishes       SetMenuDish[]
+
+  @@unique([set_menu_id, course_id])
+  @@map("set_menu_courses")
+}
+
+model SetMenuCourseTranslation {
+  set_menu_course_id Int
+  lang               String
+  notes              String?
+
+  set_menu_course SetMenuCourse @relation(fields: [set_menu_course_id], references: [id], onDelete: Cascade)
+
+  @@id([set_menu_course_id, lang])
+  @@map("set_menu_course_translations")
+}
+
+// ─── JUNCTION: SetMenu ↔ Dish ─────────────────────────────────────────────────
+// Links a dish (MenuItem) into a set menu, optionally under a course section.
+// A dish can be added to a set menu with no course (set_menu_course_id = null).
+// Translations hold a customer-facing note unique to this dish in this set menu.
+model SetMenuDish {
+  id                 Int  @id @default(autoincrement())
+  set_menu_id        Int
+  dish_id            Int
+  set_menu_course_id Int?
+  display_order      Int  @default(0)
+
+  set_menu        SetMenu        @relation(fields: [set_menu_id],        references: [id], onDelete: Cascade)
+  dish            MenuItem       @relation(fields: [dish_id],            references: [id], onDelete: Restrict)
+  set_menu_course SetMenuCourse? @relation(fields: [set_menu_course_id], references: [id], onDelete: SetNull)
+  translations    SetMenuDishTranslation[]
 
   @@unique([set_menu_id, dish_id])
   @@map("set_menu_dishes")
 }
 
-model SetMenuDishNotes {
+model SetMenuDishTranslation {
   set_menu_dish_id Int
   lang             String
-  notes            String
+  notes            String?
 
   set_menu_dish SetMenuDish @relation(fields: [set_menu_dish_id], references: [id], onDelete: Cascade)
 
   @@id([set_menu_dish_id, lang])
-  @@map("set_menu_dish_notes")
+  @@map("set_menu_dish_translations")
 }

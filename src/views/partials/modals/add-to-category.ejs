@@ -1,0 +1,73 @@
+<!-- ── Add Existing Dish to Category Modal ─────────────────────────────────── -->
+<!-- Requires in scope: allItems, primary                                       -->
+<div id="addToCatModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title" id="addToCatModalTitle">Add Dish to Category</h3>
+      <button onclick="closeModal('addToCatModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="addToCatCatId" />
+      <div class="form-group">
+        <input type="text" id="addToCatSearch" placeholder="Search dishes…" oninput="filterAddToCatDishes()" class="form-input" />
+      </div>
+      <div id="addToCatList" class="add-to-cat-list">
+        <% allItems.forEach(item => {
+          const t = (item.translations || []).find(t => t.lang === primary) || (item.translations || [])[0];
+          const name = t ? (t.name || '—') : '—';
+        %>
+          <div class="add-to-cat-item" data-item-id="<%= item.id %>" data-name="<%= name.toLowerCase() %>" onclick="selectAddToCatItem(this)">
+            <%= name %>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('addToCatModal')" class="btn btn--secondary">Cancel</button>
+      <button type="button" onclick="submitAddToCategory()" class="btn btn--primary">Add to Category</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let _addToCatSelectedId = null;
+
+  function openAddToCatModal(catId, catNameStr) {
+    document.getElementById('addToCatCatId').value = catId;
+    document.getElementById('addToCatModalTitle').textContent =
+      catNameStr ? `Add Dish to "${catNameStr}"` : 'Add Dish to Category';
+    document.getElementById('addToCatSearch').value = '';
+    _addToCatSelectedId = null;
+    document.querySelectorAll('.add-to-cat-item').forEach(el => {
+      el.classList.remove('add-to-cat-item--selected');
+      el.style.display = '';
+    });
+    openModal('addToCatModal');
+  }
+
+  function selectAddToCatItem(el) {
+    document.querySelectorAll('.add-to-cat-item').forEach(i => i.classList.remove('add-to-cat-item--selected'));
+    el.classList.add('add-to-cat-item--selected');
+    _addToCatSelectedId = el.dataset.itemId;
+  }
+
+  function filterAddToCatDishes() {
+    const q = document.getElementById('addToCatSearch').value.toLowerCase().trim();
+    document.querySelectorAll('.add-to-cat-item').forEach(el => {
+      el.style.display = !q || el.dataset.name.includes(q) ? '' : 'none';
+    });
+  }
+
+  async function submitAddToCategory() {
+    if (!_addToCatSelectedId) return showToast('Select a dish first', 'error');
+    const catId = document.getElementById('addToCatCatId').value;
+    try {
+      await api('POST', `/api/menu-items/${_addToCatSelectedId}/add-to-category`, {
+        category_id: parseInt(catId),
+      });
+      showToast('Dish added to category');
+      closeModal('addToCatModal');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+</script>

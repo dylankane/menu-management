@@ -1,5 +1,5 @@
 // src/controllers/menuItems.js
-// CRUD for regular menu items (dishes). is_set_menu = false.
+// CRUD for regular menu items (dishes).
 
 const prisma = require('../config/database');
 const { AppError } = require('../utils/errors');
@@ -20,7 +20,7 @@ async function list(req, res, next) {
   try {
     const { category_id, available, special } = req.query;
 
-    const where = { is_set_menu: false };
+    const where = {};
     if (available !== undefined) where.is_available = available === 'true';
     if (special   !== undefined) where.is_special   = special   === 'true';
     if (category_id) {
@@ -43,8 +43,8 @@ async function list(req, res, next) {
 async function getOne(req, res, next) {
   try {
     const id   = parseInt(req.params.id);
-    const item = await prisma.menuItem.findFirst({
-      where: { id, is_set_menu: false },
+    const item = await prisma.menuItem.findUnique({
+      where: { id },
       include: FULL_INCLUDE,
     });
     if (!item) throw new AppError('Menu item not found', 404);
@@ -79,7 +79,6 @@ async function create(req, res, next) {
         discount_value: discount_value ? parseFloat(discount_value) : null,
         is_available:   parseBool(is_available, true),
         is_special:     parseBool(is_special, false),
-        is_set_menu:    false,
         notes:          req.body.notes || null,
         translations: {
           create: translations.filter(t => t.name || t.description),
@@ -108,7 +107,7 @@ async function update(req, res, next) {
   try {
     const id = parseInt(req.params.id);
 
-    const existing = await prisma.menuItem.findFirst({ where: { id, is_set_menu: false } });
+    const existing = await prisma.menuItem.findUnique({ where: { id } });
     if (!existing) throw new AppError('Menu item not found', 404);
 
     const {
@@ -191,7 +190,7 @@ async function update(req, res, next) {
 async function remove(req, res, next) {
   try {
     const id = parseInt(req.params.id);
-    const existing = await prisma.menuItem.findFirst({ where: { id, is_set_menu: false } });
+    const existing = await prisma.menuItem.findUnique({ where: { id } });
     if (!existing) throw new AppError('Menu item not found', 404);
     await prisma.menuItem.delete({ where: { id } });
     res.json({ data: { message: 'Menu item deleted' } });
@@ -200,4 +199,105 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { list, getOne, create, update, remove };
+// PATCH /api/menu-items/reorder
+// Reorders dishes within a single category by updating MenuItemCategory.display_order.
+// Body: { category_id, items: [{ menu_item_id, display_order }] }
+async function reorderInCategory(req, res, next) {
+  try {
+    const { category_id, items } = req.body;
+    if (!category_id || !Array.isArray(items) || items.length === 0) {
+      throw new AppError('category_id and items array are required', 400);
+    }
+    await prisma.$transaction(
+      items.map(({ menu_item_id, display_order }) =>
+        prisma.menuItemCategory.update({
+          where: {
+            menu_item_id_category_id: {
+              menu_item_id: parseInt(menu_item_id),
+              category_id:  parseInt(category_id),
+            },
+          },
+          data: { display_order: parseInt(display_order) },
+        })
+      )
+    );
+    res.json({ data: { message: 'Order updated' } });
+  } catch (err) { next(err); }
+}
+
+// PATCH /api/menu-items/:id/move
+// Moves a dish from one category to another.
+// Body: { from_category_id, to_category_id }
+async function moveToCategory(req, res, next) {
+  try {
+    const id               = parseInt(req.params.id);
+    const from_category_id = parseInt(req.body.from_category_id);
+    const to_category_id   = parseInt(req.body.to_category_id);
+
+    const item = await prisma.menuItem.findUnique({ where: { id } });
+    if (!item) throw new AppError('Menu item not found', 404);
+
+    const maxOrder = await prisma.menuItemCategory.aggregate({
+      where: { category_id: to_category_id },
+      _max:  { display_order: true },
+    });
+
+    await prisma.$transaction([
+      prisma.menuItemCategory.delete({
+        where: {
+          menu_item_id_category_id: {
+            menu_item_id: id,
+            category_id:  from_category_id,
+          },
+        },
+      }),
+      prisma.menuItemCategory.create({
+        data: {
+          menu_item_id:  id,
+          category_id:   to_category_id,
+          display_order: (maxOrder._max.display_order ?? -1) + 1,
+        },
+      }),
+    ]);
+
+    res.json({ data: { message: 'Dish moved' } });
+  } catch (err) { next(err); }
+}
+
+// POST /api/menu-items/:id/add-to-category
+// Adds an existing dish to a category without touching its other categories.
+// Body: { category_id }
+async function addToCategory(req, res, next) {
+  try {
+    const id          = parseInt(req.params.id);
+    const category_id = parseInt(req.body.category_id);
+
+    if (!category_id) throw new AppError('category_id is required', 400);
+
+    const [item, category] = await Promise.all([
+      prisma.menuItem.findUnique({ where: { id } }),
+      prisma.category.findUnique({ where: { id: category_id } }),
+    ]);
+    if (!item)     throw new AppError('Menu item not found', 404);
+    if (!category) throw new AppError('Category not found', 404);
+
+    const maxOrder = await prisma.menuItemCategory.aggregate({
+      where: { category_id },
+      _max:  { display_order: true },
+    });
+
+    await prisma.menuItemCategory.upsert({
+      where:  { menu_item_id_category_id: { menu_item_id: id, category_id } },
+      update: {},
+      create: {
+        menu_item_id:  id,
+        category_id,
+        display_order: (maxOrder._max.display_order ?? -1) + 1,
+      },
+    });
+
+    res.json({ data: { message: 'Dish added to category' } });
+  } catch (err) { next(err); }
+}
+
+module.exports = { list, getOne, create, update, remove, reorderInCategory, moveToCategory, addToCategory };

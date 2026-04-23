@@ -67,20 +67,19 @@ router.get(['/', '/dashboard'], async (req, res, next) => {
 
     const [[totalDishes, totalCategories, totalSubCategories, totalSetMenus, totalSpecials], qrDataUrl] = await Promise.all([
       Promise.all([
-        prisma.menuItem.count({ where: { is_set_menu: false } }),
+        prisma.menuItem.count(),
         prisma.category.count({ where: { parent_id: null } }),
         prisma.category.count({ where: { parent_id: { not: null } } }),
-        prisma.menuItem.count({ where: { is_set_menu: true } }),
+        prisma.setMenu.count(),
         prisma.menuItem.count({ where: { is_special: true } }),
       ]),
       QRCode.toDataURL(menuUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }),
     ]);
 
     const recentItems = await prisma.menuItem.findMany({
-      where: { is_set_menu: false },
       take: 5,
       orderBy: { created_at: 'desc' },
-      select: { id: true, price: true, is_available: true, created_at: true, translations: true },
+      select: { id: true, price: true, is_available: true, created_at: true, image_url: true, translations: true },
     });
 
     res.render('admin/dashboard', {
@@ -118,12 +117,67 @@ router.get('/categories', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Menu Builder ──────────────────────────────────────────────────────────────
+router.get('/menu-builder', async (req, res, next) => {
+  try {
+    const WITH_TRANS = { translations: { orderBy: { lang: 'asc' } } };
+    const DISH_INCLUDE = {
+      include: {
+        menu_item: { include: WITH_TRANS },
+      },
+      orderBy: { display_order: 'asc' },
+    };
+    const SET_MENU_INCLUDE = {
+      include: {
+        set_menu: { include: WITH_TRANS },
+      },
+      orderBy: { display_order: 'asc' },
+    };
+
+    const [categories, allergens, dietaryTags, allItems] = await Promise.all([
+      prisma.category.findMany({
+        where: { parent_id: null },
+        include: {
+          ...WITH_TRANS,
+          children: {
+            include: {
+              ...WITH_TRANS,
+              menu_item_categories: DISH_INCLUDE,
+              set_menu_categories:  SET_MENU_INCLUDE,
+            },
+            orderBy: { display_order: 'asc' },
+          },
+          menu_item_categories: DISH_INCLUDE,
+          set_menu_categories:  SET_MENU_INCLUDE,
+        },
+        orderBy: { display_order: 'asc' },
+      }),
+      prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.menuItem.findMany({
+        include: { translations: { orderBy: { lang: 'asc' } } },
+        orderBy: { created_at: 'desc' },
+      }),
+    ]);
+
+    res.render('admin/menu-builder', {
+      user: req.user,
+      categories,
+      allergens,
+      dietaryTags,
+      allItems,
+      current: 'menu-builder',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
 // ── Menu Items ────────────────────────────────────────────────────────────────
 router.get('/menu-items', async (req, res, next) => {
   try {
     const [items, categories, allergens, dietaryTags] = await Promise.all([
       prisma.menuItem.findMany({
-        where: { is_set_menu: false },
         include: {
           translations: true,
           categories: { include: { category: { include: { translations: true } } } },
@@ -154,29 +208,47 @@ router.get('/menu-items', async (req, res, next) => {
 // ── Set Menus ─────────────────────────────────────────────────────────────────
 router.get('/set-menus', async (req, res, next) => {
   try {
-    const [setMenus, categories, dishes, courses] = await Promise.all([
-      prisma.menuItem.findMany({
-        where: { is_set_menu: true },
+    const [setMenus, categories, dishes, courses, allergens, dietaryTags] = await Promise.all([
+      prisma.setMenu.findMany({
         include: {
           translations: true,
-          categories: { include: { category: { include: { translations: true } } } },
-          set_menu_dishes: {
+          categories: {
+            include: { category: { include: { translations: true } } },
+            orderBy: { display_order: 'asc' },
+          },
+          courses: {
             include: {
-              dish:   { include: { translations: true } },
-              course: { include: { translations: true } },
-              notes:  true,
+              course:       { include: { translations: true } },
+              translations: true,
+              dishes: {
+                include: {
+                  dish:         { include: { translations: true } },
+                  translations: true,
+                },
+                orderBy: { display_order: 'asc' },
+              },
             },
-            orderBy: [{ course_id: 'asc' }, { display_order: 'asc' }],
+            orderBy: { display_order: 'asc' },
+          },
+          dishes: {
+            where:   { set_menu_course_id: null },
+            include: {
+              dish:         { include: { translations: true } },
+              translations: true,
+            },
+            orderBy: { display_order: 'asc' },
           },
         },
-        orderBy: { created_at: 'desc' },
+        orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
       }),
       prisma.category.findMany({
-        include: { translations: true },
+        include: {
+          translations: true,
+          children: { include: { translations: true }, orderBy: { display_order: 'asc' } },
+        },
         orderBy: [{ parent_id: 'asc' }, { display_order: 'asc' }],
       }),
       prisma.menuItem.findMany({
-        where: { is_set_menu: false },
         include: { translations: true },
         orderBy: { created_at: 'desc' },
       }),
@@ -184,9 +256,11 @@ router.get('/set-menus', async (req, res, next) => {
         include: { translations: true },
         orderBy: { display_order: 'asc' },
       }),
+      prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
     ]);
     res.render('admin/set-menus', {
-      user: req.user, setMenus, categories, dishes, courses,
+      user: req.user, setMenus, categories, dishes, courses, allergens, dietaryTags,
       current: 'set-menus',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,

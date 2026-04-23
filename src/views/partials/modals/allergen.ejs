@@ -1,0 +1,128 @@
+<!-- ── Add / Edit Allergen Modals ──────────────────────────────────────────── -->
+<!-- Requires in scope: langs, primary                                         -->
+
+<!-- Add Allergen Modal -->
+<div id="addAllergenModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title">Add Allergen</h3>
+      <button onclick="closeModal('addAllergenModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body" data-lang-container>
+      <div class="lang-tabs">
+        <% langs.forEach((lang, i) => { %>
+          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+            <%= lang.toUpperCase() %>
+          </button>
+        <% }) %>
+      </div>
+      <% langs.forEach((lang, i) => { %>
+        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+          <div class="form-group">
+            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+            <input type="text" id="newAllergenName_<%= lang %>" class="form-input" />
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('addAllergenModal')" class="btn btn--secondary">Cancel</button>
+      <button type="button" onclick="submitAddAllergen()" class="btn btn--primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Allergen Modal -->
+<div id="editAllergenModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title">Edit Allergen</h3>
+      <button onclick="closeModal('editAllergenModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body" data-lang-container>
+      <input type="hidden" id="editAllergenId" />
+      <div class="lang-tabs">
+        <% langs.forEach((lang, i) => { %>
+          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+            <%= lang.toUpperCase() %>
+          </button>
+        <% }) %>
+      </div>
+      <% langs.forEach((lang, i) => { %>
+        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+          <div class="form-group">
+            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+            <input type="text" id="editAllergenName_<%= lang %>" class="form-input" />
+          </div>
+        </div>
+      <% }) %>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('editAllergenModal')" class="btn btn--secondary">Cancel</button>
+      <button type="button" onclick="submitEditAllergen()" class="btn btn--primary">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openAddAllergenModal() {
+    LANGS.forEach(lang => {
+      const el = document.getElementById(`newAllergenName_${lang}`); if (el) el.value = '';
+    });
+    const container = document.querySelector('#addAllergenModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('addAllergenModal');
+  }
+
+  function openEditAllergenModal(a) {
+    document.getElementById('editAllergenId').value = a.id;
+    const byLang = {};
+    (a.translations || []).forEach(t => byLang[t.lang] = t);
+    LANGS.forEach(lang => {
+      const el = document.getElementById(`editAllergenName_${lang}`);
+      if (el) el.value = (byLang[lang] || {}).name || '';
+    });
+    const container = document.querySelector('#editAllergenModal [data-lang-container]');
+    resetLangTabs(container, PRIMARY);
+    openModal('editAllergenModal');
+  }
+
+  async function submitAddAllergen() {
+    const body = {};
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`newAllergenName_${lang}`)?.value.trim();
+      if (val) body[`name_${lang}`] = val;
+    });
+    try {
+      await api('POST', '/api/allergens', body);
+      showToast('Allergen added');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function submitEditAllergen() {
+    const id   = document.getElementById('editAllergenId').value;
+    const body = {};
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`editAllergenName_${lang}`)?.value.trim();
+      if (val) body[`name_${lang}`] = val;
+    });
+    try {
+      await api('PUT', `/api/allergens/${id}`, body);
+      showToast('Allergen updated');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteAllergen(id, name) {
+    confirmDelete(`Delete allergen "${name}"?`, async () => {
+      try {
+        await api('DELETE', `/api/allergens/${id}`);
+        showToast('Allergen deleted');
+        reloadAfter();
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+  }
+</script>

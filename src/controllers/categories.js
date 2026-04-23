@@ -94,10 +94,22 @@ async function create(req, res, next) {
 async function update(req, res, next) {
   try {
     const id = parseInt(req.params.id);
-    const { display_order, is_active, slug: rawSlug } = req.body;
+    const { display_order, is_active, slug: rawSlug, parent_id } = req.body;
 
     const existing = await prisma.category.findUnique({ where: { id } });
     if (!existing) throw new AppError('Category not found', 404);
+
+    // Validate parent_id change if provided
+    if (parent_id !== undefined) {
+      if (parent_id === null) {
+        // Promoting to top-level — always allowed
+      } else {
+        const newParent = await prisma.category.findUnique({ where: { id: parseInt(parent_id) } });
+        if (!newParent) throw new AppError('Parent category not found', 404);
+        if (newParent.parent_id !== null) throw new AppError('Cannot nest more than one level deep', 400);
+        if (newParent.id === id) throw new AppError('A category cannot be its own parent', 400);
+      }
+    }
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? (settings.enabled_languages) : ['en', 'es'];
@@ -106,6 +118,7 @@ async function update(req, res, next) {
     if (display_order !== undefined) scalarData.display_order = parseInt(display_order);
     if (is_active     !== undefined) scalarData.is_active     = is_active === 'true' || is_active === true;
     if (rawSlug)                     scalarData.slug           = slugify(rawSlug);
+    if (parent_id     !== undefined) scalarData.parent_id      = parent_id === null ? null : parseInt(parent_id);
 
     await prisma.$transaction(async (tx) => {
       if (Object.keys(scalarData).length) {

@@ -159,10 +159,13 @@ async function main() {
     { slug: 'chefs-suggestions', display_order: 0, is_protected: true,
       en: { name: "Chef's Suggestions", description: 'Handpicked dishes recommended by our chef' },
       es: { name: 'Sugerencias del Chef', description: 'Platos seleccionados recomendados por nuestro chef' } },
-    { slug: 'starters',  display_order: 1, is_protected: false, en: { name: 'Starters',  description: null }, es: { name: 'Entrantes', description: null } },
-    { slug: 'mains',     display_order: 2, is_protected: false, en: { name: 'Mains',     description: null }, es: { name: 'Principales', description: null } },
-    { slug: 'desserts',  display_order: 3, is_protected: false, en: { name: 'Desserts',  description: null }, es: { name: 'Postres',   description: null } },
-    { slug: 'drinks',    display_order: 4, is_protected: false, en: { name: 'Drinks',    description: null }, es: { name: 'Bebidas',   description: null } },
+    { slug: 'set-menus',  display_order: 1, is_protected: true,
+      en: { name: 'Set Menus',  description: 'Fixed price menus' },
+      es: { name: 'Menús', description: 'Menús a precio fijo' } },
+    { slug: 'starters',  display_order: 2, is_protected: false, en: { name: 'Starters',  description: null }, es: { name: 'Entrantes', description: null } },
+    { slug: 'mains',     display_order: 3, is_protected: false, en: { name: 'Mains',     description: null }, es: { name: 'Principales', description: null } },
+    { slug: 'desserts',  display_order: 4, is_protected: false, en: { name: 'Desserts',  description: null }, es: { name: 'Postres',   description: null } },
+    { slug: 'drinks',    display_order: 5, is_protected: false, en: { name: 'Drinks',    description: null }, es: { name: 'Bebidas',   description: null } },
   ];
 
   const createdCategories = {};

@@ -44,11 +44,7 @@
             <% directItems.forEach(mic => {
               const item = mic.menu_item;
             %>
-              <% if (item.is_set_menu) { %>
-                <%- include('../partials/menu-set', { setMenu: item }) %>
-              <% } else { %>
-                <%- include('../partials/menu-item', { item }) %>
-              <% } %>
+              <%- include('../partials/menu-item', { item }) %>
             <% }) %>
           </div>
         <% } %>
@@ -65,11 +61,7 @@
               <% childItems.forEach(mic => {
                 const item = mic.menu_item;
               %>
-                <% if (item.is_set_menu) { %>
-                  <%- include('../partials/menu-set', { setMenu: item }) %>
-                <% } else { %>
-                  <%- include('../partials/menu-item', { item }) %>
-                <% } %>
+                <%- include('../partials/menu-item', { item }) %>
               <% }) %>
             </div>
           <% }) %>
@@ -79,7 +71,9 @@
 
     <% if (categories.length === 0) { %>
       <div class="menu-empty">
-        <div class="menu-empty__icon">🍽️</div>
+        <div class="menu-empty__icon">
+          <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
+        </div>
         <p class="menu-empty__text">Menu coming soon</p>
       </div>
     <% } %>

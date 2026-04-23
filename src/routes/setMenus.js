@@ -36,6 +36,15 @@ router.put(
 
 router.delete('/:id', controller.remove);
 
+router.patch('/reorder',             controller.reorder);
+router.patch('/reorder-in-category', controller.reorderInCategory);
+
+// Set menu courses — specific paths before parameterised ones
+router.post('/:id/courses',                controller.addCourse);
+router.patch('/:id/courses/reorder',       controller.reorderCourses);
+router.patch('/:id/courses/:courseId',     controller.updateCourse);
+router.delete('/:id/courses/:courseId',    controller.removeCourse);
+
 // Set menu dishes
 router.post(
   '/:id/dishes',
@@ -44,7 +53,9 @@ router.post(
   controller.addDish
 );
 
-router.put('/:id/dishes/:dishId', controller.updateDish);
-router.delete('/:id/dishes/:dishId', controller.removeDish);
+router.patch('/:id/dishes/reorder',   controller.reorderDishes);
+router.patch('/:id/move-category',    controller.moveCategory);
+router.put('/:id/dishes/:entryId', controller.updateDish);
+router.delete('/:id/dishes/:entryId', controller.removeDish);
 
 module.exports = router;

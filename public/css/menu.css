@@ -329,6 +329,19 @@ ul, ol { list-style: none; }
 
 .set-course__name { color: var(--gray-700); }
 
+/* ── Icons ──────────────────────────────────────────────────── */
+svg.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+svg.icon--empty-state {
+  width: 3.5rem;
+  height: 3.5rem;
+  color: var(--color-accent);
+}
+
 /* ── Empty state ─────────────────────────────────────────────── */
 .menu-empty {
   text-align: center;

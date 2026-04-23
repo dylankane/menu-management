@@ -32,14 +32,17 @@
         <div class="card table-controls">
           <div class="card__header card__header--brand">
             <h3 class="card__title">Allergens</h3>
-            <button onclick="openModal('addAllergenModal')" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
+            <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
           </div>
         </div>
         <% if (allergens.length === 0) { %>
           <div class="card">
             <div class="empty-state">
+              <div class="empty-state__icon">
+                <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#tags"></use></svg>
+              </div>
               <p class="empty-state__text">No allergens yet.</p>
-              <button onclick="openModal('addAllergenModal')" class="empty-state__action">Add your first allergen →</button>
+              <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Allergen</button>
             </div>
           </div>
         <% } else { %>
@@ -82,14 +85,17 @@
         <div class="card table-controls">
           <div class="card__header card__header--brand">
             <h3 class="card__title">Dietary Tags</h3>
-            <button onclick="openModal('addDietaryModal')" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
+            <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
           </div>
         </div>
         <% if (dietaryTags.length === 0) { %>
           <div class="card">
             <div class="empty-state">
+              <div class="empty-state__icon">
+                <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#tags"></use></svg>
+              </div>
               <p class="empty-state__text">No dietary tags yet.</p>
-              <button onclick="openModal('addDietaryModal')" class="empty-state__action">Add your first dietary tag →</button>
+              <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Dietary Tag</button>
             </div>
           </div>
         <% } else { %>
@@ -130,248 +136,13 @@
   </main>
 </div>
 
-<!-- ── Add Allergen Modal ─────────────────────────────────────────────────── -->
-<div id="addAllergenModal" class="modal-overlay hidden">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 class="modal__title">Add Allergen</h3>
-      <button onclick="closeModal('addAllergenModal')" class="modal__close">&times;</button>
-    </div>
-    <div class="modal__body" data-lang-container>
-      <div class="lang-tabs">
-        <% langs.forEach((lang, i) => { %>
-          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-            <%= lang.toUpperCase() %>
-          </button>
-        <% }) %>
-      </div>
-      <% langs.forEach((lang, i) => { %>
-        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-          <div class="form-group">
-            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-            <input type="text" id="newAllergenName_<%= lang %>" class="form-input"
-              placeholder="e.g. <%= lang === 'en' ? 'Gluten' : 'Gluten' %>" />
-          </div>
-        </div>
-      <% }) %>
-    </div>
-    <div class="modal__footer">
-      <button type="button" onclick="closeModal('addAllergenModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitAddAllergen()" class="btn btn--primary">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Edit Allergen Modal ────────────────────────────────────────────────── -->
-<div id="editAllergenModal" class="modal-overlay hidden">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 class="modal__title">Edit Allergen</h3>
-      <button onclick="closeModal('editAllergenModal')" class="modal__close">&times;</button>
-    </div>
-    <div class="modal__body" data-lang-container>
-      <input type="hidden" id="editAllergenId" />
-      <div class="lang-tabs">
-        <% langs.forEach((lang, i) => { %>
-          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-            <%= lang.toUpperCase() %>
-          </button>
-        <% }) %>
-      </div>
-      <% langs.forEach((lang, i) => { %>
-        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-          <div class="form-group">
-            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-            <input type="text" id="editAllergenName_<%= lang %>" class="form-input" />
-          </div>
-        </div>
-      <% }) %>
-    </div>
-    <div class="modal__footer">
-      <button type="button" onclick="closeModal('editAllergenModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitEditAllergen()" class="btn btn--primary">Save Changes</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Add Dietary Modal ──────────────────────────────────────────────────── -->
-<div id="addDietaryModal" class="modal-overlay hidden">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 class="modal__title">Add Dietary Tag</h3>
-      <button onclick="closeModal('addDietaryModal')" class="modal__close">&times;</button>
-    </div>
-    <div class="modal__body" data-lang-container>
-      <div class="lang-tabs">
-        <% langs.forEach((lang, i) => { %>
-          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-            <%= lang.toUpperCase() %>
-          </button>
-        <% }) %>
-      </div>
-      <% langs.forEach((lang, i) => { %>
-        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-          <div class="form-group">
-            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-            <input type="text" id="newDietaryName_<%= lang %>" class="form-input" />
-          </div>
-        </div>
-      <% }) %>
-    </div>
-    <div class="modal__footer">
-      <button type="button" onclick="closeModal('addDietaryModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitAddDietary()" class="btn btn--primary">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── Edit Dietary Modal ─────────────────────────────────────────────────── -->
-<div id="editDietaryModal" class="modal-overlay hidden">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal__header">
-      <h3 class="modal__title">Edit Dietary Tag</h3>
-      <button onclick="closeModal('editDietaryModal')" class="modal__close">&times;</button>
-    </div>
-    <div class="modal__body" data-lang-container>
-      <input type="hidden" id="editDietaryId" />
-      <div class="lang-tabs">
-        <% langs.forEach((lang, i) => { %>
-          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-            <%= lang.toUpperCase() %>
-          </button>
-        <% }) %>
-      </div>
-      <% langs.forEach((lang, i) => { %>
-        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-          <div class="form-group">
-            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-            <input type="text" id="editDietaryName_<%= lang %>" class="form-input" />
-          </div>
-        </div>
-      <% }) %>
-    </div>
-    <div class="modal__footer">
-      <button type="button" onclick="closeModal('editDietaryModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitEditDietary()" class="btn btn--primary">Save Changes</button>
-    </div>
-  </div>
-</div>
+<%- include('../partials/modals/allergen', { langs, primary }) %>
+<%- include('../partials/modals/dietary', { langs, primary }) %>
 
 <%- include('../partials/scripts') %>
 <script>
-  const LANGS = <%- JSON.stringify(langs) %>;
-
-  function openEditAllergenModal(a) {
-    document.getElementById('editAllergenId').value = a.id;
-    const byLang = {};
-    (a.translations || []).forEach(t => byLang[t.lang] = t);
-    LANGS.forEach(lang => {
-      const el = document.getElementById(`editAllergenName_${lang}`);
-      if (el) el.value = (byLang[lang] || {}).name || '';
-    });
-    const container = document.querySelector('#editAllergenModal [data-lang-container]');
-    resetLangTabs(container, '<%= primary %>');
-    openModal('editAllergenModal');
-  }
-
-  async function submitAddAllergen() {
-    const body = {};
-    LANGS.forEach(lang => {
-      const val = document.getElementById(`newAllergenName_${lang}`)?.value.trim();
-      if (val) body[`name_${lang}`] = val;
-    });
-    try {
-      await api('POST', '/api/allergens', body);
-      LANGS.forEach(lang => {
-        const el = document.getElementById(`newAllergenName_${lang}`);
-        if (el) el.value = '';
-      });
-      showToast('Allergen added');
-      reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function submitEditAllergen() {
-    const id   = document.getElementById('editAllergenId').value;
-    const body = {};
-    LANGS.forEach(lang => {
-      const val = document.getElementById(`editAllergenName_${lang}`)?.value.trim();
-      if (val) body[`name_${lang}`] = val;
-    });
-    try {
-      await api('PUT', `/api/allergens/${id}`, body);
-      showToast('Allergen updated');
-      reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function deleteAllergen(id, name) {
-    confirmDelete(`Delete allergen "${name}"?`, async () => {
-      try {
-        await api('DELETE', `/api/allergens/${id}`);
-        showToast('Allergen deleted');
-        reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
-    });
-  }
-
-  function openEditDietaryModal(d) {
-    document.getElementById('editDietaryId').value = d.id;
-    const byLang = {};
-    (d.translations || []).forEach(t => byLang[t.lang] = t);
-    LANGS.forEach(lang => {
-      const el = document.getElementById(`editDietaryName_${lang}`);
-      if (el) el.value = (byLang[lang] || {}).name || '';
-    });
-    const container = document.querySelector('#editDietaryModal [data-lang-container]');
-    resetLangTabs(container, '<%= primary %>');
-    openModal('editDietaryModal');
-  }
-
-  async function submitAddDietary() {
-    const body = {};
-    LANGS.forEach(lang => {
-      const val = document.getElementById(`newDietaryName_${lang}`)?.value.trim();
-      if (val) body[`name_${lang}`] = val;
-    });
-    try {
-      await api('POST', '/api/dietary', body);
-      LANGS.forEach(lang => {
-        const el = document.getElementById(`newDietaryName_${lang}`);
-        if (el) el.value = '';
-      });
-      showToast('Dietary tag added');
-      reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function submitEditDietary() {
-    const id   = document.getElementById('editDietaryId').value;
-    const body = {};
-    LANGS.forEach(lang => {
-      const val = document.getElementById(`editDietaryName_${lang}`)?.value.trim();
-      if (val) body[`name_${lang}`] = val;
-    });
-    try {
-      await api('PUT', `/api/dietary/${id}`, body);
-      showToast('Dietary tag updated');
-      reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function deleteDietary(id, name) {
-    confirmDelete(`Delete dietary tag "${name}"?`, async () => {
-      try {
-        await api('DELETE', `/api/dietary/${id}`);
-        showToast('Dietary tag deleted');
-        reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
-    });
-  }
+  const LANGS   = <%- JSON.stringify(langs) %>;
+  const PRIMARY = '<%= primary %>';
 </script>
 
 </body>

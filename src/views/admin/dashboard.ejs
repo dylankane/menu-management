@@ -103,9 +103,11 @@
     <% if (recentItems.length === 0) { %>
       <div class="card">
         <div class="empty-state">
-          <div class="empty-state__icon">🍽️</div>
+          <div class="empty-state__icon">
+            <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
+          </div>
           <p class="empty-state__text">No dishes yet</p>
-          <a href="/admin/menu-items" class="empty-state__action">Add your first dish →</a>
+          <a href="/admin/menu-items" class="btn btn--pill btn--outline-brand btn--sm">+ Add Dish</a>
         </div>
       </div>
     <% } else { %>
