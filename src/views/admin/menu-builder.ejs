@@ -24,23 +24,23 @@
 %>
 
 <div class="main">
-  <header class="page-header">
+  <header class="page-header page-header--minimal">
     <h2 class="page-header__title">Menu Builder</h2>
     <%- include('../partials/lang-selector') %>
   </header>
 
-  <main class="page-body">
+  <main class="page-body page-body--minimal">
 
-    <div class="card table-card" style="border-radius: var(--radius);">
+    <div class="card table-card">
 
       <!-- Board header — reuses table-controls card header pattern -->
       <div class="card__header card__header--brand">
-        <h3 class="card__title">Menu Structure</h3>
+        <h3 class="card__title">Menu Builder</h3>
         <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Category</button>
       </div>
 
       <% if (categories.length === 0) { %>
-        <div class="empty-state" style="padding: 3rem;">
+        <div class="empty-state">
           <div class="empty-state__icon">
             <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-builder"></use></svg>
           </div>
@@ -53,7 +53,7 @@
         <div id="bl-cats">
           <% categories.forEach(cat => { %>
 
-            <div class="bl-cat is-collapsed" data-cat-id="<%= cat.id %>">
+            <div class="bl-cat is-collapsed<% if (cat.children && cat.children.length > 0) { %> bl-cat--has-subs<% } %>" data-cat-id="<%= cat.id %>">
 
               <!-- Category row -->
               <div class="bl-cat__row">
@@ -61,17 +61,16 @@
                 <svg class="icon bl-chevron" onclick="toggleCat(this)" style="width:1rem;height:1rem;"><use href="/icons/sprite.svg#chevron-down"></use></svg>
                 <span class="bl-cat__name" onclick="toggleCat(this)" style="cursor:pointer;"><%= catName(cat) %></span>
                 <div class="bl-cat__actions">
-                  <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')"
+                  <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>', <%= cat.menu_item_categories.length %>)"
                           class="btn btn--pill link--slide">+ Sub</button>
                   <button onclick="openAddToCatModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')"
                           class="btn btn--pill link--slide">+ Dish</button>
-                  <button onclick="openAddDishModal(<%= cat.id %>)"
-                          class="btn btn--pill link--slide">+ New Dish</button>
+                  <button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button>
                 </div>
               </div>
 
               <div class="bl-cat__body"><%
-                %><!-- Subcategories --><% if (cat.children && cat.children.length > 0) { %><div class="bl-subs" id="bl-subs-<%= cat.id %>" data-parent-id="<%= cat.id %>"><% cat.children.forEach(sub => { %><div class="bl-sub is-collapsed" data-cat-id="<%= sub.id %>"><div class="bl-sub__row"><span class="bl-handle bl-handle--sub" title="Drag to reorder">&#8801;</span><svg class="icon bl-chevron" onclick="toggleSub(this)" style="width:0.875rem;height:0.875rem;"><use href="/icons/sprite.svg#chevron-down"></use></svg><span class="bl-sub__name" onclick="toggleSub(this)" style="cursor:pointer;"><%= catName(sub) %></span><button onclick="openAddToCatModal(<%= sub.id %>, '<%= catName(sub).replace(/'/g, "\\'") %>')" class="btn btn--pill link--slide">+ Dish</button><button onclick="openAddDishModal(<%= sub.id %>)" class="btn btn--pill link--slide">+ New Dish</button></div><div class="bl-dishes<%= (sub.menu_item_categories.length === 0 && sub.set_menu_categories.length === 0) ? ' bl-dishes--empty' : '' %>" id="bl-dishes-<%= sub.id %>" data-cat-id="<%= sub.id %>"><% sub.menu_item_categories.forEach(mic => { %><div class="bl-dish" data-item-id="<%= mic.menu_item.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(mic.menu_item) %></span></div><% }) %></div><div class="bl-set-menus" id="bl-set-menus-<%= sub.id %>" data-cat-id="<%= sub.id %>"><% sub.set_menu_categories.forEach(smc => { %><div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(smc.set_menu) %></span></div><% }) %></div></div><% }) %></div><% } %><!-- Direct dishes (always rendered so empty cats can accept drops) --><div class="bl-dishes bl-dishes--direct<%= (cat.menu_item_categories.length === 0 && cat.set_menu_categories.length === 0) ? ' bl-dishes--empty' : '' %>" id="bl-dishes-<%= cat.id %>" data-cat-id="<%= cat.id %>"><% cat.menu_item_categories.forEach(mic => { %><div class="bl-dish" data-item-id="<%= mic.menu_item.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(mic.menu_item) %></span></div><% }) %></div><!-- Set menus in this category --><div class="bl-set-menus" id="bl-set-menus-<%= cat.id %>" data-cat-id="<%= cat.id %>"><% cat.set_menu_categories.forEach(smc => { %><div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(smc.set_menu) %></span></div><% }) %></div>
+                %><!-- Subcategories --><% if (cat.children && cat.children.length > 0) { %><div class="bl-subs" id="bl-subs-<%= cat.id %>" data-parent-id="<%= cat.id %>"><% cat.children.forEach(sub => { %><div class="bl-sub is-collapsed" data-cat-id="<%= sub.id %>"><div class="bl-sub__row"><span class="bl-handle bl-handle--sub" title="Drag to reorder">&#8801;</span><svg class="icon bl-chevron" onclick="toggleSub(this)" style="width:0.875rem;height:0.875rem;"><use href="/icons/sprite.svg#chevron-down"></use></svg><span class="bl-sub__name" onclick="toggleSub(this)" style="cursor:pointer;"><%= catName(sub) %></span><button onclick="openAddToCatModal(<%= sub.id %>, '<%= catName(sub).replace(/'/g, "\\'") %>')" class="btn btn--pill link--slide">+ Dish</button><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><div class="bl-dishes" id="bl-dishes-<%= sub.id %>" data-cat-id="<%= sub.id %>"><% sub.menu_item_categories.forEach(mic => { %><div class="bl-dish" data-item-id="<%= mic.menu_item.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(mic.menu_item) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div><div class="bl-set-menus" id="bl-set-menus-<%= sub.id %>" data-cat-id="<%= sub.id %>"><% sub.set_menu_categories.forEach(smc => { %><div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(smc.set_menu) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div></div><% }) %></div><% } %><!-- Direct dishes (always rendered so empty cats can accept drops) --><div class="bl-dishes bl-dishes--direct" id="bl-dishes-<%= cat.id %>" data-cat-id="<%= cat.id %>"><% cat.menu_item_categories.forEach(mic => { %><div class="bl-dish<% if (cat.children && cat.children.length > 0) { %> bl-dish--stranded<% } %>" data-item-id="<%= mic.menu_item.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><% if (cat.children && cat.children.length > 0) { %><svg class="icon bl-dish__warn-icon" title="Move this item to a subcategory"><use href="/icons/sprite.svg#warning"></use></svg><% } %><span class="bl-dish__name"><%= dishName(mic.menu_item) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div><!-- Set menus in this category --><div class="bl-set-menus" id="bl-set-menus-<%= cat.id %>" data-cat-id="<%= cat.id %>"><% cat.set_menu_categories.forEach(smc => { %><div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(smc.set_menu) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div>
               </div><!-- /.bl-cat__body -->
 
 
@@ -101,8 +100,11 @@
 
   // ── Drag & drop ─────────────────────────────────────────────────────────────
 
+  const SCROLL_OPTS = { scroll: true, scrollSensitivity: 60, scrollSpeed: 10 };
+
   // Category sorting
   Sortable.create(document.getElementById('bl-cats'), {
+    ...SCROLL_OPTS,
     handle:     '.bl-cat__row .bl-handle',
     animation:  180,
     ghostClass: 'bl-ghost',
@@ -120,6 +122,7 @@
   // Subcategory sorting (one per category)
   document.querySelectorAll('.bl-subs').forEach(el => {
     Sortable.create(el, {
+      ...SCROLL_OPTS,
       handle:     '.bl-sub__row .bl-handle',
       animation:  180,
       ghostClass: 'bl-ghost',
@@ -134,23 +137,24 @@
     });
   });
 
-  // Dish sorting — shared group so dishes can move between any container
+  // Dish sorting — shared group so dishes can move between any container.
+  // onMove returns false for parent-with-subs categories (shows not-allowed cursor,
+  // prevents the drop) without any visual highlighting.
   document.querySelectorAll('.bl-dishes').forEach(el => {
     Sortable.create(el, {
+      ...SCROLL_OPTS,
       group:      { name: 'dishes', pull: true, put: true },
       handle:     '.bl-handle--dish',
       animation:  180,
       ghostClass: 'bl-ghost',
+      dragClass:  'bl-dragging',
+      onMove(evt) {
+        return !document.getElementById('bl-subs-' + evt.to.dataset.catId);
+      },
       onEnd(evt) {
         const fromCatId = evt.from.dataset.catId;
         const toCatId   = evt.to.dataset.catId;
         const itemId    = evt.item.dataset.itemId;
-
-        // Drop box shows only when category has no dishes AND no set menus
-        const fromSetMenus = document.getElementById('bl-set-menus-' + evt.from.dataset.catId);
-        const fromHasSetMenus = fromSetMenus && fromSetMenus.querySelectorAll('.bl-dish').length > 0;
-        evt.from.classList.toggle('bl-dishes--empty', evt.from.querySelectorAll('.bl-dish').length === 0 && !fromHasSetMenus);
-        evt.to.classList.remove('bl-dishes--empty');
 
         if (fromCatId !== toCatId) {
           api('PATCH', `/api/menu-items/${itemId}/move`, {
@@ -169,6 +173,7 @@
   // Set menu sorting — separate group from dishes, drag between categories
   document.querySelectorAll('.bl-set-menus').forEach(el => {
     Sortable.create(el, {
+      ...SCROLL_OPTS,
       group:      { name: 'set-menus', pull: true, put: true },
       handle:     '.bl-handle--dish',
       animation:  180,
@@ -178,16 +183,6 @@
         const fromCatId = evt.from.dataset.catId;
         const toCatId   = evt.to.dataset.catId;
         const setMenuId = evt.item.dataset.setMenuId;
-
-        // Drop box lives on the dishes container — toggle it based on both lists
-        const fromDishes = document.getElementById('bl-dishes-' + fromCatId);
-        const toDishes   = document.getElementById('bl-dishes-' + toCatId);
-        if (fromDishes) {
-          const hasDishes = fromDishes.querySelectorAll('.bl-dish').length > 0;
-          const hasSetMenus = evt.from.querySelectorAll('.bl-dish').length > 0;
-          fromDishes.classList.toggle('bl-dishes--empty', !hasDishes && !hasSetMenus);
-        }
-        if (toDishes) toDishes.classList.remove('bl-dishes--empty');
 
         if (fromCatId !== toCatId) {
           api('PATCH', `/api/set-menus/${setMenuId}/move-category`, {
@@ -205,7 +200,7 @@
 
   function reorderSetMenuList(listEl) {
     const catId = parseInt(listEl.dataset.catId);
-    const items = [...listEl.querySelectorAll(':scope > .bl-set-menu')].map((el, i) => ({
+    const items = [...listEl.querySelectorAll(':scope > .bl-dish')].map((el, i) => ({
       set_menu_id:   parseInt(el.dataset.setMenuId),
       display_order: i,
     }));
@@ -213,49 +208,6 @@
     api('PATCH', '/api/set-menus/reorder-in-category', { category_id: catId, items })
       .catch(err => showToast(err.message, 'error'));
   }
-
-  // ── Auto-expand categories/subcategories while dragging ──────────────────
-  // mouseenter/mouseleave don't fire during HTML5 drag — use dragenter/dragleave.
-  // enterCount tracks nested dragenter/dragleave pairs so we only collapse
-  // when the cursor truly leaves the container, not just moves between children.
-
-  let _expandTimer = null;
-
-  function setupDragExpand(rowSel, containerSel) {
-    document.querySelectorAll(rowSel).forEach(row => {
-      const container = row.closest(containerSel);
-
-      row.addEventListener('dragenter', () => {
-        if (!container.classList.contains('is-collapsed')) return;
-        clearTimeout(_expandTimer);
-        _expandTimer = setTimeout(() => {
-          container.classList.remove('is-collapsed');
-          container.dataset.autoExpanded = '1';
-        }, 200);
-      });
-
-      row.addEventListener('dragleave', (e) => {
-        if (!row.contains(e.relatedTarget)) clearTimeout(_expandTimer);
-      });
-    });
-
-    document.querySelectorAll(containerSel).forEach(container => {
-      let enterCount = 0;
-
-      container.addEventListener('dragenter', () => { enterCount++; });
-      container.addEventListener('dragleave', () => {
-        enterCount = Math.max(0, enterCount - 1);
-        if (enterCount === 0 && container.dataset.autoExpanded) {
-          container.classList.add('is-collapsed');
-          delete container.dataset.autoExpanded;
-        }
-      });
-      container.addEventListener('drop', () => { enterCount = 0; });
-    });
-  }
-
-  setupDragExpand('.bl-cat__row', '.bl-cat');
-  setupDragExpand('.bl-sub__row', '.bl-sub');
 
   function reorderDishList(listEl) {
     const catId = parseInt(listEl.dataset.catId);
@@ -267,6 +219,29 @@
     api('PATCH', '/api/menu-items/reorder', { category_id: catId, items })
       .catch(err => showToast(err.message, 'error'));
   }
+
+  // ── Drag-over expand ─────────────────────────────────────────────────────────
+  // dragover fires continuously while hovering — no enter/leave counting needed.
+  // Expand a collapsed category or sub after hovering its header for 500ms.
+  let _expandTimer = null;
+  let _expandTarget = null;
+
+  document.addEventListener('dragover', e => {
+    const row = e.target.closest('.bl-cat__row, .bl-sub__row');
+    if (!row) {
+      clearTimeout(_expandTimer);
+      _expandTarget = null;
+      return;
+    }
+    const container = row.closest('.bl-cat, .bl-sub');
+    if (!container || !container.classList.contains('is-collapsed') || container === _expandTarget) return;
+    clearTimeout(_expandTimer);
+    _expandTarget = container;
+    _expandTimer = setTimeout(() => {
+      container.classList.remove('is-collapsed');
+      _expandTarget = null;
+    }, 500);
+  }, { passive: true });
 
 </script>
 

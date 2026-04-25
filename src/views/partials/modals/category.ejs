@@ -10,6 +10,10 @@
     </div>
     <div class="modal__body">
       <input type="hidden" id="addCatParentId" value="" />
+      <div id="addSubWarning" class="alert alert--warning hidden">
+        <svg class="icon" style="width:1rem;height:1rem;flex-shrink:0;"><use href="/icons/sprite.svg#warning"></use></svg>
+        <span>This category has items assigned directly. Adding a subcategory will strand those items — move them to a subcategory afterwards.</span>
+      </div>
       <div data-lang-container>
         <div class="lang-tabs">
           <% langs.forEach((lang, i) => { %>
@@ -121,10 +125,12 @@
     openModal('addCatModal');
   }
 
-  function openAddSubModal(parentId, parentName) {
+  function openAddSubModal(parentId, parentName, directItemCount) {
     openAddCategoryModal();
     document.getElementById('addCatParentId').value = parentId;
     document.getElementById('addCatModalTitle').textContent = `Add Subcategory under "${parentName}"`;
+    const warn = document.getElementById('addSubWarning');
+    if (warn) warn.classList.toggle('hidden', !directItemCount);
   }
 
   function openEditCategoryModal(cat) {

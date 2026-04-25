@@ -17,26 +17,24 @@
 %>
 
 <div class="main">
-  <header class="page-header">
+  <header class="page-header page-header--minimal">
     <div>
       <h2 class="page-header__title">Allergens &amp; Dietary Tags</h2>
     </div>
     <%- include('../partials/lang-selector') %>
   </header>
 
-  <main class="page-body">
+  <main class="page-body page-body--minimal">
     <div class="two-col">
 
       <!-- ── Allergens ───────────────────────────────────────────────────── -->
       <div>
-        <div class="card table-controls">
+        <div class="card table-card">
           <div class="card__header card__header--brand">
-            <h3 class="card__title">Allergens</h3>
+            <h3 class="card__title">Allergen Tags</h3>
             <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
           </div>
-        </div>
-        <% if (allergens.length === 0) { %>
-          <div class="card">
+          <% if (allergens.length === 0) { %>
             <div class="empty-state">
               <div class="empty-state__icon">
                 <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#tags"></use></svg>
@@ -44,52 +42,54 @@
               <p class="empty-state__text">No allergens yet.</p>
               <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Allergen</button>
             </div>
-          </div>
-        <% } else { %>
-          <div class="card table-card">
+          <% } else { %>
             <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Languages</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
               <tbody>
                 <% allergens.forEach(a => { %>
                   <tr>
-                    <td><p class="table-item__name"><%= tagName(a.translations) %></p></td>
-                    <td>
+                    <td class="col-name col-align-left">
+                      <p class="table-item__name"><%= tagName(a.translations) %></p>
+                    </td>
+                    <td class="col-translations col-align-center">
                       <div class="tag-list">
-                        <% a.translations.forEach(t => { %>
-                          <span class="tag"><%= t.lang.toUpperCase() %></span>
-                        <% }) %>
+                        <% const aLangs = langs.filter(l => (a.translations || []).find(t => t.lang === l && t.name)); %>
+                        <% aLangs.forEach(l => { %>
+                          <span class="tag tag--lang"><%= l.toUpperCase() %></span>
+                        <% }); %>
+                        <% if (aLangs.length === 0) { %><span class="cell-empty">—</span><% } %>
                       </div>
                     </td>
-                    <td>
-                      <div class="table-actions">
-                        <button onclick='openEditAllergenModal(<%- JSON.stringify(a) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
-                        <button onclick="deleteAllergen(<%= a.id %>, '<%= tagName(a.translations).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
-                      </div>
+                    <td class="col-details col-align-center">
+                      <button class="btn-view" onclick="openEditAllergenModal(<%- JSON.stringify(a) %>)" title="View details">
+                        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                      </button>
+                    </td>
+                    <td class="col-delete col-align-center">
+                      <button class="btn-delete" onclick="deleteAllergen(<%= a.id %>, '<%= tagName(a.translations).replace(/'/g, "\\'") %>')" title="Delete">
+                        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="15" y1="9" x2="9" y2="15"/>
+                          <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 <% }) %>
               </tbody>
             </table>
-          </div>
-        <% } %>
+          <% } %>
+        </div>
       </div>
 
       <!-- ── Dietary Tags ─────────────────────────────────────────────────── -->
       <div>
-        <div class="card table-controls">
+        <div class="card table-card">
           <div class="card__header card__header--brand">
             <h3 class="card__title">Dietary Tags</h3>
             <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
           </div>
-        </div>
-        <% if (dietaryTags.length === 0) { %>
-          <div class="card">
+          <% if (dietaryTags.length === 0) { %>
             <div class="empty-state">
               <div class="empty-state__icon">
                 <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#tags"></use></svg>
@@ -97,40 +97,44 @@
               <p class="empty-state__text">No dietary tags yet.</p>
               <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Dietary Tag</button>
             </div>
-          </div>
-        <% } else { %>
-          <div class="card table-card">
+          <% } else { %>
             <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Languages</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
               <tbody>
                 <% dietaryTags.forEach(d => { %>
                   <tr>
-                    <td><p class="table-item__name"><%= tagName(d.translations) %></p></td>
-                    <td>
+                    <td class="col-name col-align-left">
+                      <p class="table-item__name"><%= tagName(d.translations) %></p>
+                    </td>
+                    <td class="col-translations col-align-center">
                       <div class="tag-list">
-                        <% d.translations.forEach(t => { %>
-                          <span class="tag"><%= t.lang.toUpperCase() %></span>
-                        <% }) %>
+                        <% const dLangs = langs.filter(l => (d.translations || []).find(t => t.lang === l && t.name)); %>
+                        <% dLangs.forEach(l => { %>
+                          <span class="tag tag--lang"><%= l.toUpperCase() %></span>
+                        <% }); %>
+                        <% if (dLangs.length === 0) { %><span class="cell-empty">—</span><% } %>
                       </div>
                     </td>
-                    <td>
-                      <div class="table-actions">
-                        <button onclick='openEditDietaryModal(<%- JSON.stringify(d) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
-                        <button onclick="deleteDietary(<%= d.id %>, '<%= tagName(d.translations).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
-                      </div>
+                    <td class="col-details col-align-center">
+                      <button class="btn-view" onclick="openEditDietaryModal(<%- JSON.stringify(d) %>)" title="View details">
+                        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                      </button>
+                    </td>
+                    <td class="col-delete col-align-center">
+                      <button class="btn-delete" onclick="deleteDietary(<%= d.id %>, '<%= tagName(d.translations).replace(/'/g, "\\'") %>')" title="Delete">
+                        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="15" y1="9" x2="9" y2="15"/>
+                          <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                      </button>
                     </td>
                   </tr>
                 <% }) %>
               </tbody>
             </table>
-          </div>
-        <% } %>
+          <% } %>
+        </div>
       </div>
     </div>
   </main>

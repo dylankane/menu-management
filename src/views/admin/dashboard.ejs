@@ -18,7 +18,7 @@
     <div class="stats-grid">
       <div class="card dash-card stat-card">
         <div class="stat-card__body">
-          <p class="stat-card__label">Total Dishes</p>
+          <p class="stat-card__label">Total Items</p>
           <p class="stat-card__value"><%= stats.totalDishes %></p>
           <a href="/admin/menu-items" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
         </div>
@@ -94,63 +94,61 @@
         return t ? (t.name || '—') : '—';
       }
     %>
-    <div class="card table-controls">
+    <div class="card table-card">
       <div class="card__header card__header--brand">
-        <h3 class="card__title">Recently Added Dishes</h3>
+        <h3 class="card__title">Recently Added Items</h3>
         <a href="/admin/menu-items" class="card__action btn--pill link--slide link--slide--accent">View all <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
       </div>
-    </div>
-    <% if (recentItems.length === 0) { %>
-      <div class="card">
+      <% if (recentItems.length === 0) { %>
         <div class="empty-state">
           <div class="empty-state__icon">
             <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
           </div>
-          <p class="empty-state__text">No dishes yet</p>
-          <a href="/admin/menu-items" class="btn btn--pill btn--outline-brand btn--sm">+ Add Dish</a>
+          <p class="empty-state__text">No items yet</p>
+          <a href="/admin/menu-items" class="btn btn--pill btn--outline-brand btn--sm">+ Add Item</a>
         </div>
-      </div>
-    <% } else { %>
-      <div class="card table-card">
+      <% } else { %>
         <table class="data-table">
-          <thead>
-            <tr>
-              <th>Dish</th>
-              <th>Added</th>
-              <th>Price</th>
-              <th>Status</th>
-            </tr>
-          </thead>
           <tbody>
             <% recentItems.forEach(item => { %>
               <tr>
-                <td>
-                  <div class="table-item">
-                    <% if (item.image_url) { %>
-                      <img src="<%= item.image_url %>" alt="" class="table-thumb table-thumb--clickable"
-                           onclick="openLightbox('<%= item.image_url %>')" />
-                    <% } else { %>
-                      <div class="table-thumb-placeholder">🍴</div>
-                    <% } %>
-                    <p class="table-item__name"><%= dashItemName(item) %></p>
-                  </div>
+                <td class="col-thumb col-align-left">
+                  <% if (item.image_url) { %>
+                    <img src="<%= item.image_url %>" alt="" class="table-thumb table-thumb--clickable"
+                         onclick="openLightbox('<%= item.image_url %>')" />
+                  <% } else { %>
+                    <div class="table-thumb-placeholder">🍴</div>
+                  <% } %>
                 </td>
-                <td><%= new Date(item.created_at).toLocaleDateString('en-GB') %></td>
-                <td><span class="item-price">€<%= Number(item.price).toFixed(2) %></span></td>
-                <td>
-                  <label class="avail-toggle">
+                <td class="col-name col-align-left">
+                  <p class="table-item__name"><%= dashItemName(item) %></p>
+                </td>
+                <td class="col-align-left">
+                  <span class="table-item__desc"><%= new Date(item.created_at).toLocaleDateString('en-GB') %></span>
+                </td>
+                <td class="col-price col-align-center">
+                  <span class="item-price">€<%= Number(item.price).toFixed(2) %></span>
+                </td>
+                <td class="col-toggle col-align-center">
+                  <label class="smb-avail-switch">
                     <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
-                    <span class="avail-toggle__label <%= item.is_available ? 'avail-toggle__label--active' : 'avail-toggle__label--inactive' %>">
-                      <%= item.is_available ? 'Active' : 'Inactive' %>
+                    <span class="smb-avail-label <%= item.is_available ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
+                      <%= item.is_available ? 'Live' : 'Off' %>
                     </span>
                   </label>
+                </td>
+                <td class="col-details col-align-center">
+                  <button class="btn-view" title="View details">
+                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                  </button>
                 </td>
               </tr>
             <% }) %>
           </tbody>
         </table>
-      </div>
-    <% } %>
+      <% } %>
+    </div>
 
   </main>
 </div>

@@ -28,13 +28,13 @@
 %>
 
 <div class="main">
-  <header class="page-header">
+  <header class="page-header page-header--minimal">
     <h2 class="page-header__title">Set Menus</h2>
     <%- include('../partials/lang-selector') %>
   </header>
 
-  <main class="page-body">
-  <div class="card smb-card">
+  <main class="page-body page-body--minimal">
+  <div class="card table-card smb-card">
 
     <!-- Card title row — same pattern as all other pages -->
     <div class="card__header card__header--brand">
@@ -74,22 +74,27 @@
         <div class="smb-library__body hidden" id="smb-library-body">
           <div class="smb-library__list" id="smb-library-list">
             <% if (courses.length === 0) { %>
-              <div style="padding:0.75rem 0.5rem; font-size:var(--font-size-xs); color:var(--text-muted); font-style:italic;">
-                No courses yet
-              </div>
+              <div class="smb-panel__empty">No courses yet</div>
             <% } %>
             <% courses.forEach(c => { %>
               <div class="smb-library__item">
                 <span class="smb-library__item-name"><%= tName(c.translations) %></span>
-                <div style="display:flex;gap:0.25rem;flex-shrink:0;">
-                  <button onclick='openEditCourseModal(<%- JSON.stringify(c) %>)' class="btn btn--xs btn--outline-primary">Edit</button>
-                  <button onclick="deleteCourse(<%= c.id %>, '<%= tName(c.translations).replace(/'/g, "\\'") %>')" class="btn btn--xs btn--outline-danger">Del</button>
+                <div class="smb-course__actions">
+                  <button class="btn-view" onclick='openEditCourseModal(<%- JSON.stringify(c) %>)' title="Edit">
+                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                  </button>
+                  <button class="btn-delete" onclick="deleteCourse(<%= c.id %>, '<%= tName(c.translations).replace(/'/g, "\\'") %>')" title="Delete">
+                    <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
             <% }) %>
           </div>
-          <div class="card__footer">
-            <button onclick="openAddCourseModal()" class="btn btn--sm btn--outline-primary" style="width:100%;">+ New Course</button>
+          <div class="smb-library__footer">
+            <button onclick="openAddCourseModal()" class="btn btn--pill btn--outline-brand btn--sm">Create Course</button>
           </div>
         </div>
       </div>
@@ -119,12 +124,31 @@
               <input type="checkbox" id="smb-avail-chk" onchange="toggleAvailability()">
               <span class="smb-avail-label" id="smb-avail-label">Live</span>
             </label>
-            <div class="smb-header__actions">
-              <button onclick="openEditModal()" class="btn btn--sm btn--outline-primary">Edit Details</button>
-              <button onclick="confirmDeleteSm()" class="btn btn--sm btn--outline-danger">Delete</button>
-            </div>
+            <button class="btn-view" onclick="openEditModal()" title="Edit details">
+              <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+              <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+            </button>
+            <button class="btn-delete" onclick="confirmDeleteSm()" title="Delete">
+              <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+            </button>
           </div>
-          <div class="smb-header__cats" id="smb-cats"></div>
+          <div class="smb-header__bar">
+            <div class="category-breadcrumbs smb-header__cats" id="smb-cats"></div>
+            <div class="smb-popover-wrap">
+              <button class="btn btn--pill link--slide" onclick="toggleCoursePopover(event)">+ Course</button>
+              <div class="smb-popover hidden" id="smb-course-popover">
+                <div class="smb-popover__list" id="smb-popover-list"></div>
+                <div class="smb-popover__footer">
+                  <button class="btn btn--pill btn--outline-brand btn--sm" onclick="openAddCourseModal(); closeCoursePopover()">Create Course</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn--pill link--slide" id="smb-add-item-btn" onclick="openAddItemModal(null)">+ Item</button>
+          </div>
         </div>
 
         <!-- Scrollable body -->
@@ -135,19 +159,6 @@
           <!-- Uncategorised dishes section -->
           <div id="smb-uncat"></div>
 
-          <!-- Bottom action bar -->
-          <div class="smb-actions-bar">
-            <div class="smb-popover-wrap">
-              <button class="btn btn--sm btn--outline-primary" onclick="toggleCoursePopover(event)">+ Add Course</button>
-              <div class="smb-popover hidden" id="smb-course-popover">
-                <div class="smb-popover__list" id="smb-popover-list"></div>
-                <div class="smb-popover__footer">
-                  <button class="bl-add-btn" onclick="openAddCourseModal(); closeCoursePopover()">+ Create new course in library</button>
-                </div>
-              </div>
-            </div>
-            <button class="bl-add-btn" id="smb-add-item-btn" onclick="openAddItemModal(null)">+ Add Item</button>
-          </div>
         </div>
 
       </div>
@@ -468,13 +479,16 @@ function renderBuilder(sm) {
   lbl.textContent  = sm.is_available ? 'Live' : 'Off';
   lbl.className    = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
 
-  // Category badges — skip the always-present "set-menus" category
+  // Category breadcrumbs
   const catsEl = document.getElementById('smb-cats');
-  const extraCats = (sm.categories || []).filter(c => c.category.slug !== 'set-menus');
-  catsEl.innerHTML = extraCats
-    .map(c => `<span class="badge badge--primary">${esc(getName(c.category.translations))}</span>`)
-    .join('');
-  catsEl.style.display = extraCats.length ? '' : 'none';
+  catsEl.innerHTML = (sm.categories || []).map(c => {
+    const cat    = c.category;
+    const parent = ALL_CATS.find(p => p.id === cat.parent_id);
+    if (parent) {
+      return `<div class="breadcrumb-text"><span class="breadcrumb-muted">${esc(getName(parent.translations))}<span class="breadcrumb-sep"> › </span></span>${esc(getName(cat.translations))}</div>`;
+    }
+    return `<div class="breadcrumb-text">${esc(getName(cat.translations))}</div>`;
+  }).join('');
 
   // Course sections
   const coursesEl = document.getElementById('smb-courses');
@@ -506,10 +520,15 @@ function renderCourseSection(smc, smId) {
           ${noteHtml}
         </div>
         <div class="smb-course__actions">
-          <button class="bl-add-btn" onclick="openAddItemModal(${smc.id})">+ Add Item</button>
-          <button class="btn btn--xs btn--outline-danger"
-            onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')">
-            Remove
+          <button onclick="openAddItemModal(${smc.id})" class="btn btn--pill link--slide btn--sm">+ Item</button>
+          <button class="btn-view" title="View details">
+            <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+            <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+          </button>
+          <button class="btn-delete" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="Remove">
+            <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
           </button>
         </div>
       </div>
@@ -538,12 +557,21 @@ function renderDishRow(smd, smId) {
         <span class="smb-dish__name">${esc(getName(smd.dish.translations))}</span>
         ${noteHtml}
       </div>
-      <button class="btn btn--xs btn--outline-danger"
-        onclick="removeDish(${smId}, ${smd.id})">&#215;</button>
+      <button class="btn-view" title="View details">
+        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+      </button>
+      <button class="btn-delete" onclick="removeDish(${smId}, ${smd.id})" title="Remove">
+        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </button>
     </div>`;
 }
 
 // ── Sortable ──────────────────────────────────────────────────────────────────
+const SCROLL_OPTS = { scroll: true, scrollSensitivity: 60, scrollSpeed: 10 };
+
 function initSortables(smId) {
   _sortables.forEach(s => { try { s.destroy(); } catch(e) {} });
   _sortables = [];
@@ -551,6 +579,7 @@ function initSortables(smId) {
   const coursesEl = document.getElementById('smb-courses');
   if (coursesEl) {
     _sortables.push(Sortable.create(coursesEl, {
+      ...SCROLL_OPTS,
       handle:     '.bl-handle--sm',
       animation:  180,
       ghostClass: 'bl-ghost',
@@ -568,6 +597,7 @@ function initSortables(smId) {
 
   document.querySelectorAll('.smb-dish-list').forEach(listEl => {
     _sortables.push(Sortable.create(listEl, {
+      ...SCROLL_OPTS,
       group:      { name: `dishes-${smId}`, pull: true, put: true },
       handle:     '.bl-handle--dish',
       animation:  180,

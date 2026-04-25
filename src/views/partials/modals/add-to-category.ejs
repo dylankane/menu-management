@@ -21,6 +21,9 @@
           </div>
         <% }) %>
       </div>
+      <div style="padding:0.375rem 0 0.125rem; text-align:right;">
+        <button type="button" class="bl-add-btn" onclick="swapToCreateFromAddToCat()">+ Create new item</button>
+      </div>
     </div>
     <div class="modal__footer">
       <button type="button" onclick="closeModal('addToCatModal')" class="btn btn--secondary">Cancel</button>
@@ -69,5 +72,46 @@
       closeModal('addToCatModal');
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  let _addToCatSwapReturnId = null;
+
+  function swapToCreateFromAddToCat() {
+    const catId = document.getElementById('addToCatCatId').value;
+    document.getElementById('addToCatModal').classList.add('hidden');
+    _addToCatSwapReturnId = 'addToCatModal';
+    window._onItemSaved = function(item) {
+      window._onItemSaved = null;
+      _returnFromAddToCatSwap(item);
+    };
+    window._onItemModalClose = function() {
+      _returnFromAddToCatSwap(null);
+    };
+    openAddDishModal(catId || null);
+  }
+
+  function _returnFromAddToCatSwap(newItem) {
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(el => el.classList.add('hidden'));
+    if (_addToCatSwapReturnId) {
+      document.getElementById(_addToCatSwapReturnId).classList.remove('hidden');
+      _addToCatSwapReturnId = null;
+    }
+    if (newItem) _injectAndSelectAddToCatItem(newItem);
+  }
+
+  function _injectAndSelectAddToCatItem(item) {
+    const t = (item.translations || []).find(t => t.lang === PRIMARY) || (item.translations || [])[0];
+    const name = t ? (t.name || '—') : '—';
+    const el = document.createElement('div');
+    el.className = 'add-to-cat-item';
+    el.dataset.itemId = item.id;
+    el.dataset.name = name.toLowerCase();
+    el.onclick = function() { selectAddToCatItem(this); };
+    el.textContent = name;
+    const list = document.getElementById('addToCatList');
+    list.insertBefore(el, list.firstChild);
+    document.getElementById('addToCatSearch').value = '';
+    document.querySelectorAll('#addToCatList .add-to-cat-item').forEach(e => e.style.display = '');
+    selectAddToCatItem(el);
   }
 </script>

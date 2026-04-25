@@ -102,8 +102,12 @@ router.get('/categories', async (req, res, next) => {
       where: { parent_id: null },
       include: {
         translations: true,
+        _count: { select: { menu_item_categories: true, set_menu_categories: true } },
         children: {
-          include: { translations: true },
+          include: {
+            translations: true,
+            _count: { select: { menu_item_categories: true, set_menu_categories: true } },
+          },
           orderBy: { display_order: 'asc' },
         },
       },

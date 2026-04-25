@@ -14,23 +14,18 @@
            || (cat.translations || [])[0];
     return t ? (t.name || cat.slug) : cat.slug;
   }
-  function catDesc(cat) {
-    const t = (cat.translations || []).find(t => t.lang === primary)
-           || (cat.translations || [])[0];
-    return t ? (t.description || '') : '';
-  }
 %>
 
 <div class="main">
-  <header class="page-header">
+  <header class="page-header page-header--minimal">
     <h2 class="page-header__title">Categories</h2>
     <%- include('../partials/lang-selector') %>
   </header>
 
-  <main class="page-body">
-    <div class="card table-controls">
+  <main class="page-body page-body--minimal">
+    <div class="card table-card">
       <div class="card__header card__header--brand">
-        <h3 class="card__title">All Categories</h3>
+        <h3 class="card__title">Categories</h3>
         <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search & filter">
           <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/icons/sprite.svg#search"></use></svg>
         </button>
@@ -39,16 +34,22 @@
       <div class="filter-bar" id="filterBar">
         <input type="text" id="searchInput" placeholder="Search by name..." oninput="filterCategories()" class="form-input" style="width:15rem;" />
         <div class="filter-radios">
-          <label><input type="radio" name="catFilter" value="all" checked onchange="filterCategories()" /> All</label>
-          <label><input type="radio" name="catFilter" value="active" onchange="filterCategories()" /> Active</label>
-          <label><input type="radio" name="catFilter" value="inactive" onchange="filterCategories()" /> Inactive</label>
+          <label class="form-check">
+            <input type="radio" name="catFilter" value="all" checked onchange="filterCategories()" />
+            <span class="form-check__label">All</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="catFilter" value="active" onchange="filterCategories()" />
+            <span class="form-check__label">Active</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="catFilter" value="inactive" onchange="filterCategories()" />
+            <span class="form-check__label">Inactive</span>
+          </label>
         </div>
         <span id="catCount" class="filter-bar__count"></span>
       </div>
-    </div>
-
-    <% if (categories.length === 0) { %>
-      <div class="card">
+      <% if (categories.length === 0) { %>
         <div class="empty-state">
           <div class="empty-state__icon">
             <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#categories"></use></svg>
@@ -56,102 +57,141 @@
           <p class="empty-state__text">No categories yet</p>
           <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Category</button>
         </div>
-      </div>
-    <% } else { %>
-      <div class="card table-card">
+      <% } else { %>
         <table class="data-table" id="catsTable">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              <th>Subcategories</th>
-              <th>Order</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
           <tbody>
-            <% categories.forEach((cat, idx) => { %>
-              <!-- Parent row -->
-              <tr class="cat-row cat-row--parent" data-name="<%= catName(cat).toLowerCase() %>" data-id="<%= cat.id %>" data-active="<%= cat.is_active %>">
-                <td>
+            <% categories.forEach(cat => { %>
+
+              <!-- Parent category row -->
+              <tr class="cat-row cat-row--parent"
+                  data-name="<%= catName(cat).toLowerCase() %>"
+                  data-id="<%= cat.id %>"
+                  data-active="<%= cat.is_active %>">
+
+                <td class="col-name col-align-left">
                   <div class="table-item">
-                    <p class="table-item__name"><%= catName(cat) %></p>
-                    <% if (cat.is_protected) { %><span class="badge badge--warning">Protected</span><% } %>
+                    <p class="table-item__name">• <%= catName(cat) %></p>
+                    <% if (cat.is_protected) { %><svg class="icon icon--sm"><use href="/icons/sprite.svg#lock"></use></svg><% } %>
                   </div>
                 </td>
-                <td>
-                  <label class="avail-toggle">
+
+                <td class="col-counts col-align-left">
+                  <% if (!cat.children || cat.children.length === 0) { %>
+                    <span class="count-line"><%= cat._count ? (cat._count.menu_item_categories + cat._count.set_menu_categories) : 0 %> items</span>
+                  <% } else { %>
+                    <span class="cell-empty">—</span>
+                  <% } %>
+                </td>
+
+                <td class="col-add-sub col-align-center">
+                  <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')"
+                          class="btn btn--pill link--slide btn--sm">+ Sub</button>
+                </td>
+
+                <td class="col-translations col-align-center">
+                  <div class="tag-list">
+                    <% const catLangs = langs.filter(l => (cat.translations || []).find(t => t.lang === l && t.name)); %>
+                    <% catLangs.forEach(l => { %>
+                      <span class="tag tag--lang"><%= l.toUpperCase() %></span>
+                    <% }); %>
+                    <% if (catLangs.length === 0) { %><span class="cell-empty">—</span><% } %>
+                  </div>
+                </td>
+
+                <td class="col-toggle col-align-center">
+                  <label class="smb-avail-switch">
                     <input type="checkbox" <%= cat.is_active ? 'checked' : '' %> readonly tabindex="-1" />
-                    <span class="avail-toggle__label <%= cat.is_active ? 'avail-toggle__label--active' : 'avail-toggle__label--inactive' %>">
-                      <%= cat.is_active ? 'Active' : 'Inactive' %>
+                    <span class="smb-avail-label <%= cat.is_active ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
+                      <%= cat.is_active ? 'Live' : 'Off' %>
                     </span>
                   </label>
                 </td>
-                <td>
-                  <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')" class="btn btn--outline-add btn--sm">+ Add</button>
+
+                <td class="col-details col-align-center">
+                  <button class="btn-view" title="View details">
+                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                  </button>
                 </td>
-                <td>
-                  <div class="table-actions">
-                    <% if (idx > 0) { %>
-                      <button onclick="moveCategory(<%= cat.id %>, 'up', <%= idx %>)" title="Move up" class="btn-reorder">▲</button>
-                    <% } %>
-                    <% if (idx < categories.length - 1) { %>
-                      <button onclick="moveCategory(<%= cat.id %>, 'down', <%= idx %>)" title="Move down" class="btn-reorder">▼</button>
-                    <% } %>
-                  </div>
-                </td>
-                <td>
-                  <div class="table-actions">
-                    <button onclick='openEditCategoryModal(<%- JSON.stringify(cat) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
-                    <% if (!cat.is_protected) { %>
-                      <button onclick="deleteCategory(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
-                    <% } %>
-                  </div>
+                <td class="col-delete col-align-center">
+                  <% if (!cat.is_protected) { %>
+                    <button class="btn-delete" onclick="deleteCategory(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')" title="Delete">
+                      <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                      </svg>
+                    </button>
+                  <% } %>
                 </td>
               </tr>
+
               <!-- Subcategory rows -->
-              <% if (cat.children) cat.children.forEach((child, childIdx) => { %>
-                <tr class="cat-row cat-row--child" data-name="<%= catName(child).toLowerCase() %>" data-parent-id="<%= cat.id %>" data-active="<%= child.is_active %>">
-                  <td>
-                    <div class="table-item cat-row__indent">
-                      <span class="cat-row__arrow">↳</span>
-                      <p class="table-item__name"><%= catName(child) %></p>
+              <% if (cat.children) cat.children.forEach(child => { %>
+                <tr class="cat-row cat-row--child"
+                    data-name="<%= catName(child).toLowerCase() %>"
+                    data-parent-id="<%= cat.id %>"
+                    data-active="<%= child.is_active %>">
+
+                  <td class="col-name col-align-left">
+                    <p class="table-item__name cat-row__indent">◦ <%= catName(child) %></p>
+                  </td>
+
+                  <td class="col-counts col-align-left">
+                    <% const childTotal = child._count ? (child._count.menu_item_categories + child._count.set_menu_categories) : 0; %>
+                    <% if (childTotal > 0) { %>
+                      <span class="count-line"><%= childTotal %> items</span>
+                    <% } else { %>
+                      <span class="cell-empty">—</span>
+                    <% } %>
+                  </td>
+
+                  <td class="col-add-sub"></td>
+
+                  <td class="col-translations col-align-center">
+                    <div class="tag-list">
+                      <% const childLangs = langs.filter(l => (child.translations || []).find(t => t.lang === l && t.name)); %>
+                      <% childLangs.forEach(l => { %>
+                        <span class="tag tag--lang"><%= l.toUpperCase() %></span>
+                      <% }); %>
+                      <% if (childLangs.length === 0) { %><span class="cell-empty">—</span><% } %>
                     </div>
                   </td>
-                  <td>
-                    <label class="avail-toggle">
+
+                  <td class="col-toggle col-align-center">
+                    <label class="smb-avail-switch">
                       <input type="checkbox" <%= child.is_active ? 'checked' : '' %> readonly tabindex="-1" />
-                      <span class="avail-toggle__label <%= child.is_active ? 'avail-toggle__label--active' : 'avail-toggle__label--inactive' %>">
-                        <%= child.is_active ? 'Active' : 'Inactive' %>
+                      <span class="smb-avail-label <%= child.is_active ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
+                        <%= child.is_active ? 'Live' : 'Off' %>
                       </span>
                     </label>
                   </td>
-                  <td></td>
-                  <td>
-                    <div class="table-actions">
-                      <% if (childIdx > 0) { %>
-                        <button onclick="moveSubcategory(<%= child.id %>, 'up', <%= cat.id %>, <%= childIdx %>)" title="Move up" class="btn-reorder btn-reorder--outline">△</button>
-                      <% } %>
-                      <% if (childIdx < cat.children.length - 1) { %>
-                        <button onclick="moveSubcategory(<%= child.id %>, 'down', <%= cat.id %>, <%= childIdx %>)" title="Move down" class="btn-reorder btn-reorder--outline">▽</button>
-                      <% } %>
-                    </div>
+
+                  <td class="col-details col-align-center">
+                    <button class="btn-view" title="View details">
+                      <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                      <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                    </button>
                   </td>
-                  <td>
-                    <div class="table-actions">
-                      <button onclick='openEditCategoryModal(<%- JSON.stringify(child) %>)' class="btn btn--outline-primary btn--sm">Edit</button>
-                      <% if (!child.is_protected) { %>
-                        <button onclick="deleteCategory(<%= child.id %>, '<%= catName(child).replace(/'/g, "\\'") %>')" class="btn btn--outline-danger btn--sm">Delete</button>
-                      <% } %>
-                    </div>
+                  <td class="col-delete col-align-center">
+                    <% if (!child.is_protected) { %>
+                      <button class="btn-delete" onclick="deleteCategory(<%= child.id %>, '<%= catName(child).replace(/'/g, "\\'") %>')" title="Delete">
+                        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="15" y1="9" x2="9" y2="15"/>
+                          <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                      </button>
+                    <% } %>
                   </td>
                 </tr>
               <% }) %>
+
             <% }) %>
           </tbody>
         </table>
-      </div>
-    <% } %>
+      <% } %>
+    </div>
   </main>
 </div>
 
@@ -162,13 +202,6 @@
 <script>
   const LANGS   = <%- JSON.stringify(langs) %>;
   const PRIMARY = '<%= primary %>';
-  const topLevelCategories = <%- JSON.stringify(categories.map(c => ({ id: c.id, display_order: c.display_order }))) %>;
-  const subGroups = <%- JSON.stringify(
-    Object.fromEntries(categories.map(c => [
-      c.id,
-      (c.children || []).map(ch => ({ id: ch.id, display_order: ch.display_order }))
-    ]))
-  ) %>;
 
   function toggleFilterBar() {
     const bar    = document.getElementById('filterBar');
@@ -216,40 +249,7 @@
     if (countEl) countEl.textContent = `${visible} categor${visible !== 1 ? 'ies' : 'y'}`;
   }
 
-  // initialise count on page load
   filterCategories();
-
-  async function moveCategory(id, direction, currentIdx) {
-    const items   = [...topLevelCategories];
-    const swapIdx = direction === 'up' ? currentIdx - 1 : currentIdx + 1;
-    const current = items[currentIdx];
-    const swap    = items[swapIdx];
-    try {
-      await api('PATCH', '/api/categories/reorder', {
-        items: [
-          { id: current.id, display_order: swap.display_order },
-          { id: swap.id,    display_order: current.display_order },
-        ],
-      });
-      reloadAfter(100);
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function moveSubcategory(id, direction, parentId, currentIdx) {
-    const items   = [...(subGroups[parentId] || [])];
-    const swapIdx = direction === 'up' ? currentIdx - 1 : currentIdx + 1;
-    const current = items[currentIdx];
-    const swap    = items[swapIdx];
-    try {
-      await api('PATCH', '/api/categories/reorder', {
-        items: [
-          { id: current.id, display_order: swap.display_order },
-          { id: swap.id,    display_order: current.display_order },
-        ],
-      });
-      reloadAfter(100);
-    } catch (err) { showToast(err.message, 'error'); }
-  }
 </script>
 
 </body>
