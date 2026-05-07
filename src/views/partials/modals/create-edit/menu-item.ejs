@@ -1,9 +1,9 @@
-<!-- ── Add / Edit Dish Modal ──────────────────────────────────────────────── -->
+<!-- ── Add / Edit Item Modal ───────────────────────────────────────────────── -->
 <!-- Requires in scope: langs, primary, categories, allergens, dietaryTags    -->
 <div id="itemModal" class="modal-overlay hidden">
   <div class="modal modal--lg" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 id="itemModalTitle" class="modal__title">Add Dish</h3>
+      <h3 id="itemModalTitle" class="modal__title">Create Item</h3>
       <button onclick="_handleItemModalClose()" class="modal__close">&times;</button>
     </div>
 
@@ -11,7 +11,7 @@
       <div class="modal__body">
         <input type="hidden" id="itemId" value="" />
 
-        <div data-lang-container>
+        <div data-lang-container class="modal-lang-section">
           <div class="lang-tabs">
             <% langs.forEach((lang, i) => { %>
               <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
@@ -45,60 +45,82 @@
             <input type="number" id="itemPrice" name="price" required step="0.01" min="0" class="form-input" />
           </div>
           <div class="form-group">
+            <label class="form-label">Discount</label>
+            <div class="discount-group">
+              <label class="smb-avail-switch smb-avail-switch--brand">
+                <input type="checkbox" id="itemHasDiscount" name="has_discount"
+                       onchange="toggleDiscount()">
+                <span class="smb-avail-label" id="itemDiscountLabel">Off</span>
+              </label>
+              <div id="discountFields" class="discount-fields hidden">
+                <div class="form-group">
+                  <label class="form-label">Type</label>
+                  <select id="itemDiscountType" name="discount_type" class="form-select">
+                    <option value="percent">Percentage (%)</option>
+                    <option value="flat">Flat amount (€)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Value</label>
+                  <input type="number" id="itemDiscountValue" name="discount_value" step="0.01" min="0" class="form-input" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="image-upload-row">
+          <div class="image-upload-input">
             <label class="form-label">Image</label>
             <input type="file" id="itemImage" name="image" accept="image/*" class="form-file" />
-            <div id="currentImagePreview" class="image-preview hidden">
-              <img id="currentImage" src="" alt="" />
-              <span class="image-preview__label">Current image (upload new to replace)</span>
-            </div>
+          </div>
+          <div id="currentImagePreview" class="image-preview hidden">
+            <img id="currentImage" src="" alt="" class="table-thumb table-thumb--clickable"
+                 onclick="openModalLightbox(this.src)" />
+            <span id="imagePreviewLabel" class="image-preview__label">Current image — upload new to replace</span>
           </div>
         </div>
 
-        <div class="discount-group">
-          <label class="form-check">
-            <input type="checkbox" id="itemHasDiscount" name="has_discount" onchange="toggleDiscount()" />
-            <span class="form-check__label">Apply a discount</span>
-          </label>
-          <div id="discountFields" class="discount-fields hidden">
-            <div class="form-group">
-              <label class="form-label">Discount type</label>
-              <select id="itemDiscountType" name="discount_type" class="form-select">
-                <option value="percent">Percentage (%)</option>
-                <option value="flat">Flat amount (€)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Value</label>
-              <input type="number" id="itemDiscountValue" name="discount_value" step="0.01" min="0" class="form-input" />
-            </div>
+        <div class="modal-toggles">
+          <div class="modal-toggle-item">
+            <span class="modal-toggle-label">Availability</span>
+            <label class="smb-avail-switch">
+              <input type="checkbox" id="itemIsAvailable" name="is_available" checked
+                     onchange="updateModalToggle('itemIsAvailable', 'itemAvailLabel', 'Live', 'Off')">
+              <span class="smb-avail-label smb-avail-label--on" id="itemAvailLabel">Live</span>
+            </label>
           </div>
-        </div>
-
-        <div class="inline-checks">
-          <label class="form-check">
-            <input type="checkbox" id="itemIsAvailable" name="is_available" checked />
-            <span class="form-check__label">Available on menu</span>
-          </label>
-          <label class="form-check">
-            <input type="checkbox" id="itemIsSpecial" name="is_special" />
-            <span class="form-check__label">Chef's Special ⭐</span>
-          </label>
+          <div class="modal-toggle-item">
+            <span class="modal-toggle-label">Chef's Special</span>
+            <label class="smb-avail-switch smb-avail-switch--brand">
+              <input type="checkbox" id="itemIsSpecial" name="is_special"
+                     onchange="updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off')">
+              <span class="smb-avail-label" id="itemSpecialLabel">Off</span>
+            </label>
+          </div>
         </div>
 
         <div class="form-group">
           <label class="form-label">Categories</label>
-          <div class="check-list">
-            <% categories.filter(c => !c.parent_id).forEach(cat => { %>
-              <label class="form-check">
-                <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="item-category-cb" />
-                <span class="form-check__label"><%= catName(cat) %></span>
-              </label>
-              <% if (cat.children) cat.children.forEach(child => { %>
-                <label class="form-check">
-                  <input type="checkbox" name="category_ids" value="<%= child.id %>" class="item-category-cb" />
-                  <span class="form-check__label">↳ <%= catName(child) %></span>
+          <div class="check-list check-list--single">
+            <% categories.filter(c => !c.parent_id && !c.is_protected).forEach(cat => { %>
+              <div class="cat-group">
+                <label class="form-check cat-group__parent">
+                  <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="item-category-cb" />
+                  <span class="form-check__label"><%= catName(cat) %></span>
                 </label>
-              <% }) %>
+                <% const visibleChildren = (cat.children || []).filter(c => !c.is_protected); %>
+                <% if (visibleChildren.length > 0) { %>
+                  <div class="cat-group__children">
+                    <% visibleChildren.forEach(child => { %>
+                      <label class="form-check">
+                        <input type="checkbox" name="category_ids" value="<%= child.id %>" class="item-category-cb" />
+                        <span class="form-check__label"><%= catName(child) %></span>
+                      </label>
+                    <% }) %>
+                  </div>
+                <% } %>
+              </div>
             <% }) %>
           </div>
         </div>
@@ -130,24 +152,64 @@
 
       <div class="modal__footer">
         <button type="button" onclick="_handleItemModalClose()" class="btn btn--secondary">Cancel</button>
-        <button type="submit" class="btn btn--primary">Save Dish</button>
+        <button type="submit" class="btn btn--primary">Save Item</button>
       </div>
     </form>
   </div>
+</div>
+
+<!-- Modal image lightbox -->
+<div id="modalImageLightbox" class="lightbox hidden" onclick="closeModalLightbox()">
+  <img id="modalLightboxImg" src="" alt="" class="lightbox__img" onclick="event.stopPropagation()" />
+  <button class="lightbox__close" onclick="closeModalLightbox()">&times;</button>
 </div>
 
 <script>
   function toggleDiscount() {
     const checked = document.getElementById('itemHasDiscount').checked;
     document.getElementById('discountFields').classList.toggle('hidden', !checked);
+    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
   }
 
+  function updateModalToggle(checkId, labelId, onText, offText) {
+    const checked = document.getElementById(checkId).checked;
+    const label   = document.getElementById(labelId);
+    label.textContent = checked ? onText : offText;
+    label.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
+  }
+
+  function openModalLightbox(src) {
+    document.getElementById('modalLightboxImg').src = src;
+    document.getElementById('modalImageLightbox').classList.remove('hidden');
+  }
+
+  function closeModalLightbox() {
+    document.getElementById('modalImageLightbox').classList.add('hidden');
+    document.getElementById('modalLightboxImg').src = '';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModalLightbox();
+  });
+
+  document.getElementById('itemImage').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    document.getElementById('currentImage').src = url;
+    document.getElementById('imagePreviewLabel').textContent = 'New image selected — click to preview';
+    document.getElementById('currentImagePreview').classList.remove('hidden');
+  });
+
   function openAddDishModal(presetCategoryId) {
-    document.getElementById('itemModalTitle').textContent = 'Add Dish';
+    document.getElementById('itemModalTitle').textContent = 'Create Item';
     document.getElementById('itemId').value = '';
     document.getElementById('itemForm').reset();
     document.getElementById('currentImagePreview').classList.add('hidden');
     document.getElementById('discountFields').classList.add('hidden');
+    updateModalToggle('itemIsAvailable', 'itemAvailLabel', 'Live', 'Off');
+    updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off');
+    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
     if (presetCategoryId) {
       document.querySelectorAll('.item-category-cb').forEach(cb => {
         cb.checked = String(cb.value) === String(presetCategoryId);
@@ -159,7 +221,7 @@
   }
 
   function openEditDishModal(item) {
-    document.getElementById('itemModalTitle').textContent = 'Edit Dish';
+    document.getElementById('itemModalTitle').textContent = 'Edit Item';
     document.getElementById('itemId').value              = item.id;
     document.getElementById('itemPrice').value           = Number(item.price).toFixed(2);
     document.getElementById('itemIsAvailable').checked   = item.is_available;
@@ -168,6 +230,9 @@
     document.getElementById('itemDiscountType').value    = item.discount_type || 'percent';
     document.getElementById('itemDiscountValue').value   = item.discount_value ? Number(item.discount_value).toFixed(2) : '';
     document.getElementById('discountFields').classList.toggle('hidden', !item.has_discount);
+    updateModalToggle('itemIsAvailable', 'itemAvailLabel', 'Live', 'Off');
+    updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off');
+    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
 
     const byLang = {};
     (item.translations || []).forEach(t => byLang[t.lang] = t);
@@ -180,6 +245,7 @@
 
     if (item.image_url) {
       document.getElementById('currentImage').src = item.image_url;
+      document.getElementById('imagePreviewLabel').textContent = 'Current image — upload new to replace';
       document.getElementById('currentImagePreview').classList.remove('hidden');
     } else {
       document.getElementById('currentImagePreview').classList.add('hidden');
@@ -216,7 +282,7 @@
     const method = id ? 'PUT' : 'POST';
     try {
       const { data } = await api(method, url, fd);
-      showToast(id ? 'Dish updated' : 'Dish created');
+      showToast(id ? 'Item updated' : 'Item created');
       if (typeof window._onItemSaved === 'function') {
         const cb = window._onItemSaved;
         window._onItemSaved = null;
@@ -235,7 +301,7 @@
     confirmDelete(`Delete "${name}"? This cannot be undone.`, async () => {
       try {
         await api('DELETE', `/api/menu-items/${id}`);
-        showToast('Dish deleted');
+        showToast('Item deleted');
         reloadAfter();
       } catch (err) { showToast(err.message, 'error'); }
     });

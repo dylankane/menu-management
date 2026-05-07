@@ -29,7 +29,7 @@
         <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search & filter">
           <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/icons/sprite.svg#search"></use></svg>
         </button>
-        <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add Category</button>
+        <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Category</button>
       </div>
       <div class="filter-bar" id="filterBar">
         <input type="text" id="searchInput" placeholder="Search by name..." oninput="filterCategories()" class="form-input" style="width:15rem;" />
@@ -85,7 +85,7 @@
 
                 <td class="col-add-sub col-align-center">
                   <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')"
-                          class="btn btn--pill link--slide btn--sm">+ Sub</button>
+                          class="btn btn--pill link--slide btn--sm">+ Create Sub</button>
                 </td>
 
                 <td class="col-translations col-align-center">
@@ -195,7 +195,7 @@
   </main>
 </div>
 
-<%- include('../partials/modals/category', { langs, primary, categories }) %>
+<%- include('../partials/modals/create-edit/category', { langs, primary, categories }) %>
 
 <%- include('../partials/scripts') %>
 

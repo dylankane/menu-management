@@ -1,0 +1,95 @@
+<!-- ── Note Editor Modal (course/dish note — multilang) ────────────────────── -->
+<!-- Requires in scope: langs                                                  -->
+<div id="noteModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:26rem;" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title" id="noteModalTitle">Edit Note</h3>
+      <button onclick="closeModal('noteModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="noteTarget" />
+      <input type="hidden" id="noteType" />
+      <p style="font-size:var(--font-size-xs);color:var(--text-muted);margin-bottom:0.75rem;" id="noteModalHint"></p>
+      <div data-lang-container>
+        <div class="lang-tabs">
+          <% langs.forEach((lang, i) => { %>
+            <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+              data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+              <%= lang.toUpperCase() %>
+            </button>
+          <% }) %>
+        </div>
+        <% langs.forEach((lang, i) => { %>
+          <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+            <div class="form-group" style="margin-top:0.5rem;">
+              <label class="form-label">(<%= lang.toUpperCase() %>)</label>
+              <input type="text" id="noteInput_<%= lang %>" class="form-input"
+                placeholder="e.g. Please choose one dish…" />
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button onclick="closeModal('noteModal')" class="btn btn--secondary">Cancel</button>
+      <button onclick="submitNote()" class="btn btn--primary">Save Note</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openNoteModal(type, targetId, el) {
+    document.getElementById('noteTarget').value = targetId;
+    document.getElementById('noteType').value   = type;
+
+    if (type === 'course') {
+      document.getElementById('noteModalTitle').textContent = 'Edit Course Note';
+      document.getElementById('noteModalHint').textContent  =
+        'This note is shown under the course name on the customer menu for this set menu only.';
+      const sm  = SM_DATA.find(s => s.id === activeSmId);
+      const smc = sm?.courses.find(c => c.id === targetId);
+      LANGS.forEach(lang => {
+        const t  = (smc?.translations || []).find(t => t.lang === lang);
+        const el = document.getElementById(`noteInput_${lang}`);
+        if (el) el.value = t?.notes || '';
+      });
+    } else {
+      document.getElementById('noteModalTitle').textContent = 'Edit Item Note';
+      document.getElementById('noteModalHint').textContent  =
+        'This note is shown under the item name on the customer menu for this set menu only.';
+      const sm  = SM_DATA.find(s => s.id === activeSmId);
+      const smd = [...(sm?.courses || []).flatMap(c => c.dishes), ...(sm?.dishes || [])]
+        .find(d => d.id === targetId);
+      LANGS.forEach(lang => {
+        const t  = (smd?.translations || []).find(t => t.lang === lang);
+        const el = document.getElementById(`noteInput_${lang}`);
+        if (el) el.value = t?.notes || '';
+      });
+    }
+
+    resetLangTabs(document.querySelector('#noteModal [data-lang-container]'), PRIMARY);
+    openModal('noteModal');
+  }
+
+  async function submitNote() {
+    const type     = document.getElementById('noteType').value;
+    const targetId = parseInt(document.getElementById('noteTarget').value);
+    const body     = {};
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`noteInput_${lang}`)?.value ?? '';
+      body[`notes_${lang}`] = val;
+    });
+
+    const url = type === 'course'
+      ? `/api/set-menus/${activeSmId}/courses/${targetId}`
+      : `/api/set-menus/${activeSmId}/dishes/${targetId}`;
+    const method = type === 'course' ? 'PATCH' : 'PUT';
+
+    try {
+      await api(method, url, body);
+      showToast('Note saved');
+      closeModal('noteModal');
+      await refreshAndRender(activeSmId);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+</script>

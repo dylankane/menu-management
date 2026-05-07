@@ -8,23 +8,25 @@
       <h3 class="modal__title">Add Dietary Tag</h3>
       <button onclick="closeModal('addDietaryModal')" class="modal__close">&times;</button>
     </div>
-    <div class="modal__body" data-lang-container>
-      <div class="lang-tabs">
+    <div class="modal__body">
+      <div data-lang-container>
+        <div class="lang-tabs">
+          <% langs.forEach((lang, i) => { %>
+            <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+              data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+              <%= lang.toUpperCase() %>
+            </button>
+          <% }) %>
+        </div>
         <% langs.forEach((lang, i) => { %>
-          <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
-            data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
-            <%= lang.toUpperCase() %>
-          </button>
+          <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+            <div class="form-group">
+              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+              <input type="text" id="newDietaryName_<%= lang %>" class="form-input" />
+            </div>
+          </div>
         <% }) %>
       </div>
-      <% langs.forEach((lang, i) => { %>
-        <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-          <div class="form-group">
-            <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-            <input type="text" id="newDietaryName_<%= lang %>" class="form-input" />
-          </div>
-        </div>
-      <% }) %>
     </div>
     <div class="modal__footer">
       <button type="button" onclick="closeModal('addDietaryModal')" class="btn btn--secondary">Cancel</button>

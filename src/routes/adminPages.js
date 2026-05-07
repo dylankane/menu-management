@@ -254,15 +254,20 @@ router.get('/set-menus', async (req, res, next) => {
       }),
       prisma.menuItem.findMany({
         include: { translations: true },
-        orderBy: { created_at: 'desc' },
       }),
       prisma.course.findMany({
         include: { translations: true },
-        orderBy: { display_order: 'asc' },
       }),
       prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
       prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
     ]);
+    const primary = res.locals.settings?.primary_language || 'en';
+    const getName = (translations) => {
+      const t = (translations || []).find(t => t.lang === primary) || (translations || [])[0];
+      return (t?.name || '').toLowerCase();
+    };
+    dishes.sort((a, b)  => getName(a.translations).localeCompare(getName(b.translations)));
+    courses.sort((a, b) => getName(a.translations).localeCompare(getName(b.translations)));
     res.render('admin/set-menus', {
       user: req.user, setMenus, categories, dishes, courses, allergens, dietaryTags,
       current: 'set-menus',

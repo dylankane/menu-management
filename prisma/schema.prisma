@@ -230,12 +230,16 @@ model MenuItemDietary {
 // A set menu is its own entity — not a MenuItem. It has its own price,
 // availability, categories, and internal course/dish structure.
 model SetMenu {
-  id            Int      @id @default(autoincrement())
-  price         Decimal  @db.Decimal(10, 2)
-  image_url     String?
-  is_available  Boolean  @default(true)
-  display_order Int      @default(0)
-  notes         String?  // Internal admin notes — not shown to customers
+  id             Int      @id @default(autoincrement())
+  price          Decimal  @db.Decimal(10, 2)
+  image_url      String?
+  has_discount   Boolean  @default(false)
+  discount_type  String?  // "flat" | "percent"
+  discount_value Decimal? @db.Decimal(10, 2)
+  is_available   Boolean  @default(true)
+  is_special     Boolean  @default(false)
+  display_order  Int      @default(0)
+  notes          String?  // Internal admin notes — not shown to customers
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

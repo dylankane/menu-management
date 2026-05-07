@@ -1,0 +1,126 @@
+<!-- ── Add Course to Set Menu Modal ────────────────────────────────────────── -->
+<!-- Requires in scope: langs                                                  -->
+<!-- List is JS-rendered from COURSES / SM_DATA globals                       -->
+<div id="addCourseToSmModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title">Add Course</h3>
+      <button onclick="closeModal('addCourseToSmModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div class="form-group">
+        <input type="text" id="addCourseSearch" placeholder="Search courses…" oninput="filterCourseSearch()" class="form-input" />
+      </div>
+      <div id="addCourseList" class="add-to-cat-list" style="max-height:16rem;overflow-y:auto;"></div>
+      <div class="modal-create-action">
+        <button type="button" class="btn btn--pill link--slide" onclick="swapToCourseModal()">+ Create Course</button>
+      </div>
+      <div id="addCourseNoteWrap" class="hidden" style="margin-top:0.75rem;">
+        <h4 class="modal-section-title">Add A Note</h4>
+        <div data-lang-container>
+          <div class="lang-tabs" id="addCourseNoteTabs">
+            <% langs.forEach((lang, i) => { %>
+              <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+                data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+                <%= lang.toUpperCase() %>
+              </button>
+            <% }) %>
+          </div>
+          <% langs.forEach((lang, i) => { %>
+            <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+              <div class="form-group" style="margin-top:0.5rem;">
+                <label class="form-label" style="font-size:var(--font-size-xs);">
+                  Note for this course (<%= lang.toUpperCase() %>) <span style="color:var(--text-muted);font-weight:400;">— optional</span>
+                </label>
+                <input type="text" id="addCourseNote_<%= lang %>" class="form-input form-input--sm"
+                  placeholder="e.g. Please choose one dish…" />
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button onclick="closeModal('addCourseToSmModal')" class="btn btn--secondary">Cancel</button>
+      <button onclick="submitAddCourseToSm()" class="btn btn--primary">Add Course</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let _selectedCourseId = null;
+
+  function openAddCourseToSmModal() {
+    if (!activeSmId) return;
+    const sm      = SM_DATA.find(s => s.id === activeSmId);
+    const usedIds = new Set((sm?.courses || []).map(c => c.course_id));
+    const available = COURSES.filter(c => !usedIds.has(c.id));
+    const list    = document.getElementById('addCourseList');
+
+    if (available.length === 0) {
+      list.innerHTML = '<div class="smb-panel__empty" style="padding:0.75rem 0;">All courses already added to this set menu</div>';
+    } else {
+      list.innerHTML = available.map(c => `
+        <div class="add-to-cat-item" data-course-id="${c.id}"
+             data-name="${esc(getName(c.translations)).toLowerCase()}"
+             onclick="selectCourseItem(this)">
+          ${esc(getName(c.translations))}
+        </div>
+      `).join('');
+    }
+
+    _selectedCourseId = null;
+    document.getElementById('addCourseSearch').value = '';
+    document.getElementById('addCourseNoteWrap').classList.add('hidden');
+    LANGS.forEach(lang => {
+      const el = document.getElementById(`addCourseNote_${lang}`);
+      if (el) el.value = '';
+    });
+    resetLangTabs(document.querySelector('#addCourseToSmModal [data-lang-container]'), PRIMARY);
+    openModal('addCourseToSmModal');
+  }
+
+  function selectCourseItem(el) {
+    document.querySelectorAll('#addCourseList .add-to-cat-item')
+      .forEach(i => i.classList.remove('add-to-cat-item--selected'));
+    el.classList.add('add-to-cat-item--selected');
+    _selectedCourseId = parseInt(el.dataset.courseId);
+    document.getElementById('addCourseNoteWrap').classList.remove('hidden');
+  }
+
+  function filterCourseSearch() {
+    const q = document.getElementById('addCourseSearch').value.toLowerCase().trim();
+    document.querySelectorAll('#addCourseList .add-to-cat-item').forEach(el => {
+      el.style.display = !q || el.dataset.name.includes(q) ? '' : 'none';
+    });
+  }
+
+  async function submitAddCourseToSm() {
+    if (!_selectedCourseId) return showToast('Select a course first', 'error');
+    const notes = {};
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`addCourseNote_${lang}`)?.value.trim();
+      if (val) notes[`notes_${lang}`] = val;
+    });
+    closeModal('addCourseToSmModal');
+    await addCourseToSm(_selectedCourseId, Object.keys(notes).length ? notes : null);
+  }
+
+  function swapToCourseModal() {
+    document.getElementById('addCourseToSmModal').classList.add('hidden');
+    window._onCourseSaved = function(course) {
+      window._onCourseSaved = null;
+      if (!COURSES.find(c => c.id === course.id)) COURSES.push(course);
+      openAddCourseToSmModal();
+      setTimeout(() => {
+        const el = document.querySelector(`#addCourseList [data-course-id="${course.id}"]`);
+        if (el) selectCourseItem(el);
+      }, 0);
+    };
+    window._onCourseModalClose = function() {
+      window._onCourseModalClose = null;
+      document.getElementById('addCourseToSmModal').classList.remove('hidden');
+    };
+    openAddCourseModal();
+  }
+</script>

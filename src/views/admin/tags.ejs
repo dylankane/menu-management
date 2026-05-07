@@ -32,7 +32,7 @@
         <div class="card table-card">
           <div class="card__header card__header--brand">
             <h3 class="card__title">Allergen Tags</h3>
-            <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
+            <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Tag</button>
           </div>
           <% if (allergens.length === 0) { %>
             <div class="empty-state">
@@ -87,7 +87,7 @@
         <div class="card table-card">
           <div class="card__header card__header--brand">
             <h3 class="card__title">Dietary Tags</h3>
-            <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Add</button>
+            <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Tag</button>
           </div>
           <% if (dietaryTags.length === 0) { %>
             <div class="empty-state">
@@ -140,8 +140,8 @@
   </main>
 </div>
 
-<%- include('../partials/modals/allergen', { langs, primary }) %>
-<%- include('../partials/modals/dietary', { langs, primary }) %>
+<%- include('../partials/modals/create-edit/allergen', { langs, primary }) %>
+<%- include('../partials/modals/create-edit/dietary', { langs, primary }) %>
 
 <%- include('../partials/scripts') %>
 <script>

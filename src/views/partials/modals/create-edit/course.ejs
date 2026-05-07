@@ -1,0 +1,103 @@
+<!-- ── Add / Edit Course Modal ─────────────────────────────────────────────── -->
+<!-- Requires in scope: langs                                                  -->
+<div id="courseModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 id="courseModalTitle" class="modal__title">Add Course</h3>
+      <button onclick="_handleCourseModalClose()" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="courseId" />
+      <div data-lang-container>
+        <div class="lang-tabs">
+          <% langs.forEach((lang, i) => { %>
+            <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
+              data-lang="<%= lang %>" onclick="switchLangTab(this, '<%= lang %>')">
+              <%= lang.toUpperCase() %>
+            </button>
+          <% }) %>
+        </div>
+        <% langs.forEach((lang, i) => { %>
+          <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
+            <div class="form-group">
+              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+              <input type="text" id="courseName_<%= lang %>" class="form-input" />
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button onclick="_handleCourseModalClose()" class="btn btn--secondary">Cancel</button>
+      <button onclick="submitCourse()" class="btn btn--primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openAddCourseModal() {
+    document.getElementById('courseModalTitle').textContent = 'Add Course';
+    document.getElementById('courseId').value = '';
+    LANGS.forEach(lang => {
+      const el = document.getElementById(`courseName_${lang}`);
+      if (el) el.value = '';
+    });
+    resetLangTabs(document.querySelector('#courseModal [data-lang-container]'), PRIMARY);
+    openModal('courseModal');
+  }
+
+  function openEditCourseModal(course) {
+    document.getElementById('courseModalTitle').textContent = 'Edit Course';
+    document.getElementById('courseId').value = course.id;
+    const byLang = {};
+    (course.translations || []).forEach(t => byLang[t.lang] = t);
+    LANGS.forEach(lang => {
+      const el = document.getElementById(`courseName_${lang}`);
+      if (el) el.value = byLang[lang]?.name || '';
+    });
+    resetLangTabs(document.querySelector('#courseModal [data-lang-container]'), PRIMARY);
+    openModal('courseModal');
+  }
+
+  function _handleCourseModalClose() {
+    closeModal('courseModal');
+    if (typeof window._onCourseModalClose === 'function') {
+      const cb = window._onCourseModalClose;
+      window._onCourseModalClose = null;
+      cb();
+    }
+  }
+
+  async function submitCourse() {
+    const id   = document.getElementById('courseId').value;
+    const body = {};
+    LANGS.forEach(lang => {
+      const val = document.getElementById(`courseName_${lang}`)?.value.trim();
+      if (val) body[`name_${lang}`] = val;
+    });
+    const url    = id ? `/api/courses/${id}` : '/api/courses';
+    const method = id ? 'PUT' : 'POST';
+    try {
+      const { data } = await api(method, url, body);
+      showToast(id ? 'Course updated' : 'Course created');
+      closeModal('courseModal');
+      if (!id && typeof window._onCourseSaved === 'function') {
+        const cb = window._onCourseSaved;
+        window._onCourseSaved = null;
+        cb(data.course);
+      } else {
+        reloadAfter(300);
+      }
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteCourse(id, name) {
+    confirmDelete(`Delete course "${name}" from the library?`, async () => {
+      try {
+        await api('DELETE', `/api/courses/${id}`);
+        showToast('Course deleted');
+        reloadAfter(300);
+      } catch (err) { showToast(err.message, 'error'); }
+    });
+  }
+</script>

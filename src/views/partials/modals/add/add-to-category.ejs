@@ -9,20 +9,20 @@
     <div class="modal__body">
       <input type="hidden" id="addToCatCatId" />
       <div class="form-group">
-        <input type="text" id="addToCatSearch" placeholder="Search dishes…" oninput="filterAddToCatDishes()" class="form-input" />
+        <input type="text" id="addToCatSearch" placeholder="Search items…" oninput="filterAddToCatDishes()" class="form-input" />
       </div>
-      <div id="addToCatList" class="add-to-cat-list">
+      <div id="addToCatList" class="add-to-cat-list" style="max-height:16rem;overflow-y:auto;">
         <% allItems.forEach(item => {
           const t = (item.translations || []).find(t => t.lang === primary) || (item.translations || [])[0];
           const name = t ? (t.name || '—') : '—';
         %>
           <div class="add-to-cat-item" data-item-id="<%= item.id %>" data-name="<%= name.toLowerCase() %>" onclick="selectAddToCatItem(this)">
-            <%= name %>
+            <%= name %><span class="add-to-cat-item__meta"> — €<%= Number(item.price).toFixed(2) %></span>
           </div>
         <% }) %>
       </div>
-      <div style="padding:0.375rem 0 0.125rem; text-align:right;">
-        <button type="button" class="bl-add-btn" onclick="swapToCreateFromAddToCat()">+ Create new item</button>
+      <div class="modal-create-action">
+        <button type="button" class="btn btn--pill link--slide" onclick="swapToCreateFromAddToCat()">+ Create Item</button>
       </div>
     </div>
     <div class="modal__footer">
@@ -41,7 +41,7 @@
       catNameStr ? `Add Dish to "${catNameStr}"` : 'Add Dish to Category';
     document.getElementById('addToCatSearch').value = '';
     _addToCatSelectedId = null;
-    document.querySelectorAll('.add-to-cat-item').forEach(el => {
+    document.querySelectorAll('#addToCatList .add-to-cat-item').forEach(el => {
       el.classList.remove('add-to-cat-item--selected');
       el.style.display = '';
     });
@@ -49,14 +49,14 @@
   }
 
   function selectAddToCatItem(el) {
-    document.querySelectorAll('.add-to-cat-item').forEach(i => i.classList.remove('add-to-cat-item--selected'));
+    document.querySelectorAll('#addToCatList .add-to-cat-item').forEach(i => i.classList.remove('add-to-cat-item--selected'));
     el.classList.add('add-to-cat-item--selected');
     _addToCatSelectedId = el.dataset.itemId;
   }
 
   function filterAddToCatDishes() {
     const q = document.getElementById('addToCatSearch').value.toLowerCase().trim();
-    document.querySelectorAll('.add-to-cat-item').forEach(el => {
+    document.querySelectorAll('#addToCatList .add-to-cat-item').forEach(el => {
       el.style.display = !q || el.dataset.name.includes(q) ? '' : 'none';
     });
   }
@@ -107,11 +107,12 @@
     el.dataset.itemId = item.id;
     el.dataset.name = name.toLowerCase();
     el.onclick = function() { selectAddToCatItem(this); };
-    el.textContent = name;
+    el.innerHTML = `${esc(name)}<span class="add-to-cat-item__meta"> — €${Number(item.price).toFixed(2)}</span>`;
     const list = document.getElementById('addToCatList');
     list.insertBefore(el, list.firstChild);
     document.getElementById('addToCatSearch').value = '';
     document.querySelectorAll('#addToCatList .add-to-cat-item').forEach(e => e.style.display = '');
     selectAddToCatItem(el);
+    list.scrollTop = 0;
   }
 </script>

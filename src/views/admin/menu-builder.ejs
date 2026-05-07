@@ -33,7 +33,6 @@
 
     <div class="card table-card">
 
-      <!-- Board header — reuses table-controls card header pattern -->
       <div class="card__header card__header--brand">
         <h3 class="card__title">Menu Builder</h3>
         <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Category</button>
@@ -49,9 +48,9 @@
         </div>
       <% } else { %>
 
-        <!-- Category sortable list -->
         <div id="bl-cats">
           <% categories.forEach(cat => { %>
+          <% const isSetMenusCat = cat.slug === 'set-menus'; %>
 
             <div class="bl-cat is-collapsed<% if (cat.children && cat.children.length > 0) { %> bl-cat--has-subs<% } %>" data-cat-id="<%= cat.id %>">
 
@@ -61,18 +60,111 @@
                 <svg class="icon bl-chevron" onclick="toggleCat(this)" style="width:1rem;height:1rem;"><use href="/icons/sprite.svg#chevron-down"></use></svg>
                 <span class="bl-cat__name" onclick="toggleCat(this)" style="cursor:pointer;"><%= catName(cat) %></span>
                 <div class="bl-cat__actions">
-                  <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>', <%= cat.menu_item_categories.length %>)"
-                          class="btn btn--pill link--slide">+ Sub</button>
-                  <button onclick="openAddToCatModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')"
-                          class="btn btn--pill link--slide">+ Dish</button>
-                  <button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button>
+                  <% if (isSetMenusCat) { %>
+                    <a href="/admin/set-menus" class="btn btn--pill link--slide">Manage Set Menus →</a>
+                  <% } else { %>
+                    <button onclick="openAddSubModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')" class="btn btn--pill link--slide">+ Create Sub</button>
+                    <button onclick="openAddToCatModal(<%= cat.id %>, '<%= catName(cat).replace(/'/g, "\\'") %>')" class="btn btn--pill link--slide">+ Add Item</button>
+                  <% } %>
+                  <button class="btn-view" title="View details">
+                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                  </button>
                 </div>
               </div>
 
-              <div class="bl-cat__body"><%
-                %><!-- Subcategories --><% if (cat.children && cat.children.length > 0) { %><div class="bl-subs" id="bl-subs-<%= cat.id %>" data-parent-id="<%= cat.id %>"><% cat.children.forEach(sub => { %><div class="bl-sub is-collapsed" data-cat-id="<%= sub.id %>"><div class="bl-sub__row"><span class="bl-handle bl-handle--sub" title="Drag to reorder">&#8801;</span><svg class="icon bl-chevron" onclick="toggleSub(this)" style="width:0.875rem;height:0.875rem;"><use href="/icons/sprite.svg#chevron-down"></use></svg><span class="bl-sub__name" onclick="toggleSub(this)" style="cursor:pointer;"><%= catName(sub) %></span><button onclick="openAddToCatModal(<%= sub.id %>, '<%= catName(sub).replace(/'/g, "\\'") %>')" class="btn btn--pill link--slide">+ Dish</button><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><div class="bl-dishes" id="bl-dishes-<%= sub.id %>" data-cat-id="<%= sub.id %>"><% sub.menu_item_categories.forEach(mic => { %><div class="bl-dish" data-item-id="<%= mic.menu_item.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(mic.menu_item) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div><div class="bl-set-menus" id="bl-set-menus-<%= sub.id %>" data-cat-id="<%= sub.id %>"><% sub.set_menu_categories.forEach(smc => { %><div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(smc.set_menu) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div></div><% }) %></div><% } %><!-- Direct dishes (always rendered so empty cats can accept drops) --><div class="bl-dishes bl-dishes--direct" id="bl-dishes-<%= cat.id %>" data-cat-id="<%= cat.id %>"><% cat.menu_item_categories.forEach(mic => { %><div class="bl-dish<% if (cat.children && cat.children.length > 0) { %> bl-dish--stranded<% } %>" data-item-id="<%= mic.menu_item.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><% if (cat.children && cat.children.length > 0) { %><svg class="icon bl-dish__warn-icon" title="Move this item to a subcategory"><use href="/icons/sprite.svg#warning"></use></svg><% } %><span class="bl-dish__name"><%= dishName(mic.menu_item) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div><!-- Set menus in this category --><div class="bl-set-menus" id="bl-set-menus-<%= cat.id %>" data-cat-id="<%= cat.id %>"><% cat.set_menu_categories.forEach(smc => { %><div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>"><span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span><span class="bl-dish__name"><%= dishName(smc.set_menu) %></span><button class="btn-view" title="View details"><svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg><svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg></button></div><% }) %></div>
-              </div><!-- /.bl-cat__body -->
+              <!-- Category body -->
+              <div class="bl-cat__body">
 
+                <% if (!isSetMenusCat) { %>
+
+                  <% if (cat.children && cat.children.length > 0) { %>
+                    <div class="bl-subs" id="bl-subs-<%= cat.id %>" data-parent-id="<%= cat.id %>">
+                      <% cat.children.forEach(sub => { %>
+                        <div class="bl-sub is-collapsed" data-cat-id="<%= sub.id %>">
+                          <div class="bl-sub__row">
+                            <span class="bl-handle bl-handle--sub" title="Drag to reorder">&#8801;</span>
+                            <svg class="icon bl-chevron" onclick="toggleSub(this)" style="width:0.875rem;height:0.875rem;"><use href="/icons/sprite.svg#chevron-down"></use></svg>
+                            <span class="bl-sub__name" onclick="toggleSub(this)" style="cursor:pointer;"><%= catName(sub) %></span>
+                            <button onclick="openAddToCatModal(<%= sub.id %>, '<%= catName(sub).replace(/'/g, "\\'") %>')" class="btn btn--pill link--slide">+ Add Item</button>
+                            <button class="btn-view" title="View details">
+                              <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                              <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                            </button>
+                          </div>
+                          <div class="bl-dishes" id="bl-dishes-<%= sub.id %>" data-cat-id="<%= sub.id %>">
+                            <% sub.menu_item_categories.forEach(mic => { %>
+                              <div class="bl-dish" data-item-id="<%= mic.menu_item.id %>">
+                                <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+                                <span class="bl-dish__name"><%= dishName(mic.menu_item) %></span>
+                                <button class="btn-view" title="View details">
+                                  <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                                  <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                                </button>
+                              </div>
+                            <% }) %>
+                          </div>
+                          <div class="bl-set-menus" id="bl-set-menus-<%= sub.id %>" data-cat-id="<%= sub.id %>">
+                            <% sub.set_menu_categories.forEach(smc => { %>
+                              <div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>">
+                                <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+                                <span class="bl-dish__name"><%= dishName(smc.set_menu) %></span>
+                                <button class="btn-view" title="View details">
+                                  <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                                  <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                                </button>
+                              </div>
+                            <% }) %>
+                          </div>
+                        </div>
+                      <% }) %>
+                    </div>
+                  <% } %>
+
+                  <!-- Direct dishes (always rendered so empty cats can accept drops) -->
+                  <div class="bl-dishes bl-dishes--direct" id="bl-dishes-<%= cat.id %>" data-cat-id="<%= cat.id %>">
+                    <% cat.menu_item_categories.forEach(mic => { %>
+                      <div class="bl-dish" data-item-id="<%= mic.menu_item.id %>">
+                        <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+                        <span class="bl-dish__name"><%= dishName(mic.menu_item) %></span>
+                        <button class="btn-view" title="View details">
+                          <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                          <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                        </button>
+                      </div>
+                    <% }) %>
+                  </div>
+
+                  <div class="bl-set-menus" id="bl-set-menus-<%= cat.id %>" data-cat-id="<%= cat.id %>">
+                    <% cat.set_menu_categories.forEach(smc => { %>
+                      <div class="bl-dish" data-set-menu-id="<%= smc.set_menu.id %>">
+                        <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+                        <span class="bl-dish__name"><%= dishName(smc.set_menu) %></span>
+                        <button class="btn-view" title="View details">
+                          <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                          <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                        </button>
+                      </div>
+                    <% }) %>
+                  </div>
+
+                <% } else { %>
+
+                  <!-- Read-only set menu items — manage from Set Menus page -->
+                  <div class="bl-set-menus bl-set-menus--locked" data-cat-id="<%= cat.id %>">
+                    <% if (cat.set_menu_categories.length === 0) { %>
+                      <div class="smb-panel__empty">No set menus yet — create one on the Set Menus page</div>
+                    <% } %>
+                    <% cat.set_menu_categories.forEach(smc => { %>
+                      <div class="bl-dish bl-dish--readonly">
+                        <span class="bl-dish__name"><%= dishName(smc.set_menu) %></span>
+                      </div>
+                    <% }) %>
+                  </div>
+
+                <% } %>
+
+              </div><!-- /.bl-cat__body -->
 
             </div><!-- /.bl-cat -->
 
@@ -85,15 +177,27 @@
   </main>
 </div>
 
-<%- include('../partials/modals/category', { langs, primary, categories }) %>
-<%- include('../partials/modals/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
-<%- include('../partials/modals/add-to-category', { allItems, primary }) %>
+<%- include('../partials/modals/create-edit/category', { langs, primary, categories }) %>
+<%- include('../partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
+<%- include('../partials/modals/add/add-item', { langs, primary, dishes: allItems }) %>
 
 <%- include('../partials/scripts') %>
 <script src="/js/sortable.min.js"></script>
 <script>
   const LANGS   = <%- JSON.stringify(langs) %>;
   const PRIMARY = '<%= primary %>';
+
+  function openAddToCatModal(catId, catNameStr) {
+    openAddItemModal({
+      title:     catNameStr ? `Add Dish to "${catNameStr}"` : 'Add Dish to Category',
+      showNotes: false,
+      onSubmit:  async (dishId) => {
+        await api('POST', `/api/menu-items/${dishId}/add-to-category`, { category_id: catId });
+        showToast('Dish added to category');
+        reloadAfter();
+      },
+    });
+  }
 
   function toggleCat(el) { el.closest('.bl-cat').classList.toggle('is-collapsed'); }
   function toggleSub(el) { el.closest('.bl-sub').classList.toggle('is-collapsed'); }
@@ -137,9 +241,7 @@
     });
   });
 
-  // Dish sorting — shared group so dishes can move between any container.
-  // onMove returns false for parent-with-subs categories (shows not-allowed cursor,
-  // prevents the drop) without any visual highlighting.
+  // Dish sorting — shared group so dishes can move between any container
   document.querySelectorAll('.bl-dishes').forEach(el => {
     Sortable.create(el, {
       ...SCROLL_OPTS,
@@ -148,9 +250,6 @@
       animation:  180,
       ghostClass: 'bl-ghost',
       dragClass:  'bl-dragging',
-      onMove(evt) {
-        return !document.getElementById('bl-subs-' + evt.to.dataset.catId);
-      },
       onEnd(evt) {
         const fromCatId = evt.from.dataset.catId;
         const toCatId   = evt.to.dataset.catId;
@@ -170,8 +269,8 @@
     });
   });
 
-  // Set menu sorting — separate group from dishes, drag between categories
-  document.querySelectorAll('.bl-set-menus').forEach(el => {
+  // Set menu sorting — locked containers excluded
+  document.querySelectorAll('.bl-set-menus:not(.bl-set-menus--locked)').forEach(el => {
     Sortable.create(el, {
       ...SCROLL_OPTS,
       group:      { name: 'set-menus', pull: true, put: true },
@@ -221,9 +320,7 @@
   }
 
   // ── Drag-over expand ─────────────────────────────────────────────────────────
-  // dragover fires continuously while hovering — no enter/leave counting needed.
-  // Expand a collapsed category or sub after hovering its header for 500ms.
-  let _expandTimer = null;
+  let _expandTimer  = null;
   let _expandTarget = null;
 
   document.addEventListener('dragover', e => {

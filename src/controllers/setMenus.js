@@ -60,7 +60,7 @@ async function getOne(req, res, next) {
 // POST /api/set-menus
 async function create(req, res, next) {
   try {
-    const { price, is_available, category_ids } = req.body;
+    const { price, is_available, is_special, category_ids, has_discount, discount_type, discount_value } = req.body;
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? settings.enabled_languages : ['en', 'es'];
@@ -68,10 +68,14 @@ async function create(req, res, next) {
 
     const setMenu = await prisma.setMenu.create({
       data: {
-        price:        parseFloat(price),
-        image_url:    req.uploadedFile || null,
-        is_available: parseBool(is_available, true),
-        notes:        req.body.notes || null,
+        price:          parseFloat(price),
+        image_url:      req.uploadedFile || null,
+        is_available:   parseBool(is_available, true),
+        is_special:     parseBool(is_special, false),
+        has_discount:   parseBool(has_discount, false),
+        discount_type:  discount_type  || null,
+        discount_value: discount_value ? parseFloat(discount_value) : null,
+        notes:          req.body.notes || null,
         translations: {
           create: translations.filter(t => t.name || t.description),
         },
@@ -94,7 +98,7 @@ async function update(req, res, next) {
     const existing = await prisma.setMenu.findUnique({ where: { id } });
     if (!existing) throw new AppError('Set menu not found', 404);
 
-    const { price, is_available, category_ids } = req.body;
+    const { price, is_available, is_special, category_ids, has_discount, discount_type, discount_value } = req.body;
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? settings.enabled_languages : ['en', 'es'];
@@ -105,7 +109,11 @@ async function update(req, res, next) {
       if (req.uploadedFile)              scalarData.image_url    = req.uploadedFile;
       if (req.body.notes !== undefined)  scalarData.notes        = req.body.notes || null;
       const formSubmit = price !== undefined;
-      if (is_available !== undefined || formSubmit) scalarData.is_available = parseBool(is_available, true);
+      if (is_available !== undefined || formSubmit) scalarData.is_available  = parseBool(is_available, true);
+      if (is_special    !== undefined || formSubmit) scalarData.is_special    = parseBool(is_special, false);
+      if (has_discount  !== undefined || formSubmit) scalarData.has_discount  = parseBool(has_discount, false);
+      if (discount_type  !== undefined) scalarData.discount_type  = discount_type  || null;
+      if (discount_value !== undefined) scalarData.discount_value = discount_value ? parseFloat(discount_value) : null;
 
       await tx.setMenu.update({ where: { id }, data: scalarData });
 

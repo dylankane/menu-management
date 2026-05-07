@@ -5,15 +5,11 @@
 <div id="addCatModal" class="modal-overlay hidden">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title" id="addCatModalTitle">Add Category</h3>
+      <h3 class="modal__title" id="addCatModalTitle">Create Category</h3>
       <button onclick="closeModal('addCatModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
       <input type="hidden" id="addCatParentId" value="" />
-      <div id="addSubWarning" class="alert alert--warning hidden">
-        <svg class="icon" style="width:1rem;height:1rem;flex-shrink:0;"><use href="/icons/sprite.svg#warning"></use></svg>
-        <span>This category has items assigned directly. Adding a subcategory will strand those items — move them to a subcategory afterwards.</span>
-      </div>
       <div data-lang-container>
         <div class="lang-tabs">
           <% langs.forEach((lang, i) => { %>
@@ -36,10 +32,6 @@
           </div>
         <% }) %>
       </div>
-      <div class="form-group">
-        <label class="form-label">Slug <span class="hint">(auto-generated, can override)</span></label>
-        <input type="text" id="addCatSlug" class="form-input" placeholder="e.g. starters" />
-      </div>
     </div>
     <div class="modal__footer">
       <button type="button" onclick="closeModal('addCatModal')" class="btn btn--secondary">Cancel</button>
@@ -57,7 +49,7 @@
     </div>
     <div class="modal__body">
       <input type="hidden" id="editCatId" />
-      <div data-lang-container>
+      <div data-lang-container class="modal-lang-section">
         <div class="lang-tabs">
           <% langs.forEach((lang, i) => { %>
             <button type="button" class="lang-tab <%= i === 0 ? 'lang-tab--active' : '' %>"
@@ -88,10 +80,6 @@
           <% }) %>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Slug</label>
-        <input type="text" id="editCatSlug" class="form-input" />
-      </div>
       <label class="form-check">
         <input type="checkbox" id="editCatIsActive" />
         <span class="form-check__label">Active (visible on menu)</span>
@@ -105,37 +93,26 @@
 </div>
 
 <script>
-  // Auto-generate slug from primary-language name field
-  document.getElementById('addCatName_' + PRIMARY)?.addEventListener('input', function () {
-    const slug = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-').replace(/-+/g,'-');
-    document.getElementById('addCatSlug').value = slug;
-  });
-
   function openAddCategoryModal() {
     document.getElementById('addCatParentId').value = '';
-    document.getElementById('addCatModalTitle').textContent = 'Add Category';
+    document.getElementById('addCatModalTitle').textContent = 'Create Category';
     LANGS.forEach(lang => {
       const n = document.getElementById(`addCatName_${lang}`); if (n) n.value = '';
       const d = document.getElementById(`addCatDesc_${lang}`); if (d) d.value = '';
     });
-    document.getElementById('addCatSlug').value = '';
     const container = document.querySelector('#addCatModal [data-lang-container]');
     resetLangTabs(container, PRIMARY);
     openModal('addCatModal');
   }
 
-  function openAddSubModal(parentId, parentName, directItemCount) {
+  function openAddSubModal(parentId, parentName) {
     openAddCategoryModal();
     document.getElementById('addCatParentId').value = parentId;
-    document.getElementById('addCatModalTitle').textContent = `Add Subcategory under "${parentName}"`;
-    const warn = document.getElementById('addSubWarning');
-    if (warn) warn.classList.toggle('hidden', !directItemCount);
+    document.getElementById('addCatModalTitle').textContent = `Create Sub under "${parentName}"`;
   }
 
   function openEditCategoryModal(cat) {
     document.getElementById('editCatId').value         = cat.id;
-    document.getElementById('editCatSlug').value       = cat.slug;
     document.getElementById('editCatIsActive').checked = cat.is_active;
     document.getElementById('editCatParentId').value   = cat.parent_id || '';
     const byLang = {};
@@ -150,7 +127,7 @@
   }
 
   async function submitAddCategory() {
-    const body = { slug: document.getElementById('addCatSlug').value || undefined };
+    const body = {};
     const parentId = document.getElementById('addCatParentId').value;
     if (parentId) body.parent_id = parseInt(parentId);
     LANGS.forEach(lang => {
@@ -170,7 +147,6 @@
     const id       = document.getElementById('editCatId').value;
     const parentId = document.getElementById('editCatParentId').value;
     const body = {
-      slug:      document.getElementById('editCatSlug').value,
       is_active: document.getElementById('editCatIsActive').checked,
       parent_id: parentId === '' ? null : parseInt(parentId),
     };
