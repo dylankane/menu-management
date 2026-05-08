@@ -108,7 +108,7 @@
                 </td>
 
                 <td class="col-details col-align-center">
-                  <button class="btn-view" title="View details">
+                  <button class="btn-view" onclick="openCatViewModal(<%= cat.id %>)" title="View details">
                     <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
                     <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
                   </button>
@@ -168,7 +168,7 @@
                   </td>
 
                   <td class="col-details col-align-center">
-                    <button class="btn-view" title="View details">
+                    <button class="btn-view" onclick="openCatViewModal(<%= child.id %>)" title="View details">
                       <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
                       <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
                     </button>
@@ -196,12 +196,14 @@
 </div>
 
 <%- include('../partials/modals/create-edit/category', { langs, primary, categories }) %>
+<%- include('../partials/modals/view/category') %>
 
 <%- include('../partials/scripts') %>
 
 <script>
-  const LANGS   = <%- JSON.stringify(langs) %>;
-  const PRIMARY = '<%= primary %>';
+  const LANGS     = <%- JSON.stringify(langs) %>;
+  const PRIMARY   = '<%= primary %>';
+  const CATS_DATA = <%- JSON.stringify(categories) %>;
 
   function toggleFilterBar() {
     const bar    = document.getElementById('filterBar');

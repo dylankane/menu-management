@@ -53,9 +53,10 @@ router.post(
   controller.addDish
 );
 
-router.patch('/:id/dishes/reorder',   controller.reorderDishes);
-router.patch('/:id/move-category',    controller.moveCategory);
-router.put('/:id/dishes/:entryId', controller.updateDish);
-router.delete('/:id/dishes/:entryId', controller.removeDish);
+router.patch('/:id/dishes/reorder',          controller.reorderDishes);
+router.patch('/:id/move-category',           controller.moveCategory);
+router.put('/:id/dishes/:entryId',           controller.updateDish);
+router.delete('/:id/dishes/:entryId',        controller.removeDish);
+router.delete('/:id/categories/:catId',      controller.removeFromCategory);
 
 module.exports = router;

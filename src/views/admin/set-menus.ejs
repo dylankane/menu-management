@@ -125,7 +125,7 @@
               <input type="checkbox" id="smb-avail-chk" onchange="toggleAvailability()">
               <span class="smb-avail-label" id="smb-avail-label">Live</span>
             </label>
-            <button class="btn-view" onclick="openEditModal()" title="Edit details">
+            <button class="btn-view" onclick="openSmViewModal(activeSmId)" title="View details">
               <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
               <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
             </button>
@@ -163,6 +163,7 @@
 </div><!-- /.main -->
 
 
+<%- include('../partials/modals/view/set-menu', { langs, primary }) %>
 <%- include('../partials/modals/create-edit/course', { langs }) %>
 <%- include('../partials/modals/create-edit/set-menu', { langs, primary, categories }) %>
 <%- include('../partials/modals/create-edit/note', { langs }) %>
@@ -359,10 +360,15 @@ function initSortables(smId) {
   if (coursesEl) {
     _sortables.push(Sortable.create(coursesEl, {
       ...SCROLL_OPTS,
+      draggable:  '.smb-course',
       handle:     '.bl-handle--sm',
       animation:  180,
       ghostClass: 'bl-ghost',
       dragClass:  'bl-dragging',
+      onMove(evt) {
+        // Prevent dropping inside another course's dish list
+        return evt.to === coursesEl;
+      },
       onEnd() {
         const items = [...coursesEl.querySelectorAll(':scope > .smb-course')].map((el, i) => ({
           id:            parseInt(el.dataset.smcId),

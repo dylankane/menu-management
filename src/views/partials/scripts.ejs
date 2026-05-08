@@ -50,12 +50,26 @@
     const res  = await fetch(url, opts);
     const json = await res.json();
     if (!res.ok) {
-      // Show field-level errors if present
-      if (json.errors) throw new Error(json.errors.map(e => e.message).join(', '));
-      throw new Error(json.error || 'Something went wrong');
+      const err = new Error(json.errors ? json.errors.map(e => e.message).join(', ') : (json.error || 'Something went wrong'));
+      err.status = res.status;
+      throw err;
     }
     return json;
   }
+
+  // ── UI message library ────────────────────────────────────────────────────
+  // Single source of truth for all user-facing strings.
+  // When a translation system is added, swap these values for translation calls.
+  const UI_MESSAGES = {
+    // Drag-and-drop / category assignment
+    itemAlreadyInCategory:    'That item is already in this category.',
+    setMenuAlreadyInCategory: 'That set menu is already in this category.',
+    // Deletion
+    cannotDelete:             'This item is protected and cannot be deleted.',
+    hasChildren:              'Remove all subcategories before deleting.',
+    // Generic fallback
+    genericError:             'Something went wrong — please refresh and try again.',
+  };
 
   // ── Confirm delete ────────────────────────────────────────────────────────
   function confirmDelete(message, callback) {
@@ -96,4 +110,27 @@
     const primaryPanel = container.querySelector(`.lang-panel[data-lang="${primaryLang}"]`);
     if (primaryPanel) primaryPanel.classList.add('lang-panel--active');
   }
+
+  // ── Auto-capitalise ───────────────────────────────────────────────────────
+  // Add data-capitalize="title" (first letter of every word) or
+  //     data-capitalize="sentence" (first letter of each sentence) to any
+  // input or textarea and it will be transformed on blur automatically.
+  function toTitleCase(str) {
+    return str.replace(/\S+/g, w => w.charAt(0).toUpperCase() + w.slice(1));
+  }
+
+  function toSentenceCase(str) {
+    return str
+      .trim()
+      .replace(/(^\s*|[.!?]\s+)([a-z])/g, (_, prefix, ch) => prefix + ch.toUpperCase())
+      .replace(/^([a-z])/, ch => ch.toUpperCase());
+  }
+
+  document.addEventListener('blur', (e) => {
+    const mode = e.target.dataset.capitalize;
+    if (!mode) return;
+    const val = e.target.value;
+    if (!val.trim()) return;
+    e.target.value = mode === 'title' ? toTitleCase(val) : toSentenceCase(val);
+  }, true);
 </script>

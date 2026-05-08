@@ -177,6 +177,64 @@ router.get('/menu-builder', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Builder (new sidebar layout) ──────────────────────────────────────────────
+router.get('/builder', async (req, res, next) => {
+  try {
+    const WITH_TRANS = { translations: { orderBy: { lang: 'asc' } } };
+    const DISH_INCLUDE = {
+      include: {
+        menu_item: { include: WITH_TRANS },
+      },
+      orderBy: { display_order: 'asc' },
+    };
+    const SET_MENU_INCLUDE = {
+      include: {
+        set_menu: { include: WITH_TRANS },
+      },
+      orderBy: { display_order: 'asc' },
+    };
+
+    const [categories, allergens, dietaryTags, allItems] = await Promise.all([
+      prisma.category.findMany({
+        where: { parent_id: null },
+        include: {
+          ...WITH_TRANS,
+          _count: { select: { menu_item_categories: true, set_menu_categories: true } },
+          children: {
+            include: {
+              ...WITH_TRANS,
+              _count: { select: { menu_item_categories: true, set_menu_categories: true } },
+              menu_item_categories: DISH_INCLUDE,
+              set_menu_categories:  SET_MENU_INCLUDE,
+            },
+            orderBy: { display_order: 'asc' },
+          },
+          menu_item_categories: DISH_INCLUDE,
+          set_menu_categories:  SET_MENU_INCLUDE,
+        },
+        orderBy: { display_order: 'asc' },
+      }),
+      prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
+      prisma.menuItem.findMany({
+        include: { translations: { orderBy: { lang: 'asc' } } },
+        orderBy: { created_at: 'desc' },
+      }),
+    ]);
+
+    res.render('admin/builder', {
+      user: req.user,
+      categories,
+      allergens,
+      dietaryTags,
+      allItems,
+      current: 'builder',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
 // ── Menu Items ────────────────────────────────────────────────────────────────
 router.get('/menu-items', async (req, res, next) => {
   try {

@@ -38,8 +38,9 @@ router.put(
 
 router.delete('/:id', controller.remove);
 
-router.patch('/reorder',              controller.reorderInCategory);
-router.patch('/:id/move',             controller.moveToCategory);
-router.post('/:id/add-to-category',   controller.addToCategory);
+router.patch('/reorder',                     controller.reorderInCategory);
+router.patch('/:id/move',                    controller.moveToCategory);
+router.post('/:id/add-to-category',          controller.addToCategory);
+router.delete('/:id/categories/:catId',      controller.removeFromCategory);
 
 module.exports = router;

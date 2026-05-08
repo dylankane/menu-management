@@ -57,7 +57,7 @@ async function create(req, res, next) {
     const langs    = settings ? (settings.enabled_languages) : ['en', 'es'];
     const primary  = settings ? settings.primary_language : 'en';
 
-    const translations = extractTranslations(req.body, langs, ['name', 'description']);
+    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
 
     console.log('DEBUG - Request body:', req.body);
     console.log('DEBUG - Extracted translations:', translations);
@@ -74,6 +74,8 @@ async function create(req, res, next) {
         slug,
         parent_id:     parent_id ? parseInt(parent_id) : null,
         display_order: display_order ? parseInt(display_order) : 0,
+        image_url:     req.uploadedFile || null,
+        notes:         req.body.notes || null,
         translations: {
           create: translations.filter(t => t.name || t.description),
         },
@@ -101,10 +103,12 @@ async function update(req, res, next) {
 
     // Validate parent_id change if provided
     if (parent_id !== undefined) {
-      if (parent_id === null) {
+      if (parent_id === null || parent_id === 'null' || parent_id === '') {
         // Promoting to top-level — always allowed
       } else {
-        const newParent = await prisma.category.findUnique({ where: { id: parseInt(parent_id) } });
+        const parentIdInt = parseInt(parent_id);
+        if (isNaN(parentIdInt)) throw new AppError('Invalid parent_id', 400);
+        const newParent = await prisma.category.findUnique({ where: { id: parentIdInt } });
         if (!newParent) throw new AppError('Parent category not found', 404);
         if (newParent.parent_id !== null) throw new AppError('Cannot nest more than one level deep', 400);
         if (newParent.id === id) throw new AppError('A category cannot be its own parent', 400);
@@ -115,23 +119,34 @@ async function update(req, res, next) {
     const langs    = settings ? (settings.enabled_languages) : ['en', 'es'];
 
     const scalarData = {};
-    if (display_order !== undefined) scalarData.display_order = parseInt(display_order);
-    if (is_active     !== undefined) scalarData.is_active     = is_active === 'true' || is_active === true;
-    if (rawSlug)                     scalarData.slug           = slugify(rawSlug);
-    if (parent_id     !== undefined) scalarData.parent_id      = parent_id === null ? null : parseInt(parent_id);
+    if (display_order      !== undefined) scalarData.display_order = parseInt(display_order);
+    if (is_active          !== undefined) scalarData.is_active     = is_active === 'true' || is_active === true;
+    if (rawSlug)                          scalarData.slug           = slugify(rawSlug);
+    if (parent_id          !== undefined) scalarData.parent_id      = (!parent_id || parent_id === 'null') ? null : parseInt(parent_id);
+    if (req.body.notes     !== undefined) scalarData.notes          = req.body.notes || null;
+    if (req.uploadedFile)                 scalarData.image_url      = req.uploadedFile;
 
     await prisma.$transaction(async (tx) => {
       if (Object.keys(scalarData).length) {
         await tx.category.update({ where: { id }, data: scalarData });
       }
 
-      const translations = extractTranslations(req.body, langs, ['name', 'description']);
+      // Cascade is_active to subcategories (only applies to parent categories)
+      if (is_active !== undefined && existing.parent_id === null) {
+        const newIsActive = is_active === 'true' || is_active === true;
+        await tx.category.updateMany({
+          where: { parent_id: id },
+          data:  { is_active: newIsActive },
+        });
+      }
+
+      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
       for (const t of translations) {
-        if (t.name !== undefined || t.description !== undefined) {
+        if (t.name !== undefined || t.description !== undefined || t.public_notes !== undefined) {
           await tx.categoryTranslation.upsert({
-            where: { category_id_lang: { category_id: id, lang: t.lang } },
-            update: { name: t.name, description: t.description },
-            create: { category_id: id, lang: t.lang, name: t.name, description: t.description },
+            where:  { category_id_lang: { category_id: id, lang: t.lang } },
+            update: { name: t.name, description: t.description, public_notes: t.public_notes },
+            create: { category_id: id, lang: t.lang, name: t.name, description: t.description, public_notes: t.public_notes },
           });
         }
       }

@@ -83,6 +83,7 @@
           <tbody id="itemsBody">
             <% items.forEach(item => { %>
               <tr class="item-row"
+                  data-id="<%= item.id %>"
                   data-name="<%= itemName(item).toLowerCase() %>"
                   data-categories="<%= item.categories.map(c => c.category_id).join(',') %>"
                   data-available="<%= item.is_available %>">
@@ -137,20 +138,26 @@
                   <div class="tag-status">
                     <div class="tag-status__item">
                       <span class="tag-status__label">Allergens:</span>
-                      <span class="tag-status__dot <%= (item.allergen_tags && item.allergen_tags.length > 0) ? 'tag-status__dot--success' : 'tag-status__dot--danger' %>"></span>
+                      <span class="tag-status__dot <%= (item.allergens && item.allergens.length > 0) ? 'tag-status__dot--success' : 'tag-status__dot--danger' %>"></span>
                     </div>
                     <div class="tag-status__item">
                       <span class="tag-status__label">Dietary:</span>
-                      <span class="tag-status__dot <%= (item.dietary_tags && item.dietary_tags.length > 0) ? 'tag-status__dot--success' : 'tag-status__dot--danger' %>"></span>
+                      <span class="tag-status__dot <%= (item.dietary && item.dietary.length > 0) ? 'tag-status__dot--success' : 'tag-status__dot--danger' %>"></span>
                     </div>
                   </div>
                 </td>
                 <td class="col-price col-align-center">
-                  <span class="item-price">€<%= Number(item.price).toFixed(2) %></span>
+                  <span class="item-price <%= (item.has_discount && item.discount_value) ? 'item-price--muted' : '' %>">€<%= Number(item.price).toFixed(2) %></span>
                   <% if (item.has_discount && item.discount_value) { %>
-                    <br/><span class="item-discount">
-                      -<%= item.discount_type === 'percent' ? item.discount_value + '%' : '€' + Number(item.discount_value).toFixed(2) %>
-                    </span>
+                    <%
+                      const dv = Number(item.discount_value);
+                      let finalPrice = Number(item.price);
+                      if (item.discount_type === 'percent') finalPrice = finalPrice * (1 - dv / 100);
+                      else finalPrice = finalPrice - dv;
+                      finalPrice = Math.max(0, finalPrice);
+                    %>
+                    <br/><span class="item-discount">-<%= item.discount_type === 'percent' ? dv + '%' : '€' + dv.toFixed(2) %></span>
+                    <br/><span class="item-price">€<%= finalPrice.toFixed(2) %></span>
                   <% } %>
                 </td>
                 <td class="col-toggle col-align-center">
@@ -186,6 +193,7 @@
 </div>
 
 <%- include('../partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
+<%- include('../partials/modals/view/menu-item') %>
 
 <!-- ── Image Lightbox ─────────────────────────────────────────────────────── -->
 <div id="imageLightbox" class="lightbox hidden" onclick="closeLightbox()">
@@ -196,8 +204,10 @@
 <%- include('../partials/scripts') %>
 
 <script>
-  const LANGS   = <%- JSON.stringify(langs) %>;
-  const PRIMARY = '<%= primary %>';
+  const LANGS          = <%- JSON.stringify(langs) %>;
+  const PRIMARY        = '<%= primary %>';
+  const ITEMS_DATA     = <%- JSON.stringify(items) %>;
+  const CATEGORIES_DATA = <%- JSON.stringify(categories) %>;
 
   function toggleFilterBar() {
 
@@ -245,6 +255,118 @@
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeLightbox();
   });
+
+  function updateTableRow(item) {
+    const row = document.querySelector(`.item-row[data-id="${item.id}"]`);
+    if (!row) return;
+
+    const primaryTrans = (item.translations || []).find(t => t.lang === PRIMARY) || (item.translations || [])[0] || {};
+    const name = primaryTrans.name || '—';
+    const desc = primaryTrans.description || '';
+
+    row.dataset.name       = name.toLowerCase();
+    row.dataset.categories = (item.categories || []).map(c => c.category_id).join(',');
+    row.dataset.available  = item.is_available;
+
+    // Thumbnail
+    const thumbCell = row.querySelector('.col-thumb');
+    if (thumbCell) {
+      thumbCell.innerHTML = item.image_url
+        ? `<img src="${esc(item.image_url)}" alt="" class="table-thumb table-thumb--clickable" onclick="openLightbox('${esc(item.image_url)}')" />`
+        : `<div class="table-thumb-placeholder">🍴</div>`;
+    }
+
+    // Name + description
+    const nameCell = row.querySelector('.col-name');
+    if (nameCell) {
+      const truncated = desc.length > 80 ? desc.substring(0, 80) + '...' : desc;
+      nameCell.innerHTML = `<p class="table-item__name">${esc(name)}</p>` +
+        (desc ? `<p class="table-item__desc">${esc(truncated)}</p>` : '');
+    }
+
+    // Categories
+    const catCell = row.querySelector('.col-categories');
+    if (catCell) {
+      const catData = typeof CATEGORIES_DATA !== 'undefined' ? CATEGORIES_DATA : [];
+      let inner = '';
+      let hasContent = false;
+      (item.categories || []).forEach(c => {
+        hasContent = true;
+        const cat      = c.category;
+        const catTrans = (cat.translations || []).find(t => t.lang === PRIMARY) || (cat.translations || [])[0] || {};
+        const catName  = catTrans.name || '?';
+        if (cat.parent_id) {
+          const parent      = catData.find(p => p.id === cat.parent_id);
+          const parentTrans = parent ? ((parent.translations || []).find(t => t.lang === PRIMARY) || (parent.translations || [])[0] || {}) : {};
+          inner += parent
+            ? `<div class="breadcrumb-text"><span class="breadcrumb-muted">${esc(parentTrans.name || '?')}<span class="breadcrumb-sep"> › </span></span>${esc(catName)}</div>`
+            : `<div class="breadcrumb-text">${esc(catName)}</div>`;
+        } else {
+          inner += `<div class="breadcrumb-text">${esc(catName)}</div>`;
+        }
+      });
+      if (item.is_special) { hasContent = true; inner += `<div class="breadcrumb-text">Chef's Special</div>`; }
+      if (!hasContent) inner = `<span class="cell-empty">—</span>`;
+      catCell.innerHTML = `<div class="category-breadcrumbs">${inner}</div>`;
+    }
+
+    // Translations
+    const transCell = row.querySelector('.col-translations');
+    if (transCell) {
+      const translatedLangs = (item.translations || []).filter(t => t.name && t.description).map(t => t.lang);
+      transCell.innerHTML = `<div class="tag-list">` +
+        (translatedLangs.length
+          ? translatedLangs.map(l => `<span class="tag tag--lang">${esc(l.toUpperCase())}</span>`).join('')
+          : `<span class="cell-empty">—</span>`) +
+        `</div>`;
+    }
+
+    // Allergen / dietary dots
+    const tagsCell = row.querySelector('.col-tags');
+    if (tagsCell) {
+      const hasAllergens = item.allergens && item.allergens.length > 0;
+      const hasDietary   = item.dietary   && item.dietary.length   > 0;
+      tagsCell.innerHTML =
+        `<div class="tag-status">` +
+          `<div class="tag-status__item"><span class="tag-status__label">Allergens:</span>` +
+            `<span class="tag-status__dot tag-status__dot--${hasAllergens ? 'success' : 'danger'}"></span></div>` +
+          `<div class="tag-status__item"><span class="tag-status__label">Dietary:</span>` +
+            `<span class="tag-status__dot tag-status__dot--${hasDietary ? 'success' : 'danger'}"></span></div>` +
+        `</div>`;
+    }
+
+    // Price
+    const priceCell = row.querySelector('.col-price');
+    if (priceCell) {
+      const hasDiscount = item.has_discount && item.discount_value;
+      let html = `<span class="item-price${hasDiscount ? ' item-price--muted' : ''}">€${Number(item.price).toFixed(2)}</span>`;
+      if (hasDiscount) {
+        const dv = Number(item.discount_value);
+        let final = Number(item.price);
+        if (item.discount_type === 'percent') final = final * (1 - dv / 100);
+        else final = final - dv;
+        final = Math.max(0, final);
+        const discStr = item.discount_type === 'percent' ? `${dv}%` : `€${dv.toFixed(2)}`;
+        html += `<br/><span class="item-discount">-${discStr}</span>`;
+        html += `<br/><span class="item-price">€${final.toFixed(2)}</span>`;
+      }
+      priceCell.innerHTML = html;
+    }
+
+    // Availability toggle
+    const toggleCell = row.querySelector('.col-toggle');
+    if (toggleCell) {
+      toggleCell.innerHTML =
+        `<label class="smb-avail-switch" onclick="toggleAvailability(${item.id}, ${item.is_available})">` +
+          `<input type="checkbox" ${item.is_available ? 'checked' : ''} readonly tabindex="-1" />` +
+          `<span class="smb-avail-label smb-avail-label--${item.is_available ? 'on' : 'off'}">` +
+            `${item.is_available ? 'Live' : 'Off'}` +
+          `</span>` +
+        `</label>`;
+    }
+
+    filterItems();
+  }
 </script>
 
 </body>

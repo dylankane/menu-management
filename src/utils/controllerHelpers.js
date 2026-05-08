@@ -40,7 +40,7 @@ function extractTranslations(body, langs, fields) {
     const row = { lang };
     for (const field of fields) {
       const val = body[`${field}_${lang}`];
-      row[field] = val !== undefined ? (val.trim() || null) : null;
+      if (val !== undefined) row[field] = val.trim() || null;
     }
     return row;
   });

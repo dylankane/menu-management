@@ -24,11 +24,15 @@
             <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
               <div class="form-group">
                 <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
-                <input type="text" name="name_<%= lang %>" id="itemName_<%= lang %>" class="form-input" />
+                <input type="text" name="name_<%= lang %>" id="itemName_<%= lang %>" class="form-input" data-capitalize="title" />
               </div>
               <div class="form-group">
                 <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
-                <textarea name="description_<%= lang %>" id="itemDesc_<%= lang %>" rows="2" class="form-textarea"></textarea>
+                <textarea name="description_<%= lang %>" id="itemDesc_<%= lang %>" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Public Notes (<%= lang.toUpperCase() %>) <span class="hint">(shown to customers)</span></label>
+                <textarea name="public_notes_<%= lang %>" id="itemPublicNotes_<%= lang %>" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
               </div>
             </div>
           <% }) %>
@@ -36,7 +40,7 @@
 
         <div class="form-group">
           <label class="form-label">Internal Notes <span class="hint">(admin only — not shown to customers)</span></label>
-          <textarea name="notes" id="itemNotes" rows="2" class="form-textarea"></textarea>
+          <textarea name="notes" id="itemNotes" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
         </div>
 
         <div class="form-grid-2">
@@ -237,9 +241,10 @@
     const byLang = {};
     (item.translations || []).forEach(t => byLang[t.lang] = t);
     LANGS.forEach(lang => {
-      const t = byLang[lang] || {};
-      const n = document.getElementById(`itemName_${lang}`); if (n) n.value = t.name        || '';
-      const d = document.getElementById(`itemDesc_${lang}`); if (d) d.value = t.description || '';
+      const t  = byLang[lang] || {};
+      const n  = document.getElementById(`itemName_${lang}`);        if (n)  n.value  = t.name         || '';
+      const d  = document.getElementById(`itemDesc_${lang}`);        if (d)  d.value  = t.description  || '';
+      const pn = document.getElementById(`itemPublicNotes_${lang}`); if (pn) pn.value = t.public_notes || '';
     });
     document.getElementById('itemNotes').value = item.notes || '';
 

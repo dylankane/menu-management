@@ -11,11 +11,11 @@
       <div class="form-group">
         <input type="text" id="addCourseSearch" placeholder="Search courses…" oninput="filterCourseSearch()" class="form-input" />
       </div>
-      <div id="addCourseList" class="add-to-cat-list" style="max-height:16rem;overflow-y:auto;"></div>
+      <div id="addCourseList" class="add-to-cat-list"></div>
       <div class="modal-create-action">
         <button type="button" class="btn btn--pill link--slide" onclick="swapToCourseModal()">+ Create Course</button>
       </div>
-      <div id="addCourseNoteWrap" class="hidden" style="margin-top:0.75rem;">
+      <div id="addCourseNoteWrap" class="modal-note-wrap hidden">
         <h4 class="modal-section-title">Add A Note</h4>
         <div data-lang-container>
           <div class="lang-tabs" id="addCourseNoteTabs">
@@ -28,9 +28,9 @@
           </div>
           <% langs.forEach((lang, i) => { %>
             <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
-              <div class="form-group" style="margin-top:0.5rem;">
-                <label class="form-label" style="font-size:var(--font-size-xs);">
-                  Note for this course (<%= lang.toUpperCase() %>) <span style="color:var(--text-muted);font-weight:400;">— optional</span>
+              <div class="form-group">
+                <label class="form-label form-label--xs">
+                  Note for this course (<%= lang.toUpperCase() %>) <span class="hint">— optional</span>
                 </label>
                 <input type="text" id="addCourseNote_<%= lang %>" class="form-input form-input--sm"
                   placeholder="e.g. Please choose one dish…" />
@@ -58,7 +58,7 @@
     const list    = document.getElementById('addCourseList');
 
     if (available.length === 0) {
-      list.innerHTML = '<div class="smb-panel__empty" style="padding:0.75rem 0;">All courses already added to this set menu</div>';
+      list.innerHTML = '<div class="smb-panel__empty">All courses already added to this set menu</div>';
     } else {
       list.innerHTML = available.map(c => `
         <div class="add-to-cat-item" data-course-id="${c.id}"

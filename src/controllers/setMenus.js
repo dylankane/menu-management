@@ -64,7 +64,7 @@ async function create(req, res, next) {
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? settings.enabled_languages : ['en', 'es'];
-    const translations = extractTranslations(req.body, langs, ['name', 'description']);
+    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
 
     const setMenu = await prisma.setMenu.create({
       data: {
@@ -117,13 +117,13 @@ async function update(req, res, next) {
 
       await tx.setMenu.update({ where: { id }, data: scalarData });
 
-      const translations = extractTranslations(req.body, langs, ['name', 'description']);
+      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
       for (const t of translations) {
-        if (t.name !== undefined || t.description !== undefined) {
+        if (t.name !== undefined || t.description !== undefined || t.public_notes !== undefined) {
           await tx.setMenuTranslation.upsert({
             where:  { set_menu_id_lang: { set_menu_id: id, lang: t.lang } },
-            update: { name: t.name, description: t.description },
-            create: { set_menu_id: id, lang: t.lang, name: t.name, description: t.description },
+            update: { name: t.name, description: t.description, public_notes: t.public_notes },
+            create: { set_menu_id: id, lang: t.lang, name: t.name, description: t.description, public_notes: t.public_notes },
           });
         }
       }
@@ -196,6 +196,13 @@ async function updateCourse(req, res, next) {
 
     const smc = await prisma.setMenuCourse.findUnique({ where: { id } });
     if (!smc || smc.set_menu_id !== set_menu_id) throw new AppError('Course section not found', 404);
+
+    if (req.body.notes !== undefined) {
+      await prisma.setMenuCourse.update({
+        where: { id },
+        data:  { notes: req.body.notes || null },
+      });
+    }
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? settings.enabled_languages : ['en', 'es'];
@@ -379,6 +386,23 @@ async function removeDish(req, res, next) {
   } catch (err) { next(err); }
 }
 
+// DELETE /api/set-menus/:id/categories/:catId
+async function removeFromCategory(req, res, next) {
+  try {
+    const set_menu_id = parseInt(req.params.id);
+    const category_id = parseInt(req.params.catId);
+
+    const sm = await prisma.setMenu.findUnique({ where: { id: set_menu_id } });
+    if (!sm) throw new AppError('Set menu not found', 404);
+
+    await prisma.setMenuCategory.delete({
+      where: { set_menu_id_category_id: { set_menu_id, category_id } },
+    });
+
+    res.json({ data: { message: 'Set menu removed from category' } });
+  } catch (err) { next(err); }
+}
+
 // PATCH /api/set-menus/reorder-in-category — reorder set menus within a specific category
 async function reorderInCategory(req, res, next) {
   try {
@@ -417,7 +441,10 @@ async function moveCategory(req, res, next) {
     });
 
     res.json({ data: { message: 'Moved' } });
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.code === 'P2002') return next(new AppError('That set menu is already in this category', 409));
+    next(err);
+  }
 }
 
 // PATCH /api/set-menus/reorder
@@ -459,5 +486,5 @@ module.exports = {
   list, getOne, create, update, remove,
   addCourse, updateCourse, removeCourse, reorderCourses,
   addDish, updateDish, removeDish,
-  reorder, reorderDishes, reorderInCategory, moveCategory,
+  reorder, reorderDishes, reorderInCategory, moveCategory, removeFromCategory,
 };

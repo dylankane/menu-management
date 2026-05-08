@@ -126,6 +126,8 @@ model Category {
   display_order Int      @default(0)
   is_protected  Boolean  @default(false)
   is_active     Boolean  @default(true)
+  image_url     String?
+  notes         String?  // Internal admin notes — not shown to customers
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -141,10 +143,11 @@ model Category {
 }
 
 model CategoryTranslation {
-  category_id Int
-  lang        String
-  name        String?
-  description String?
+  category_id  Int
+  lang         String
+  name         String?
+  description  String?
+  public_notes String?
 
   category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
 
@@ -182,6 +185,7 @@ model MenuItemTranslation {
   lang         String
   name         String?
   description  String?
+  public_notes String?
 
   menu_item MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
 
@@ -252,10 +256,11 @@ model SetMenu {
 }
 
 model SetMenuTranslation {
-  set_menu_id Int
-  lang        String
-  name        String?
-  description String?
+  set_menu_id  Int
+  lang         String
+  name         String?
+  description  String?
+  public_notes String?
 
   set_menu SetMenu @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
 
@@ -283,10 +288,11 @@ model SetMenuCategory {
 // and in what order. A course section can exist here before any dishes are added.
 // Translations hold a customer-facing note unique to this set menu / course pairing.
 model SetMenuCourse {
-  id            Int @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   set_menu_id   Int
   course_id     Int
-  display_order Int @default(0)
+  display_order Int     @default(0)
+  notes         String? // Internal admin notes — not shown to customers
 
   set_menu     SetMenu                  @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
   course       Course                   @relation(fields: [course_id],   references: [id], onDelete: Restrict)

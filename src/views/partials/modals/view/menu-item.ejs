@@ -1,0 +1,238 @@
+<!-- ── Menu Item View Modal ──────────────────────────────────────────────────── -->
+<div id="itemViewModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+
+    <div class="modal__header">
+      <h3 id="itemViewTitle" class="modal__title">—</h3>
+      <button onclick="closeModal('itemViewModal')" class="modal__close">&times;</button>
+    </div>
+
+    <div class="modal__body modal__body--view">
+
+      <!-- Translations — all languages stacked, divider below this section only -->
+      <div id="itemViewTranslations" class="view-langs"></div>
+
+      <!-- Image (left) + Info (right) -->
+      <div class="view-hero">
+
+        <!-- Image or placeholder -->
+        <img id="itemViewImg" src="" alt="" class="view-hero__img hidden"
+             onclick="openLightbox(this.src)" />
+        <div id="itemViewImgPlaceholder" class="view-hero__img-placeholder hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+            <line x1="2" y1="2" x2="22" y2="22"/>
+          </svg>
+        </div>
+
+        <!-- Info column -->
+        <div class="view-hero__meta">
+
+          <div class="view-info-row">
+            <span class="form-label">Price</span>
+            <div class="view-hero__price-row">
+              <span id="itemViewPrice" class="item-price"></span>
+              <span id="itemViewDiscount" class="item-discount hidden"></span>
+              <span id="itemViewFinalPrice" class="view-hero__final hidden"></span>
+            </div>
+          </div>
+
+          <div class="view-info-row">
+            <span class="form-label">Status</span>
+            <div id="itemViewBadges" class="view-hero__badges"></div>
+          </div>
+
+          <div class="view-info-row">
+            <span class="form-label">Notes <span class="hint">(internal only)</span></span>
+            <p id="itemViewNotes" class="view-section__value view-section__value--muted"></p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <div class="view-section">
+        <span class="form-label">Categories</span>
+        <div id="itemViewCategories" class="category-breadcrumbs"></div>
+      </div>
+
+      <!-- Allergens & Dietary — two columns -->
+      <div class="form-grid-2">
+        <div class="view-section">
+          <span class="form-label">Allergens</span>
+          <div id="itemViewAllergens"></div>
+        </div>
+        <div class="view-section">
+          <span class="form-label">Dietary</span>
+          <div id="itemViewDietary"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal__footer">
+      <button onclick="closeModal('itemViewModal')" class="btn btn--secondary">Close</button>
+      <button onclick="_itemViewToEdit()" class="btn btn--primary">Edit Item</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let _viewingItem = null;
+
+  function openViewModal(id) {
+    const item = (typeof ITEMS_DATA !== 'undefined' ? ITEMS_DATA : []).find(i => i.id === id);
+    if (!item) return;
+    _viewingItem = item;
+    _populateViewModal(item);
+    openModal('itemViewModal');
+  }
+
+  function _populateViewModal(item) {
+    const byLang       = {};
+    (item.translations || []).forEach(t => { byLang[t.lang] = t; });
+    const primaryTrans = byLang[PRIMARY] || Object.values(byLang)[0] || {};
+
+    // Title
+    document.getElementById('itemViewTitle').textContent = primaryTrans.name || '—';
+
+    // Translations — all languages stacked
+    const transContainer = document.getElementById('itemViewTranslations');
+    transContainer.innerHTML = '';
+    LANGS.forEach(lang => {
+      const t   = byLang[lang] || {};
+      const div = document.createElement('div');
+      div.className = 'view-lang-block';
+      div.innerHTML =
+        `<span class="view-lang-block__tag">${esc(lang.toUpperCase())}</span>` +
+        `<div class="view-lang-block__content">` +
+          `<p class="view-lang-block__name">${esc(t.name || '—')}</p>` +
+          `<p class="view-lang-block__desc">${esc(t.description || '—')}</p>` +
+          `<p class="view-lang-block__desc view-lang-block__desc--notes">${esc(t.public_notes || '—')}</p>` +
+        `</div>`;
+      transContainer.appendChild(div);
+    });
+
+    // Image or placeholder
+    const imgEl         = document.getElementById('itemViewImg');
+    const placeholderEl = document.getElementById('itemViewImgPlaceholder');
+    if (item.image_url) {
+      imgEl.src = item.image_url;
+      imgEl.classList.remove('hidden');
+      placeholderEl.classList.add('hidden');
+    } else {
+      imgEl.classList.add('hidden');
+      placeholderEl.classList.remove('hidden');
+    }
+
+    // Price & discount
+    const priceEl = document.getElementById('itemViewPrice');
+    priceEl.textContent = '€' + Number(item.price).toFixed(2);
+    priceEl.classList.toggle('item-price--muted', !!(item.has_discount && item.discount_value));
+    const discountEl = document.getElementById('itemViewDiscount');
+    const finalEl    = document.getElementById('itemViewFinalPrice');
+    if (item.has_discount && item.discount_value) {
+      const dv  = Number(item.discount_value);
+      const str = item.discount_type === 'percent' ? `-${dv}%` : `-€${dv.toFixed(2)}`;
+      discountEl.textContent = str;
+      discountEl.classList.remove('hidden');
+      let final = Number(item.price);
+      if (item.discount_type === 'percent') final = final * (1 - dv / 100);
+      else final = final - dv;
+      finalEl.textContent = '→ €' + Math.max(0, final).toFixed(2);
+      finalEl.classList.remove('hidden');
+    } else {
+      discountEl.classList.add('hidden');
+      finalEl.classList.add('hidden');
+    }
+
+    // Status & special
+    const badgesEl = document.getElementById('itemViewBadges');
+    badgesEl.innerHTML =
+      `<span class="smb-avail smb-avail--${item.is_available ? 'on' : 'off'}"></span>` +
+      `<span class="smb-avail-label">${item.is_available ? 'Live' : 'Off'}</span>` +
+      (item.is_special ? `&nbsp;&nbsp;<span class="tag">Chef's Special</span>` : '');
+
+    // Notes — always visible, dash when empty
+    document.getElementById('itemViewNotes').textContent = item.notes || '—';
+
+    // Categories — breadcrumb style matching the table
+    const catContainer = document.getElementById('itemViewCategories');
+    catContainer.innerHTML = '';
+    const catData = typeof CATEGORIES_DATA !== 'undefined' ? CATEGORIES_DATA : [];
+    if (item.categories && item.categories.length) {
+      item.categories.forEach(c => {
+        const cat      = c.category;
+        const catTrans = (cat.translations || []).find(t => t.lang === PRIMARY) || (cat.translations || [])[0] || {};
+        const div      = document.createElement('div');
+        div.className  = 'breadcrumb-text';
+        if (cat.parent_id) {
+          const parent      = catData.find(p => p.id === cat.parent_id);
+          const parentTrans = parent
+            ? ((parent.translations || []).find(t => t.lang === PRIMARY) || (parent.translations || [])[0] || {})
+            : {};
+          div.innerHTML = parent
+            ? `<span class="breadcrumb-muted">${esc(parentTrans.name || '?')}<span class="breadcrumb-sep"> › </span></span>${esc(catTrans.name || '?')}`
+            : esc(catTrans.name || '?');
+        } else {
+          div.textContent = catTrans.name || '?';
+        }
+        catContainer.appendChild(div);
+      });
+    } else {
+      catContainer.innerHTML = '<span class="cell-empty">—</span>';
+    }
+
+    // Allergens — bulleted list or "None"
+    const allergenContainer = document.getElementById('itemViewAllergens');
+    allergenContainer.innerHTML = '';
+    if (item.allergens && item.allergens.length) {
+      item.allergens.forEach(a => {
+        const t   = (a.allergen.translations || []).find(t => t.lang === PRIMARY) || (a.allergen.translations || [])[0] || {};
+        const div = document.createElement('div');
+        div.className   = 'breadcrumb-text';
+        div.textContent = t.name || '?';
+        allergenContainer.appendChild(div);
+      });
+    } else {
+      allergenContainer.innerHTML = '<span class="cell-empty">—</span>';
+    }
+
+    // Dietary — bulleted list or dash
+    const dietaryContainer = document.getElementById('itemViewDietary');
+    dietaryContainer.innerHTML = '';
+    if (item.dietary && item.dietary.length) {
+      item.dietary.forEach(d => {
+        const t   = (d.dietary_tag.translations || []).find(t => t.lang === PRIMARY) || (d.dietary_tag.translations || [])[0] || {};
+        const div = document.createElement('div');
+        div.className   = 'breadcrumb-text';
+        div.textContent = t.name || '?';
+        dietaryContainer.appendChild(div);
+      });
+    } else {
+      dietaryContainer.innerHTML = '<span class="cell-empty">—</span>';
+    }
+  }
+
+  // Close view modal, open edit modal.
+  // Callbacks restore the view modal (with fresh data on save, or as-is on cancel).
+  function _itemViewToEdit() {
+    if (!_viewingItem) return;
+    closeModal('itemViewModal');
+    window._onItemSaved = (updatedItem) => {
+      const idx = ITEMS_DATA.findIndex(i => i.id === updatedItem.id);
+      if (idx !== -1) ITEMS_DATA[idx] = updatedItem;
+      _viewingItem = updatedItem;
+      _populateViewModal(updatedItem);
+      if (typeof updateTableRow === 'function') updateTableRow(updatedItem);
+      openModal('itemViewModal');
+    };
+    window._onItemModalClose = () => {
+      openModal('itemViewModal');
+    };
+    openEditDishModal(_viewingItem);
+  }
+</script>

@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Menu Builder', restaurantName }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<%
+  const primary = settings.primary_language || 'en';
+  const langs   = settings.enabled_languages || ['en', 'es'];
+
+  function getName(translations) {
+    if (!translations || !translations.length) return '—';
+    const t = translations.find(t => t.lang === primary) || translations[0];
+    return t ? (t.name || '—') : '—';
+  }
+  
+  function catName(cat) {
+    return getName(cat.translations);
+  }
+  
+  function dishName(item) {
+    return getName(item.translations);
+  }
+  
+  function tagName(translations) {
+    const t = (translations || []).find(t => t.lang === primary) || (translations || [])[0];
+    return t ? (t.name || '') : '';
+  }
+%>
+
+<div class="main">
+  <header class="page-header page-header--minimal">
+    <h2 class="page-header__title">Builder</h2>
+    <%- include('../partials/lang-selector') %>
+  </header>
+
+  <main class="page-body page-body--minimal">
+  <div class="card table-card smb-card">
+
+    <div class="card__header card__header--brand">
+      <h3 class="card__title">Menu Builder</h3>
+      <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Category</button>
+    </div>
+
+    <div class="smb-split">
+
+    <!-- ── LEFT PANEL (SIDEBAR) ─────────────────────────────────────── -->
+    <div class="smb-panel">
+      <div class="smb-panel__header smb-panel__header--col">
+        <h4 class="smb-panel__title">Categories</h4>
+        <label class="toggle-switch">
+          <input type="checkbox" id="inactive-toggle-checkbox" onchange="toggleInactiveView()">
+          <span class="toggle-switch__track">
+            <span class="toggle-switch__label toggle-switch__label--left">Live</span>
+            <span class="toggle-switch__slider"></span>
+            <span class="toggle-switch__label toggle-switch__label--right">Off</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="smb-panel__list" id="builder-list">
+        <% if (categories.length === 0) { %>
+          <div class="smb-panel__empty">No categories yet</div>
+        <% } %>
+        
+        <!-- Parent categories -->
+        <div id="builder-cats">
+          <% categories.filter(cat => cat.is_active).forEach(cat => { %>
+            <div class="builder-cat-group is-collapsed" data-cat-id="<%= cat.id %>">
+              <!-- Parent category -->
+              <div class="smb-item" data-cat-id="<%= cat.id %>">
+                <span class="smb-item__handle">&#8801;</span>
+                <% if (cat.children && cat.children.length > 0) { %>
+                  <svg class="icon builder-chevron builder-chevron--collapsed" onclick="toggleCatCollapse(event, <%= cat.id %>)"><use href="/icons/sprite.svg#chevron-down"></use></svg>
+                <% } else { %>
+                  <span class="builder-chevron-spacer"></span>
+                <% } %>
+                <span class="smb-avail smb-avail--<%= cat.is_active ? 'on' : 'off' %>"></span>
+                <div class="smb-item__info" onclick="selectCategory(<%= cat.id %>)">
+                  <span class="smb-item__name"><%= catName(cat) %></span>
+                  <% if (cat.children && cat.children.length > 0) { %>
+                    <span class="smb-item__price"><%= cat.children.length %> subs</span>
+                  <% } else { %>
+                    <span class="smb-item__price"><%= cat._count ? (cat._count.menu_item_categories + cat._count.set_menu_categories) : 0 %> items</span>
+                  <% } %>
+                </div>
+              </div>
+              
+              <!-- Subcategories (nested) -->
+              <% if (cat.children && cat.children.length > 0) { %>
+                <div class="builder-subs hidden" id="builder-subs-<%= cat.id %>" data-parent-id="<%= cat.id %>">
+                  <% cat.children.filter(sub => sub.is_active).forEach(sub => { %>
+                    <div class="smb-item smb-item--sub" data-cat-id="<%= sub.id %>" onclick="selectCategory(<%= sub.id %>)">
+                      <span class="smb-item__handle smb-item__handle--sub">&#8801;</span>
+                      <span class="smb-avail smb-avail--<%= sub.is_active ? 'on' : 'off' %>"></span>
+                      <div class="smb-item__info">
+                        <span class="smb-item__name"><%= catName(sub) %></span>
+                        <span class="smb-item__price"><%= sub._count ? (cat.is_protected ? sub._count.set_menu_categories : (sub._count.menu_item_categories + sub._count.set_menu_categories)) : 0 %> <%= cat.is_protected ? 'set menus' : 'items' %></span>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+
+        <!-- Inactive categories (hidden by default) -->
+        <div id="builder-inactive" class="hidden">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT BUILDER ──────────────────────────────────────────── -->
+    <div class="smb-builder">
+
+      <!-- Empty state -->
+      <div class="smb-empty" id="builder-empty">
+        <div class="empty-state__icon">
+          <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#categories"></use></svg>
+        </div>
+        <p class="empty-state__text">Select a category to start building</p>
+        <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Create New Category</button>
+      </div>
+
+      <!-- Builder content (JS-rendered) -->
+      <div class="smb-content hidden" id="builder-content">
+
+        <!-- Sticky header -->
+        <div class="smb-header">
+          <div class="smb-header__row">
+            <h3 class="smb-header__name" id="builder-name">—</h3>
+            <span class="smb-header__count" id="builder-count"></span>
+            <div id="builder-langs" class="tag-list smb-header__langs"></div>
+            <label class="smb-avail-switch" title="Toggle availability">
+              <input type="checkbox" id="builder-avail-chk" onchange="toggleAvailability()">
+              <span class="smb-avail-label" id="builder-avail-label">Live</span>
+            </label>
+            <div class="smb-header__actions">
+              <button class="btn-view" onclick="openCatViewModal(activeCatId)" title="View details">
+                <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+                <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+              </button>
+              <button class="btn-delete" id="builder-delete-btn" onclick="confirmDeleteCat()" title="Delete">
+                <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="smb-header__bar">
+            <div class="category-breadcrumbs smb-header__cats" id="builder-breadcrumb"></div>
+            <button class="btn btn--pill link--slide" onclick="openAddSubModal(activeCatId, activeCatName)" id="builder-add-sub-btn">+ Subcategory</button>
+            <button class="btn btn--pill link--slide" id="builder-add-item-btn" onclick="openAddToCatModal(activeCatId, activeCatName)">+ Item</button>
+          </div>
+        </div>
+
+        <!-- Scrollable body -->
+        <div class="smb-body" id="builder-body">
+          <!-- Subcategories with nested items rendered by JS -->
+        </div>
+
+      </div>
+    </div>
+
+    </div><!-- /.smb-split -->
+  </div><!-- /.smb-card -->
+  </main><!-- /.page-body -->
+</div><!-- /.main -->
+
+<%- include('../partials/modals/create-edit/category', { langs, primary, categories }) %>
+<%- include('../partials/modals/view/category') %>
+<%- include('../partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
+<%- include('../partials/modals/view/menu-item') %>
+<%- include('../partials/modals/view/set-menu', { langs, primary }) %>
+<%- include('../partials/modals/add/add-item', { langs, primary, dishes: allItems }) %>
+
+<%- include('../partials/scripts') %>
+<script src="/js/sortable.min.js"></script>
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+let CATS_DATA  = <%- JSON.stringify(categories) %>;
+const LANGS    = <%- JSON.stringify(langs) %>;
+const PRIMARY  = '<%= primary %>';
+const ALL_ITEMS = <%- JSON.stringify(allItems) %>;
+
+// Flat category list — needed by view modals for parent breadcrumbs
+const ALL_CATS = [];
+CATS_DATA.forEach(c => { ALL_CATS.push(c); (c.children || []).forEach(s => ALL_CATS.push(s)); });
+
+// Aliases expected by the shared view modal scripts
+let ITEMS_DATA      = ALL_ITEMS;
+const CATEGORIES_DATA = ALL_CATS;
+let SM_DATA         = [];
+
+let activeCatId   = null;
+let activeCatName = '';
+let _sortables    = [];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function getName(translations) {
+  if (!translations || !translations.length) return '—';
+  const t = translations.find(t => t.lang === PRIMARY) || translations[0];
+  return t ? (t.name || '—') : '—';
+}
+
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Panel selection ───────────────────────────────────────────────────────────
+function selectCategory(id) {
+  activeCatId = id;
+  sessionStorage.setItem('builder-active', id);
+  
+  document.querySelectorAll('.smb-item').forEach(el =>
+    el.classList.toggle('smb-item--active', parseInt(el.dataset.catId) === id)
+  );
+  
+  document.querySelectorAll('.inactive-item').forEach(el =>
+    el.classList.toggle('inactive-item--active', parseInt(el.dataset.catId) === id)
+  );
+  
+  const cat = findCategory(id);
+  if (cat) {
+    activeCatName = getName(cat.translations);
+    renderBuilder(cat);
+  }
+}
+
+function findCategory(id) {
+  for (const cat of CATS_DATA) {
+    if (cat.id === id) return cat;
+    if (cat.children) {
+      for (const sub of cat.children) {
+        if (sub.id === id) return sub;
+      }
+    }
+  }
+  return null;
+}
+
+// ── Builder render ────────────────────────────────────────────────────────────
+function renderBuilder(cat) {
+  document.getElementById('builder-empty').classList.add('hidden');
+  document.getElementById('builder-content').classList.remove('hidden');
+
+  // Header
+  const _parent = cat.parent_id ? CATS_DATA.find(c => c.id === cat.parent_id) : null;
+  const isSetMenuContext = cat.is_protected || (_parent?.is_protected || false);
+  document.getElementById('builder-name').textContent = getName(cat.translations);
+  const totalItems = isSetMenuContext
+    ? (cat._count?.set_menu_categories || 0)
+    : (cat._count?.menu_item_categories || 0) + (cat._count?.set_menu_categories || 0);
+  const itemLabel = isSetMenuContext ? 'set menu' : 'item';
+
+  // Show subs count and item count for parent categories with subs
+  if (!cat.parent_id && cat.children && cat.children.length > 0) {
+    const subsCount = cat.children.length;
+    document.getElementById('builder-count').textContent = `${subsCount} sub${subsCount !== 1 ? 's' : ''} · ${totalItems} ${itemLabel}${totalItems !== 1 ? 's' : ''}`;
+  } else {
+    document.getElementById('builder-count').textContent = `${totalItems} ${itemLabel}${totalItems !== 1 ? 's' : ''}`;
+  }
+  
+  const chk = document.getElementById('builder-avail-chk');
+  chk.checked = cat.is_active;
+  const lbl = document.getElementById('builder-avail-label');
+  lbl.textContent  = cat.is_active ? 'Live' : 'Off';
+  lbl.className    = `smb-avail-label smb-avail-label--${cat.is_active ? 'on' : 'off'}`;
+
+  // Breadcrumb
+  const breadcrumbEl = document.getElementById('builder-breadcrumb');
+  if (cat.parent_id) {
+    const parent = CATS_DATA.find(p => p.id === cat.parent_id);
+    if (parent) {
+      breadcrumbEl.innerHTML = `<div class="breadcrumb-text"><span class="breadcrumb-muted">${esc(getName(parent.translations))}<span class="breadcrumb-sep"> › </span></span>${esc(getName(cat.translations))}</div>`;
+    } else {
+      breadcrumbEl.innerHTML = '';
+    }
+  } else {
+    breadcrumbEl.innerHTML = '';
+  }
+
+  // Language completion tags
+  const langsEl = document.getElementById('builder-langs');
+  const completedLangs = LANGS.filter(lang => {
+    const t = (cat.translations || []).find(t => t.lang === lang);
+    return t && t.name;
+  });
+  langsEl.innerHTML = completedLangs.length
+    ? completedLangs.map(l => `<span class="tag tag--lang">${esc(l.toUpperCase())}</span>`).join('')
+    : '<span class="cell-empty">—</span>';
+
+  // Show/hide subcategory button (only for parent categories)
+  const addSubBtn = document.getElementById('builder-add-sub-btn');
+  if (cat.parent_id) {
+    addSubBtn.classList.add('hidden');
+  } else {
+    addSubBtn.classList.remove('hidden');
+  }
+
+  // Update delete button — disabled for protected categories
+  const deleteBtn = document.getElementById('builder-delete-btn');
+  if (deleteBtn) deleteBtn.disabled = !!cat.is_protected;
+
+  // Update + Item button — redirect to set-menus for protected context
+  const addItemBtn = document.getElementById('builder-add-item-btn');
+  if (addItemBtn) {
+    if (isSetMenuContext) {
+      addItemBtn.onclick = () => window.location.href = '/admin/set-menus';
+      addItemBtn.textContent = 'Manage Set Menus';
+    } else {
+      addItemBtn.onclick = () => openAddToCatModal(activeCatId, activeCatName);
+      addItemBtn.textContent = '+ Item';
+    }
+  }
+
+  // For parent categories: show subcategories with their items nested inside
+  // For subcategories: just show their items
+  const bodyEl = document.getElementById('builder-body');
+
+  if (!cat.parent_id && cat.children && cat.children.length > 0) {
+    // Parent category with subcategories
+    const subcatSections = cat.children.map(sub => renderSubcatSection(sub)).join('');
+    const directItems = renderDirectItemsSection(cat.menu_item_categories || [], cat.set_menu_categories || [], cat.id);
+    bodyEl.innerHTML = subcatSections + directItems;
+  } else {
+    // Subcategory or parent without subs - just show items
+    const directItems = renderDirectItemsSection(cat.menu_item_categories || [], cat.set_menu_categories || [], cat.id);
+    bodyEl.innerHTML = directItems;
+  }
+
+  // Empty state when the body has no content
+  if (!bodyEl.innerHTML.trim()) {
+    const isSub = !!cat.parent_id;
+    bodyEl.innerHTML = `
+      <div class="smb-body-empty">
+        <p class="smb-body-empty__text">${isSub ? 'No items in this subcategory yet.' : 'No items in this category yet.'}</p>
+        <div class="smb-body-empty__actions">
+          ${isSetMenuContext
+            ? `<button onclick="window.location.href='/admin/set-menus'" class="btn btn--pill btn--outline-brand btn--sm">+ Manage Set Menus</button>`
+            : `<button onclick="openAddToCatModal(activeCatId, activeCatName)" class="btn btn--pill btn--outline-brand btn--sm">+ Add Item</button>`
+          }
+          ${!isSub ? `<button onclick="openAddSubModal(activeCatId, activeCatName)" class="btn btn--pill btn--outline-brand btn--sm">+ Add Subcategory</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // Init sortables
+  initSortables(cat.id);
+}
+
+function renderSubcatSection(sub) {
+  const _subParent = CATS_DATA.find(c => c.id === sub.parent_id);
+  const isSetMenuSub = _subParent?.is_protected || false;
+  const itemCount = isSetMenuSub
+    ? (sub.set_menu_categories?.length || 0)
+    : (sub.menu_item_categories?.length || 0) + (sub.set_menu_categories?.length || 0);
+  const subItemLabel = isSetMenuSub ? 'set menu' : 'item';
+  const dishes = (sub.menu_item_categories || []).map(mic => renderDishRow(mic, sub.id)).join('');
+  const setMenus = (sub.set_menu_categories || []).map(smc => renderSetMenuRow(smc, sub.id)).join('');
+  const allItems = dishes + setMenus;
+
+  return `
+    <div class="smb-course" data-sub-id="${sub.id}">
+      <div class="smb-course__head">
+        <span class="bl-handle bl-handle--sm" title="Drag to reorder">&#8801;</span>
+        <div class="smb-course__meta">
+          <span class="smb-course__name">${esc(getName(sub.translations))}</span>
+          <span class="smb-course__count">${itemCount} ${subItemLabel}${itemCount !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="smb-course__actions">
+          ${isSetMenuSub
+            ? `<button onclick="window.location.href='/admin/set-menus'" class="btn btn--pill link--slide btn--sm">Manage Set Menus</button>`
+            : `<button onclick="openAddToCatModal(${sub.id}, '${esc(getName(sub.translations))}')" class="btn btn--pill link--slide btn--sm">+ Item</button>`
+          }
+          <button class="btn-view" onclick="openCatViewModal(${sub.id})" title="View details">
+            <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+            <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+          </button>
+          <button class="btn-delete" onclick="deleteCategory(${sub.id}, '${esc(getName(sub.translations))}')" title="Delete">
+            <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="smb-dish-list" data-cat-id="${sub.id}" id="dish-list-${sub.id}">
+        ${allItems}
+      </div>
+    </div>`;
+}
+
+function renderDirectItemsSection(dishes, setMenus, catId) {
+  // Items directly under the category (not in subcategories)
+  const dishRows = dishes.map(mic => renderDishRow(mic, catId)).join('');
+  const setMenuRows = setMenus.map(smc => renderSetMenuRow(smc, catId)).join('');
+  const allItems = dishRows + setMenuRows;
+  
+  if (!allItems) return '';
+  
+  return `<div class="smb-dish-list" data-cat-id="${catId}" id="dish-list-${catId}">${allItems}</div>`;
+}
+
+function renderDishRow(mic, catId) {
+  return `
+    <div class="smb-dish" data-item-id="${mic.menu_item.id}">
+      <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+      <div class="smb-dish__info">
+        <span class="smb-dish__name">${esc(getName(mic.menu_item.translations))}</span>
+      </div>
+      <button class="btn-view" onclick="openBuilderItemView(${mic.menu_item.id})" title="View details">
+        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+      </button>
+      <button class="btn-delete" onclick="removeItemFromCat(${mic.menu_item.id}, ${catId})" title="Remove">
+        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </button>
+    </div>`;
+}
+
+function renderSetMenuRow(smc, catId) {
+  return `
+    <div class="smb-dish" data-set-menu-id="${smc.set_menu.id}">
+      <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+      <div class="smb-dish__info">
+        <span class="smb-dish__name">${esc(getName(smc.set_menu.translations))}</span>
+      </div>
+      <button class="btn-view" onclick="openBuilderSmView(${smc.set_menu.id})" title="View details">
+        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
+        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+      </button>
+      <button class="btn-delete" onclick="removeSetMenuFromCat(${smc.set_menu.id}, ${catId})" title="Remove">
+        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </button>
+    </div>`;
+}
+
+// ── Sortable ──────────────────────────────────────────────────────────────────
+const SCROLL_OPTS = { scroll: true, scrollSensitivity: 60, scrollSpeed: 10 };
+
+// Parent categories sortable
+Sortable.create(document.getElementById('builder-cats'), {
+  ...SCROLL_OPTS,
+  handle:     '.smb-item__handle:not(.smb-item__handle--sub)',
+  animation:  180,
+  ghostClass: 'bl-ghost',
+  dragClass:  'bl-dragging',
+  onEnd() {
+    const items = [...document.querySelectorAll('#builder-cats > .builder-cat-group')].map((el, i) => ({
+      id:            parseInt(el.dataset.catId),
+      display_order: i,
+    }));
+    api('PATCH', '/api/categories/reorder', { items })
+      .catch(err => showToast(err.message, 'error'));
+  },
+});
+
+// Subcategories sortable (for each parent)
+document.querySelectorAll('.builder-subs').forEach(el => {
+  Sortable.create(el, {
+    ...SCROLL_OPTS,
+    handle:     '.smb-item__handle--sub',
+    animation:  180,
+    ghostClass: 'bl-ghost',
+    dragClass:  'bl-dragging',
+    onEnd(evt) {
+      const items = [...evt.from.querySelectorAll(':scope > .smb-item--sub')].map((el, i) => ({
+        id:            parseInt(el.dataset.catId),
+        display_order: i,
+      }));
+      api('PATCH', '/api/categories/reorder', { items })
+        .catch(err => showToast(err.message, 'error'));
+    },
+  });
+});
+
+function initSortables(catId) {
+  _sortables.forEach(s => { try { s.destroy(); } catch(e) {} });
+  _sortables = [];
+
+  // Subcategories reorder within builder body
+  const bodyEl = document.getElementById('builder-body');
+  if (bodyEl) {
+    const subcatSections = bodyEl.querySelectorAll('.smb-course');
+    if (subcatSections.length > 0) {
+      _sortables.push(Sortable.create(bodyEl, {
+        ...SCROLL_OPTS,
+        draggable:  '.smb-course',
+        handle:     '.bl-handle--sm',
+        animation:  180,
+        ghostClass: 'bl-ghost',
+        dragClass:  'bl-dragging',
+        onMove(evt) {
+          // Prevent dropping inside another subcategory's item list
+          return evt.to === bodyEl;
+        },
+        onEnd() {
+          const items = [...bodyEl.querySelectorAll(':scope > .smb-course')].map((el, i) => ({
+            id:            parseInt(el.dataset.subId),
+            display_order: i,
+          }));
+          if (items.length > 0) {
+            api('PATCH', '/api/categories/reorder', { items })
+              .catch(err => showToast(err.message, 'error'));
+          }
+        },
+      }));
+    }
+  }
+
+  // All dish lists (both in subcategories and direct)
+  document.querySelectorAll('.smb-dish-list').forEach(listEl => {
+    _sortables.push(Sortable.create(listEl, {
+      ...SCROLL_OPTS,
+      group:      { name: 'items', pull: true, put: true },
+      handle:     '.bl-handle--dish',
+      animation:  180,
+      ghostClass: 'bl-ghost',
+      dragClass:  'bl-dragging',
+      onEnd(evt) {
+        const fromCatId = evt.from.dataset.catId;
+        const toCatId   = evt.to.dataset.catId;
+        const itemId    = evt.item.dataset.itemId;
+        const setMenuId = evt.item.dataset.setMenuId;
+
+        if (itemId) {
+          // Regular menu item
+          if (fromCatId !== toCatId) {
+            api('PATCH', `/api/menu-items/${itemId}/move`, {
+              from_category_id: parseInt(fromCatId),
+              to_category_id:   parseInt(toCatId),
+            })
+            .then(() => {
+              reorderDishList(evt.to);
+              adjustSubCount(parseInt(fromCatId), -1, false);
+              adjustSubCount(parseInt(toCatId),   +1, false);
+            })
+            .catch(err => {
+              const msg = err.status === 409 ? UI_MESSAGES.itemAlreadyInCategory : UI_MESSAGES.genericError;
+              showToast(msg, 'error');
+              setTimeout(() => location.reload(), 3500);
+            });
+          } else {
+            reorderDishList(evt.to);
+          }
+        } else if (setMenuId) {
+          // Set menu
+          if (fromCatId !== toCatId) {
+            api('PATCH', `/api/set-menus/${setMenuId}/move-category`, {
+              from_category_id: parseInt(fromCatId),
+              to_category_id:   parseInt(toCatId),
+            })
+            .then(() => {
+              reorderSetMenuList(evt.to);
+              adjustSubCount(parseInt(fromCatId), -1, true);
+              adjustSubCount(parseInt(toCatId),   +1, true);
+            })
+            .catch(err => {
+              const msg = err.status === 409 ? UI_MESSAGES.setMenuAlreadyInCategory : UI_MESSAGES.genericError;
+              showToast(msg, 'error');
+              setTimeout(() => location.reload(), 3500);
+            });
+          } else {
+            reorderSetMenuList(evt.to);
+          }
+        }
+      },
+    }));
+  });
+}
+
+function reorderDishList(listEl) {
+  const catId = parseInt(listEl.dataset.catId);
+  const items = [...listEl.querySelectorAll(':scope > .smb-dish')].map((el, i) => ({
+    menu_item_id:  parseInt(el.dataset.itemId),
+    display_order: i,
+  }));
+  if (!items.length) return;
+  api('PATCH', '/api/menu-items/reorder', { category_id: catId, items })
+    .catch(err => showToast(err.message, 'error'));
+}
+
+function reorderSetMenuList(listEl) {
+  const catId = parseInt(listEl.dataset.catId);
+  const items = [...listEl.querySelectorAll(':scope > .smb-dish')].map((el, i) => ({
+    set_menu_id:   parseInt(el.dataset.setMenuId),
+    display_order: i,
+  }));
+  if (!items.length) return;
+  api('PATCH', '/api/set-menus/reorder-in-category', { category_id: catId, items })
+    .catch(err => showToast(err.message, 'error'));
+}
+
+function adjustSubCount(catId, delta, isSetMenu) {
+  // Sub section header badge in the builder body
+  const courseEl = document.querySelector(`.smb-course[data-sub-id="${catId}"]`);
+  if (courseEl) {
+    const el = courseEl.querySelector('.smb-course__count');
+    if (el) {
+      const m = el.textContent.match(/^(\d+)\s+(.+)$/);
+      if (m) {
+        const n  = Math.max(0, parseInt(m[1]) + delta);
+        const sm = m[2].includes('set menu');
+        el.textContent = `${n} ${sm ? 'set menu' : 'item'}${n !== 1 ? 's' : ''}`;
+      }
+    }
+  }
+  // Sidebar sub count
+  const sidebarEl = document.querySelector(`.smb-item--sub[data-cat-id="${catId}"] .smb-item__price`);
+  if (sidebarEl) {
+    const m = sidebarEl.textContent.match(/^(\d+)\s+(.+)$/);
+    if (m) {
+      const n  = Math.max(0, parseInt(m[1]) + delta);
+      const sm = m[2].includes('set menu');
+      sidebarEl.textContent = `${n} ${sm ? 'set menu' : 'item'}${n !== 1 ? 's' : ''}`;
+    }
+  }
+  // Keep CATS_DATA in sync so renderBuilder stays accurate if the user clicks a sub
+  const cat = findCategory(catId);
+  if (cat && cat._count) {
+    if (isSetMenu) cat._count.set_menu_categories  = Math.max(0, (cat._count.set_menu_categories  || 0) + delta);
+    else           cat._count.menu_item_categories = Math.max(0, (cat._count.menu_item_categories || 0) + delta);
+  }
+}
+
+// ── Availability toggle ───────────────────────────────────────────────────────
+async function toggleAvailability() {
+  if (!activeCatId) return;
+  const chk = document.getElementById('builder-avail-chk');
+  try {
+    await api('PUT', `/api/categories/${activeCatId}`, { is_active: chk.checked });
+    const lbl = document.getElementById('builder-avail-label');
+    lbl.textContent = chk.checked ? 'Live' : 'Off';
+    lbl.className   = `smb-avail-label smb-avail-label--${chk.checked ? 'on' : 'off'}`;
+    
+    // Update in data — cascade to children if this is a parent category
+    const cat = findCategory(activeCatId);
+    if (cat) {
+      cat.is_active = chk.checked;
+      if (!cat.parent_id) {
+        (cat.children || []).forEach(sub => { sub.is_active = chk.checked; });
+      }
+    }
+    
+    // Update sidebar indicator
+    const sidebarItem = document.querySelector(`.smb-item[data-cat-id="${activeCatId}"]`);
+    if (sidebarItem) {
+      const dot = sidebarItem.querySelector('.smb-avail');
+      dot.className = `smb-avail smb-avail--${chk.checked ? 'on' : 'off'}`;
+    }
+    
+    showToast(chk.checked ? 'Category is now live' : 'Category hidden');
+  } catch (err) {
+    chk.checked = !chk.checked;
+    showToast(err.message, 'error');
+  }
+}
+
+// ── Add item ──────────────────────────────────────────────────────────────────
+function openAddToCatModal(catId, catNameStr) {
+  openAddItemModal({
+    title:     catNameStr ? `Add Dish to "${catNameStr}"` : 'Add Dish to Category',
+    showNotes: false,
+    onSubmit:  async (dishId) => {
+      await api('POST', `/api/menu-items/${dishId}/add-to-category`, { category_id: catId });
+      showToast('Dish added to category');
+      reloadAfter();
+    },
+  });
+}
+
+async function removeItemFromCat(itemId, catId) {
+  try {
+    await api('DELETE', `/api/menu-items/${itemId}/categories/${catId}`);
+    showToast('Item removed from category');
+    reloadAfter();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function removeSetMenuFromCat(setMenuId, catId) {
+  try {
+    await api('DELETE', `/api/set-menus/${setMenuId}/categories/${catId}`);
+    showToast('Set menu removed from category');
+    reloadAfter();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ── Category status toggle (inactive panel) ───────────────────────────────────
+async function toggleCategoryStatus(id, checked) {
+  try {
+    await api('PUT', `/api/categories/${id}`, { is_active: checked });
+    showToast(checked ? 'Category is now live' : 'Category hidden');
+    reloadAfter();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ── View modal helpers ────────────────────────────────────────────────────────
+async function openBuilderItemView(itemId) {
+  try {
+    const r    = await api('GET', `/api/menu-items/${itemId}`);
+    const item = r.data.item;
+    const idx  = ITEMS_DATA.findIndex(i => i.id === item.id);
+    if (idx !== -1) ITEMS_DATA[idx] = item; else ITEMS_DATA.push(item);
+    openViewModal(itemId);
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+async function openBuilderSmView(setMenuId) {
+  try {
+    const r  = await api('GET', `/api/set-menus/${setMenuId}`);
+    SM_DATA  = [r.data.setMenu];
+    openSmViewModal(setMenuId);
+  } catch (err) { showToast(err.message, 'error'); }
+}
+
+// Redirect "Edit Set Menu" to the set-menus page — the full editor lives there
+function _smViewToEdit() {
+  closeModal('smViewModal');
+  window.location.href = '/admin/set-menus';
+}
+
+function confirmDeleteCat() {
+  if (!activeCatId) return;
+  const cat = findCategory(activeCatId);
+  if (!cat) return;
+  
+  if (cat.is_protected) {
+    showToast('This category is protected and cannot be deleted', 'error');
+    return;
+  }
+  
+  deleteCategory(activeCatId, getName(cat.translations));
+}
+
+// ── Collapse/Expand ───────────────────────────────────────────────────────────
+function toggleCatCollapse(event, catId) {
+  event.stopPropagation();
+  const group = document.querySelector(`.builder-cat-group[data-cat-id="${catId}"]`);
+  const chevron = event.currentTarget;
+  const subsEl = document.getElementById(`builder-subs-${catId}`);
+  
+  if (!group || !subsEl) return;
+  
+  const isCollapsed = group.classList.toggle('is-collapsed');
+  chevron.classList.toggle('builder-chevron--collapsed', isCollapsed);
+  subsEl.classList.toggle('hidden', isCollapsed);
+}
+
+// ── Toggle Inactive View ──────────────────────────────────────────────────────
+let showingInactive = false;
+
+function toggleInactiveView() {
+  const checkbox = document.getElementById('inactive-toggle-checkbox');
+  showingInactive = checkbox.checked;
+  
+  const activeCatsEl = document.getElementById('builder-cats');
+  const inactiveCatsEl = document.getElementById('builder-inactive');
+  const builderContent = document.getElementById('builder-content');
+  const builderEmpty = document.getElementById('builder-empty');
+  
+  if (showingInactive) {
+    // Show inactive view
+    activeCatsEl.classList.add('hidden');
+    inactiveCatsEl.classList.remove('hidden');
+    
+    renderInactiveList();
+    
+    // Check if there are any inactive categories
+    const hasInactive = CATS_DATA.some(cat => !cat.is_active || (cat.children || []).some(s => !s.is_active));
+    if (!hasInactive) {
+      builderContent.classList.add('hidden');
+      builderEmpty.classList.remove('hidden');
+      builderEmpty.querySelector('.empty-state__text').textContent = 'No inactive categories';
+    } else if (!activeCatId || (activeCatId && findCategory(activeCatId)?.is_active)) {
+      // If no category selected or current selection is active, show empty state
+      builderContent.classList.add('hidden');
+      builderEmpty.classList.remove('hidden');
+      builderEmpty.querySelector('.empty-state__text').textContent = 'Select a category to view details';
+    }
+    // Otherwise keep current inactive category displayed
+  } else {
+    // Show active view
+    activeCatsEl.classList.remove('hidden');
+    inactiveCatsEl.classList.add('hidden');
+    
+    // Restore previous selection if any
+    if (activeCatId && findCategory(activeCatId)) {
+      selectCategory(activeCatId);
+    } else {
+      builderContent.classList.add('hidden');
+      builderEmpty.classList.remove('hidden');
+      builderEmpty.querySelector('.empty-state__text').textContent = 'Select a category to start building';
+    }
+  }
+}
+
+function renderInactiveList() {
+  const inactiveCatsEl = document.getElementById('builder-inactive');
+  
+  // Get all inactive categories and subcategories
+  // CATS_DATA is top-level only; subs live in .children
+  const inactiveParents = CATS_DATA.filter(cat => !cat.is_active);
+  const inactiveSubs = [];
+  CATS_DATA.forEach(cat => {
+    (cat.children || []).forEach(sub => {
+      if (!sub.is_active) inactiveSubs.push(sub);
+    });
+  });
+
+  // Sort alphabetically
+  inactiveParents.sort((a, b) => getName(a.translations).localeCompare(getName(b.translations)));
+  inactiveSubs.sort((a, b) => getName(a.translations).localeCompare(getName(b.translations)));
+  
+  let html = '';
+  
+  // Categories section
+  if (inactiveParents.length > 0) {
+    html += '<div class="inactive-section"><h4 class="inactive-section__title">Categories</h4>';
+    inactiveParents.forEach(cat => {
+      html += `
+        <div class="inactive-item" data-cat-id="${cat.id}">
+          <div class="inactive-item__info" onclick="selectCategory(${cat.id})">
+            <span class="inactive-item__name">${esc(getName(cat.translations))}</span>
+          </div>
+          <label class="smb-avail-switch">
+            <input type="checkbox" onchange="toggleCategoryStatus(${cat.id}, this.checked)" />
+            <span class="smb-avail-label smb-avail-label--off">Activate</span>
+          </label>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  
+  // Subcategories section
+  if (inactiveSubs.length > 0) {
+    html += '<div class="inactive-section"><h4 class="inactive-section__title">Subcategories</h4>';
+    inactiveSubs.forEach(sub => {
+      const parent = CATS_DATA.find(p => p.id === sub.parent_id);
+      const parentName = parent ? getName(parent.translations) : '';
+      html += `
+        <div class="inactive-item" data-cat-id="${sub.id}">
+          <div class="inactive-item__info" onclick="selectCategory(${sub.id})">
+            <span class="inactive-item__name">${esc(getName(sub.translations))}</span>
+            ${parentName ? `<span class="inactive-item__parent">in ${esc(parentName)}</span>` : ''}
+          </div>
+          <label class="smb-avail-switch">
+            <input type="checkbox" onchange="toggleCategoryStatus(${sub.id}, this.checked)" />
+            <span class="smb-avail-label smb-avail-label--off">Activate</span>
+          </label>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  
+  if (inactiveParents.length === 0 && inactiveSubs.length === 0) {
+    html = '<div class="smb-panel__empty">No inactive categories</div>';
+  }
+  
+  inactiveCatsEl.innerHTML = html;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function init() {
+  const lastId = parseInt(sessionStorage.getItem('builder-active'));
+  if (lastId && findCategory(lastId)) {
+    selectCategory(lastId);
+  } else if (CATS_DATA.length > 0) {
+    selectCategory(CATS_DATA[0].id);
+  }
+})();
+</script>
+
+</body>
+</html>

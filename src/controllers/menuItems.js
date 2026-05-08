@@ -68,7 +68,7 @@ async function create(req, res, next) {
     const settings = await prisma.restaurantSettings.findFirst();
     const langs = settings ? (settings.enabled_languages) : ['en', 'es'];
 
-    const translations = extractTranslations(req.body, langs, ['name', 'description']);
+    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
 
     const item = await prisma.menuItem.create({
       data: {
@@ -138,13 +138,13 @@ async function update(req, res, next) {
       await tx.menuItem.update({ where: { id }, data: scalarData });
 
       // Translations — upsert each language
-      const translations = extractTranslations(req.body, langs, ['name', 'description']);
+      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
       for (const t of translations) {
-        if (t.name !== undefined || t.description !== undefined) {
+        if (t.name !== undefined || t.description !== undefined || t.public_notes !== undefined) {
           await tx.menuItemTranslation.upsert({
-            where: { menu_item_id_lang: { menu_item_id: id, lang: t.lang } },
-            update: { name: t.name, description: t.description },
-            create: { menu_item_id: id, lang: t.lang, name: t.name, description: t.description },
+            where:  { menu_item_id_lang: { menu_item_id: id, lang: t.lang } },
+            update: { name: t.name, description: t.description, public_notes: t.public_notes },
+            create: { menu_item_id: id, lang: t.lang, name: t.name, description: t.description, public_notes: t.public_notes },
           });
         }
       }
@@ -261,6 +261,26 @@ async function moveToCategory(req, res, next) {
     ]);
 
     res.json({ data: { message: 'Dish moved' } });
+  } catch (err) {
+    if (err.code === 'P2002') return next(new AppError('That item is already in this category', 409));
+    next(err);
+  }
+}
+
+// DELETE /api/menu-items/:id/categories/:catId
+async function removeFromCategory(req, res, next) {
+  try {
+    const id         = parseInt(req.params.id);
+    const categoryId = parseInt(req.params.catId);
+
+    const item = await prisma.menuItem.findUnique({ where: { id } });
+    if (!item) throw new AppError('Menu item not found', 404);
+
+    await prisma.menuItemCategory.delete({
+      where: { menu_item_id_category_id: { menu_item_id: id, category_id: categoryId } },
+    });
+
+    res.json({ data: { message: 'Item removed from category' } });
   } catch (err) { next(err); }
 }
 
@@ -300,4 +320,4 @@ async function addToCategory(req, res, next) {
   } catch (err) { next(err); }
 }
 
-module.exports = { list, getOne, create, update, remove, reorderInCategory, moveToCategory, addToCategory };
+module.exports = { list, getOne, create, update, remove, reorderInCategory, moveToCategory, addToCategory, removeFromCategory };

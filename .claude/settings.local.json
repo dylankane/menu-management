@@ -48,7 +48,8 @@
       "Bash(cmd:*)",
       "Bash(echo \"exit: $?\")",
       "Bash(grep -v \"^$\")",
-      "Bash(npx --yes ejslint src/views/partials/head.ejs src/views/partials/sidebar.ejs src/views/partials/scripts.ejs src/views/admin/dashboard.ejs src/views/admin/menu-items.ejs src/views/admin/categories.ejs src/views/admin/tags.ejs src/views/admin/set-menus.ejs src/views/admin/courses.ejs src/views/admin/settings.ejs src/views/admin/profile.ejs)"
+      "Bash(npx --yes ejslint src/views/partials/head.ejs src/views/partials/sidebar.ejs src/views/partials/scripts.ejs src/views/admin/dashboard.ejs src/views/admin/menu-items.ejs src/views/admin/categories.ejs src/views/admin/tags.ejs src/views/admin/set-menus.ejs src/views/admin/courses.ejs src/views/admin/settings.ejs src/views/admin/profile.ejs)",
+      "Bash(python3 *)"
     ]
   }
 }
