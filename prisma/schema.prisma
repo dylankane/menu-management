@@ -26,23 +26,113 @@ model User {
 }
 
 // ─── RESTAURANT SETTINGS ──────────────────────────────────────────────────────
-// Singleton row (always id = 1). Stores restaurant-level config including
-// language preferences. enabled_languages is a JSON array of BCP-47 codes.
-// primary_language must always be included in enabled_languages.
-// 'en' and 'es' are locked and cannot be removed.
+// Singleton row (always id = 1). Restaurant identity and configuration —
+// language preferences, branding. enabled_languages is a JSON array of BCP-47
+// codes. primary_language must always be included in enabled_languages.
 model RestaurantSettings {
   id                Int      @id @default(1)
   restaurant_name   String   @default("My Restaurant")
   primary_language  String   @default("en")
   enabled_languages Json     @default("[\"en\",\"es\"]")
   logo_url          String?
-  address           String?
-  phone             String?
-  website           String?
-  social_links      Json?
   updated_at        DateTime @updatedAt
 
   @@map("restaurant_settings")
+}
+
+// ─── CLIENT ACCOUNT ───────────────────────────────────────────────────────────
+// Singleton row (id = 1). Developer/owner record for this client instance.
+// Stores the business relationship — personal contact, billing, plan.
+// Not public-facing — admin and super_admin only.
+model ClientAccount {
+  id              Int      @id @default(1)
+  owner_name      String?
+  owner_email     String?
+  owner_phone     String?
+  billing_address String?
+  tax_number      String?
+  plan            String?
+  notes           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@map("client_account")
+}
+
+// ─── RESTAURANT CONTACT ───────────────────────────────────────────────────────
+// Singleton row (id = 1). Public-facing contact details and social links.
+// Served via the public API to the restaurant's website.
+// whatsapp stores the number only — wa.me URL is constructed at render time.
+model RestaurantContact {
+  id                 Int      @id @default(1)
+  phone              String?
+  whatsapp           String?
+  email_general      String?
+  email_reservations String?
+  address            String?
+  map_url            String?
+  instagram_url      String?
+  facebook_url       String?
+  tripadvisor_url    String?
+  google_url         String?
+  twitter_url        String?
+  linkedin_url       String?
+  youtube_url        String?
+  updated_at         DateTime @updatedAt
+
+  @@map("restaurant_contact")
+}
+
+// ─── OPENING HOURS ────────────────────────────────────────────────────────────
+// Seven rows — one per day, seeded on setup. Supports split service hours
+// via two slots (e.g. 09:00–14:00 and 16:00–23:00).
+model OpeningHours {
+  id            Int      @id @default(autoincrement())
+  day           String   @unique  // "monday" | "tuesday" | ... | "sunday"
+  is_closed     Boolean  @default(false)
+  slot_1_from   String?
+  slot_1_to     String?
+  slot_2_active Boolean  @default(false)
+  slot_2_from   String?
+  slot_2_to     String?
+  note          String?
+
+  @@map("opening_hours")
+}
+
+// ─── OPENING HOURS OVERRIDE ───────────────────────────────────────────────────
+// Date-specific exceptions — bank holidays, private events, special hours.
+// The public API checks these first before falling back to the regular schedule.
+model OpeningHoursOverride {
+  id            Int      @id @default(autoincrement())
+  date          DateTime @unique @db.Date
+  is_closed     Boolean  @default(true)
+  slot_1_from   String?
+  slot_1_to     String?
+  slot_2_active Boolean  @default(false)
+  slot_2_from   String?
+  slot_2_to     String?
+  note          String?
+  created_at    DateTime @default(now())
+
+  @@map("opening_hours_overrides")
+}
+
+// ─── ANNOUNCEMENT ─────────────────────────────────────────────────────────────
+// Singleton row (id = 1). Manager-built modal pushed to the website.
+// Returned by the public API only when is_active = true.
+model Announcement {
+  id         Int      @id @default(1)
+  is_active  Boolean  @default(false)
+  title      String?
+  body       String?
+  image_url  String?
+  cta_active Boolean  @default(false)
+  cta_label  String?
+  cta_url    String?
+  updated_at DateTime @updatedAt
+
+  @@map("announcement")
 }
 
 // ─── ALLERGEN TAGS ────────────────────────────────────────────────────────────

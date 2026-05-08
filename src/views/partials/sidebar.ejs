@@ -15,6 +15,12 @@
 
     <hr />
 
+    <!-- ── RESTAURANT HUB ──────────────────────────────────────────── -->
+    <a href="/admin/restaurant" class="sidebar__section-title <%= current === 'restaurant' ? 'sidebar__section-title--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#building"></use></svg>
+      <span>Restaurant Hub</span>
+    </a>
+
     <!-- ── MENU ─────────────────────────────────────────────────────── -->
     <div class="sidebar__section" id="section-menu">
       <button class="sidebar__section-title" onclick="toggleSection('section-menu')">
@@ -23,21 +29,13 @@
         <svg class="icon sidebar__section-chevron"><use href="/icons/sprite.svg#chevron-down"></use></svg>
       </button>
       <div class="sidebar__section-links">
-        <a href="/admin/menu-builder" class="sidebar__link <%= current === 'menu-builder' ? 'sidebar__link--active' : '' %>">
-          <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#menu-builder"></use></svg>
-          Menu Builder
-        </a>
         <a href="/admin/builder" class="sidebar__link <%= current === 'builder' ? 'sidebar__link--active' : '' %>">
           <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#menu-builder"></use></svg>
-          Builder (New)
+          Builder
         </a>
         <a href="/admin/menu-items" class="sidebar__link <%= current === 'menu-items' ? 'sidebar__link--active' : '' %>">
           <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#menu-items"></use></svg>
           Menu Items
-        </a>
-        <a href="/admin/categories" class="sidebar__link <%= current === 'categories' ? 'sidebar__link--active' : '' %>">
-          <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#categories"></use></svg>
-          Categories
         </a>
         <a href="/admin/set-menus" class="sidebar__link <%= current === 'set-menus' ? 'sidebar__link--active' : '' %>">
           <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#set-menus"></use></svg>
@@ -50,29 +48,6 @@
         <a href="/menu" target="_blank" class="sidebar__link">
           <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#eye"></use></svg>
           Preview Menu
-        </a>
-      </div>
-    </div>
-
-    <!-- ── RESTAURANT ─────────────────────────────────────────────── -->
-    <div class="sidebar__section" id="section-restaurant">
-      <button class="sidebar__section-title" onclick="toggleSection('section-restaurant')">
-        <svg class="icon sidebar__section-icon"><use href="/icons/sprite.svg#building"></use></svg>
-        <span>Restaurant</span>
-        <svg class="icon sidebar__section-chevron"><use href="/icons/sprite.svg#chevron-down"></use></svg>
-      </button>
-      <div class="sidebar__section-links">
-        <a href="/admin/restaurant" class="sidebar__link <%= current === 'restaurant-dashboard' ? 'sidebar__link--active' : '' %>">
-          <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#dashboard"></use></svg>
-          Overview
-        </a>
-        <a href="/admin/restaurant/opening-hours" class="sidebar__link <%= current === 'opening-hours' ? 'sidebar__link--active' : '' %>">
-          <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#clock"></use></svg>
-          Opening Hours
-        </a>
-        <a href="/admin/restaurant/contact" class="sidebar__link <%= current === 'contact' ? 'sidebar__link--active' : '' %>">
-          <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#phone"></use></svg>
-          Contact &amp; Info
         </a>
       </div>
     </div>
@@ -120,11 +95,10 @@
 </aside>
 
 <script>
-  const SIDEBAR_SECTIONS = ['section-menu', 'section-restaurant', 'section-gourmet-club'];
+  const SIDEBAR_SECTIONS = ['section-menu', 'section-gourmet-club'];
 
   const SECTION_PAGES = {
-    'section-menu':         ['menu-builder', 'builder', 'menu-items', 'categories', 'set-menus', 'tags'],
-    'section-restaurant':   ['restaurant-dashboard', 'opening-hours', 'contact'],
+    'section-menu':         ['builder', 'menu-items', 'set-menus', 'tags'],
     'section-gourmet-club': ['gourmet-club-dashboard', 'members'],
   };
 

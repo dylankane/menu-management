@@ -75,7 +75,9 @@ app.use('/api/set-menus',    require('./src/routes/setMenus'));
 app.use('/api/allergens',    require('./src/routes/allergens'));
 app.use('/api/dietary',      require('./src/routes/dietary'));
 app.use('/api/courses',      require('./src/routes/courses'));
-app.use('/api/settings',     require('./src/routes/restaurantSettings'));
+app.use('/api/settings',       require('./src/routes/restaurantSettings'));
+app.use('/api/client-account', require('./src/routes/clientAccount'));
+app.use('/api/restaurant',     require('./src/routes/restaurant'));
 
 // ── Admin page routes ─────────────────────────────────────────────────────────
 app.use('/admin', require('./src/routes/adminPages'));

@@ -28,6 +28,41 @@ async function main() {
   });
   console.log('Seeded restaurant settings');
 
+  // ── Client account (singleton) ────────────────────────────────────────────
+  await prisma.clientAccount.upsert({
+    where:  { id: 1 },
+    update: {},
+    create: { id: 1 },
+  });
+  console.log('Seeded client account');
+
+  // ── Restaurant contact (singleton) ────────────────────────────────────────
+  await prisma.restaurantContact.upsert({
+    where:  { id: 1 },
+    update: {},
+    create: { id: 1 },
+  });
+  console.log('Seeded restaurant contact');
+
+  // ── Announcement (singleton) ───────────────────────────────────────────────
+  await prisma.announcement.upsert({
+    where:  { id: 1 },
+    update: {},
+    create: { id: 1 },
+  });
+  console.log('Seeded announcement');
+
+  // ── Opening hours (one row per day) ───────────────────────────────────────
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  for (const day of days) {
+    await prisma.openingHours.upsert({
+      where:  { day },
+      update: {},
+      create: { day, is_closed: false },
+    });
+  }
+  console.log('Seeded opening hours (7 days)');
+
   // ── Admin user ─────────────────────────────────────────────────────────────
   const hashedPassword = await bcrypt.hash('admin123', 12);
   const adminUser = await prisma.user.upsert({

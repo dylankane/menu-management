@@ -95,89 +95,7 @@ router.get(['/', '/dashboard'], async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Categories ────────────────────────────────────────────────────────────────
-router.get('/categories', async (req, res, next) => {
-  try {
-    const categories = await prisma.category.findMany({
-      where: { parent_id: null },
-      include: {
-        translations: true,
-        _count: { select: { menu_item_categories: true, set_menu_categories: true } },
-        children: {
-          include: {
-            translations: true,
-            _count: { select: { menu_item_categories: true, set_menu_categories: true } },
-          },
-          orderBy: { display_order: 'asc' },
-        },
-      },
-      orderBy: { display_order: 'asc' },
-    });
-    res.render('admin/categories', {
-      user: req.user, categories, current: 'categories',
-      restaurantName: restaurantName(res),
-      settings: res.locals.settings,
-    });
-  } catch (err) { next(err); }
-});
-
-// ── Menu Builder ──────────────────────────────────────────────────────────────
-router.get('/menu-builder', async (req, res, next) => {
-  try {
-    const WITH_TRANS = { translations: { orderBy: { lang: 'asc' } } };
-    const DISH_INCLUDE = {
-      include: {
-        menu_item: { include: WITH_TRANS },
-      },
-      orderBy: { display_order: 'asc' },
-    };
-    const SET_MENU_INCLUDE = {
-      include: {
-        set_menu: { include: WITH_TRANS },
-      },
-      orderBy: { display_order: 'asc' },
-    };
-
-    const [categories, allergens, dietaryTags, allItems] = await Promise.all([
-      prisma.category.findMany({
-        where: { parent_id: null },
-        include: {
-          ...WITH_TRANS,
-          children: {
-            include: {
-              ...WITH_TRANS,
-              menu_item_categories: DISH_INCLUDE,
-              set_menu_categories:  SET_MENU_INCLUDE,
-            },
-            orderBy: { display_order: 'asc' },
-          },
-          menu_item_categories: DISH_INCLUDE,
-          set_menu_categories:  SET_MENU_INCLUDE,
-        },
-        orderBy: { display_order: 'asc' },
-      }),
-      prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
-      prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
-      prisma.menuItem.findMany({
-        include: { translations: { orderBy: { lang: 'asc' } } },
-        orderBy: { created_at: 'desc' },
-      }),
-    ]);
-
-    res.render('admin/menu-builder', {
-      user: req.user,
-      categories,
-      allergens,
-      dietaryTags,
-      allItems,
-      current: 'menu-builder',
-      restaurantName: restaurantName(res),
-      settings: res.locals.settings,
-    });
-  } catch (err) { next(err); }
-});
-
-// ── Builder (new sidebar layout) ──────────────────────────────────────────────
+// ── Builder ───────────────────────────────────────────────────────────────────
 router.get('/builder', async (req, res, next) => {
   try {
     const WITH_TRANS = { translations: { orderBy: { lang: 'asc' } } };
@@ -365,14 +283,42 @@ router.get('/tags', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Restaurant ────────────────────────────────────────────────────────────────
+router.get('/restaurant', async (req, res, next) => {
+  try {
+    const [contact, openingHours, overrides, announcement] = await Promise.all([
+      prisma.restaurantContact.findFirst(),
+      prisma.openingHours.findMany({ orderBy: { id: 'asc' } }),
+      prisma.openingHoursOverride.findMany({ orderBy: { date: 'asc' } }),
+      prisma.announcement.findFirst(),
+    ]);
+    res.render('admin/restaurant', {
+      user: req.user,
+      contact:      contact      || {},
+      openingHours: openingHours || [],
+      overrides:    overrides    || [],
+      announcement: announcement || {},
+      current: 'restaurant',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
 // ── Settings ──────────────────────────────────────────────────────────────────
 router.get('/settings', async (req, res, next) => {
   try {
+    const account = await prisma.clientAccount.findFirst();
     res.render('admin/settings', {
       user: req.user, current: 'settings',
       restaurantName: restaurantName(res),
       maxLanguages: parseInt(process.env.MAX_LANGUAGES || '3', 10),
       settings: res.locals.settings,
+      account: account || {},
+      features: {
+        restaurantHub: process.env.FEATURE_RESTAURANT_HUB === 'true',
+        gourmetClub:  process.env.FEATURE_GOURMET_CLUB  === 'true',
+      },
     });
   } catch (err) { next(err); }
 });

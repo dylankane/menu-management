@@ -19,10 +19,6 @@
     return getName(cat.translations);
   }
   
-  function dishName(item) {
-    return getName(item.translations);
-  }
-  
   function tagName(translations) {
     const t = (translations || []).find(t => t.lang === primary) || (translations || [])[0];
     return t ? (t.name || '') : '';
@@ -80,7 +76,7 @@
                 <div class="smb-item__info" onclick="selectCategory(<%= cat.id %>)">
                   <span class="smb-item__name"><%= catName(cat) %></span>
                   <% if (cat.children && cat.children.length > 0) { %>
-                    <span class="smb-item__price"><%= cat.children.length %> subs</span>
+                    <span class="smb-item__price"><%= cat.children.filter(s => s.is_active).length %> subs</span>
                   <% } else { %>
                     <span class="smb-item__price"><%= cat._count ? (cat._count.menu_item_categories + cat._count.set_menu_categories) : 0 %> items</span>
                   <% } %>
@@ -582,7 +578,7 @@ function initSortables(catId) {
 
 function reorderDishList(listEl) {
   const catId = parseInt(listEl.dataset.catId);
-  const items = [...listEl.querySelectorAll(':scope > .smb-dish')].map((el, i) => ({
+  const items = [...listEl.querySelectorAll(':scope > .smb-dish[data-item-id]')].map((el, i) => ({
     menu_item_id:  parseInt(el.dataset.itemId),
     display_order: i,
   }));
@@ -593,7 +589,7 @@ function reorderDishList(listEl) {
 
 function reorderSetMenuList(listEl) {
   const catId = parseInt(listEl.dataset.catId);
-  const items = [...listEl.querySelectorAll(':scope > .smb-dish')].map((el, i) => ({
+  const items = [...listEl.querySelectorAll(':scope > .smb-dish[data-set-menu-id]')].map((el, i) => ({
     set_menu_id:   parseInt(el.dataset.setMenuId),
     display_order: i,
   }));
@@ -673,31 +669,39 @@ function openAddToCatModal(catId, catNameStr) {
     title:     catNameStr ? `Add Dish to "${catNameStr}"` : 'Add Dish to Category',
     showNotes: false,
     onSubmit:  async (dishId) => {
-      await api('POST', `/api/menu-items/${dishId}/add-to-category`, { category_id: catId });
-      showToast('Dish added to category');
-      reloadAfter();
+      try {
+        await api('POST', `/api/menu-items/${dishId}/add-to-category`, { category_id: catId });
+        showToast('Dish added to category');
+        reloadAfter();
+      } catch (err) {
+        showToast(err.status === 409 ? UI_MESSAGES.itemAlreadyInCategory : err.message, 'error');
+      }
     },
   });
 }
 
-async function removeItemFromCat(itemId, catId) {
-  try {
-    await api('DELETE', `/api/menu-items/${itemId}/categories/${catId}`);
-    showToast('Item removed from category');
-    reloadAfter();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+function removeItemFromCat(itemId, catId) {
+  confirmDelete('Remove this item from the category?', async () => {
+    try {
+      await api('DELETE', `/api/menu-items/${itemId}/categories/${catId}`);
+      showToast('Item removed from category');
+      reloadAfter();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
 }
 
-async function removeSetMenuFromCat(setMenuId, catId) {
-  try {
-    await api('DELETE', `/api/set-menus/${setMenuId}/categories/${catId}`);
-    showToast('Set menu removed from category');
-    reloadAfter();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+function removeSetMenuFromCat(setMenuId, catId) {
+  confirmDelete('Remove this set menu from the category?', async () => {
+    try {
+      await api('DELETE', `/api/set-menus/${setMenuId}/categories/${catId}`);
+      showToast('Set menu removed from category');
+      reloadAfter();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  });
 }
 
 // ── Category status toggle (inactive panel) ───────────────────────────────────

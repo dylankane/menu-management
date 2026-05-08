@@ -20,12 +20,11 @@ async function get(req, res, next) {
 // PUT /api/settings
 async function update(req, res, next) {
   try {
-    const { restaurant_name, primary_language, logo_url, address, phone, website, social_links } = req.body;
+    const { restaurant_name, primary_language } = req.body;
 
     const existing = await prisma.restaurantSettings.findFirst();
     const currentLangs = existing ? existing.enabled_languages : ['en', 'es'];
 
-    // Validate primary language is in enabled list
     if (primary_language && !currentLangs.includes(primary_language)) {
       throw new AppError('primary_language must be one of the enabled languages', 400);
     }
@@ -33,17 +32,7 @@ async function update(req, res, next) {
     const data = {};
     if (restaurant_name  !== undefined) data.restaurant_name  = restaurant_name;
     if (primary_language !== undefined) data.primary_language = primary_language;
-    if (logo_url         !== undefined) data.logo_url         = logo_url || null;
-    if (address          !== undefined) data.address          = address  || null;
-    if (phone            !== undefined) data.phone            = phone    || null;
-    if (website          !== undefined) data.website          = website  || null;
     if (req.uploadedFile)               data.logo_url         = req.uploadedFile;
-
-    if (social_links !== undefined) {
-      data.social_links = typeof social_links === 'string'
-        ? JSON.parse(social_links)
-        : social_links;
-    }
 
     const settings = await prisma.restaurantSettings.upsert({
       where: { id: 1 },
