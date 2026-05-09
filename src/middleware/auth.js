@@ -39,4 +39,14 @@ function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth };
+function requireSuperAdmin(req, res, next) {
+  if (req.user?.role !== 'super_admin') {
+    if (req.path.startsWith('/api/')) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    return res.status(403).send('Access denied');
+  }
+  next();
+}
+
+module.exports = { requireAuth, requireSuperAdmin };

@@ -8,7 +8,7 @@ const bcrypt            = require('bcryptjs');
 const QRCode            = require('qrcode');
 const prisma            = require('../config/database');
 const { signToken, verifyToken } = require('../utils/jwt');
-const { requireAuth }   = require('../middleware/auth');
+const { requireAuth, requireSuperAdmin } = require('../middleware/auth');
 const loadSettings      = require('../middleware/loadSettings');
 
 const router = express.Router();
@@ -285,6 +285,7 @@ router.get('/tags', async (req, res, next) => {
 
 // ── Restaurant ────────────────────────────────────────────────────────────────
 router.get('/restaurant', async (req, res, next) => {
+  if (!res.locals.features.restaurantHub) return res.redirect('/admin');
   try {
     const [contact, openingHours, overrides, announcement] = await Promise.all([
       prisma.restaurantContact.findFirst(),
@@ -309,15 +310,16 @@ router.get('/restaurant', async (req, res, next) => {
 router.get('/settings', async (req, res, next) => {
   try {
     const account = await prisma.clientAccount.findFirst();
+    const acc = account || {};
     res.render('admin/settings', {
       user: req.user, current: 'settings',
       restaurantName: restaurantName(res),
-      maxLanguages: parseInt(process.env.MAX_LANGUAGES || '3', 10),
+      maxLanguages: acc.max_languages ?? 3,
       settings: res.locals.settings,
-      account: account || {},
+      account: acc,
       features: {
-        restaurantHub: process.env.FEATURE_RESTAURANT_HUB === 'true',
-        gourmetClub:  process.env.FEATURE_GOURMET_CLUB  === 'true',
+        restaurantHub: acc.has_restaurant_hub ?? false,
+        gourmetClub:   acc.has_gourmet_club  ?? false,
       },
     });
   } catch (err) { next(err); }
@@ -334,6 +336,52 @@ router.get('/profile', async (req, res, next) => {
       user, current: 'profile',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Gourmet Club ──────────────────────────────────────────────────────────────
+router.get('/gourmet-club', async (req, res, next) => {
+  if (!res.locals.features.gourmetClub) return res.redirect('/admin');
+  try {
+    const [totalMembers, activeMembers, consentCount] = await Promise.all([
+      prisma.gourmetClubMember.count(),
+      prisma.gourmetClubMember.count({ where: { is_active: true } }),
+      prisma.gourmetClubMember.count({ where: { marketing_consent: true } }),
+    ]);
+    res.render('admin/gourmet-club/overview', {
+      user: req.user, current: 'gourmet-club-dashboard',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+      stats: { totalMembers, activeMembers, consentCount },
+    });
+  } catch (err) { next(err); }
+});
+
+router.get('/gourmet-club/members', async (req, res, next) => {
+  if (!res.locals.features.gourmetClub) return res.redirect('/admin');
+  try {
+    const members = await prisma.gourmetClubMember.findMany({
+      orderBy: { created_at: 'desc' },
+    });
+    res.render('admin/gourmet-club/members', {
+      user: req.user, current: 'members',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+      members,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Config (super admin only) ─────────────────────────────────────────────────
+router.get('/config', requireSuperAdmin, async (req, res, next) => {
+  try {
+    const account = await prisma.clientAccount.findFirst();
+    res.render('admin/config', {
+      user: req.user, current: 'config',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+      account: account || {},
     });
   } catch (err) { next(err); }
 });

@@ -583,6 +583,39 @@ a.sidebar__section-title {
   align-items: stretch;
 }
 
+/* Config page */
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.config-row:last-child {
+  border-bottom: none;
+}
+
+.config-row__info {
+  flex: 1;
+}
+
+.config-row__name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 0.2rem;
+}
+
+.config-row__desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.config-row__number {
+  width: 5rem !important;
+  text-align: center;
+}
+
 /* Settings page — 2-col top row, full-width Plan & Features at bottom */
 .settings-grid {
   display: grid;
@@ -3220,4 +3253,127 @@ svg.icon--empty-state {
 }
 .view-child-btn:hover {
   text-decoration: underline;
+}
+
+/* ── Data table thead ────────────────────────────────────────────────────── */
+
+.data-table thead th {
+  padding: 0.5rem 0.875rem;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+/* ── Gourmet Club ─────────────────────────────────────────────────────────── */
+
+.gc-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.gc-form-card {
+  max-width: 56rem;
+}
+
+.gc-form-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.75rem 1rem;
+  align-items: end;
+}
+
+.gc-form-consent {
+  display: flex;
+  align-items: center;
+  padding-bottom: 0.5rem;
+}
+
+.gc-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: none;
+  border: none;
+  padding: 0.75rem 0 0.25rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.gc-advanced-toggle:hover {
+  color: var(--text-primary);
+}
+
+.gc-advanced-toggle__chevron {
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform 0.2s;
+}
+.gc-advanced-toggle__chevron--open {
+  transform: rotate(180deg);
+}
+
+.gc-advanced {
+  display: none;
+  padding-top: 0.5rem;
+}
+.gc-advanced--open {
+  display: block;
+}
+
+.gc-form-fields--advanced {
+  grid-template-columns: auto 1fr;
+}
+
+.gc-birthday {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.gc-form-notes {
+  grid-column: 2;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 4rem;
+}
+
+.gc-member-number {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.gc-visit-count {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.gc-consent-icon--yes {
+  width: 1rem;
+  height: 1rem;
+  color: var(--success);
+}
+
+.table-link {
+  color: var(--brand-light);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+}
+.table-link:hover {
+  text-decoration: underline;
+}
+
+.cell-date {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }

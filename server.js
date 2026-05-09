@@ -78,6 +78,8 @@ app.use('/api/courses',      require('./src/routes/courses'));
 app.use('/api/settings',       require('./src/routes/restaurantSettings'));
 app.use('/api/client-account', require('./src/routes/clientAccount'));
 app.use('/api/restaurant',     require('./src/routes/restaurant'));
+app.use('/api/super-admin',    require('./src/routes/superAdmin'));
+app.use('/api/gourmet-club',   require('./src/routes/gourmetClub'));
 
 // ── Admin page routes ─────────────────────────────────────────────────────────
 app.use('/admin', require('./src/routes/adminPages'));

@@ -18,8 +18,15 @@ const DEFAULTS = {
 
 module.exports = async function loadSettings(req, res, next) {
   try {
-    const settings = await prisma.restaurantSettings.findFirst();
+    const [settings, account] = await Promise.all([
+      prisma.restaurantSettings.findFirst(),
+      prisma.clientAccount.findFirst(),
+    ]);
     res.locals.settings = settings || DEFAULTS;
+    res.locals.features = {
+      restaurantHub: account?.has_restaurant_hub ?? false,
+      gourmetClub:   account?.has_gourmet_club   ?? false,
+    };
     next();
   } catch (err) {
     next(err);

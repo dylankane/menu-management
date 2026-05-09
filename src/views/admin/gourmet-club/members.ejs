@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../../partials/head', { title: 'Members', restaurantName }) %>
+<body>
+
+<%- include('../../partials/sidebar', { current, user, restaurantName }) %>
+
+<div class="main">
+  <header class="page-header page-header--minimal">
+    <h2 class="page-header__title">Members</h2>
+  </header>
+
+  <main class="page-body page-body--minimal">
+  <div class="gc-page">
+
+    <!-- ── Add Member Form ──────────────────────────────────────────────────── -->
+    <div class="card gc-form-card">
+      <div class="card__header card__header--accent">
+        <h3 class="card__title">Add Member</h3>
+      </div>
+      <div class="card__body">
+        <div class="gc-form-fields">
+          <div class="form-group">
+            <label class="form-label" for="gcName">Name <span class="form-required">*</span></label>
+            <input type="text" id="gcName" class="form-input" placeholder="Full name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="gcEmail">Email</label>
+            <input type="email" id="gcEmail" class="form-input" placeholder="email@example.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="gcPhone">Phone</label>
+            <input type="tel" id="gcPhone" class="form-input" placeholder="+34 600 000 000" />
+          </div>
+          <div class="form-group gc-form-consent">
+            <label class="form-check">
+              <input type="checkbox" id="gcConsent" />
+              <span class="form-check__label">Marketing consent</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Advanced section -->
+        <button type="button" class="gc-advanced-toggle" id="gcAdvancedToggle" onclick="toggleAdvanced()">
+          <svg class="icon gc-advanced-toggle__chevron" id="gcAdvancedChevron"><use href="/icons/sprite.svg#chevron-down"></use></svg>
+          Advanced
+        </button>
+        <div class="gc-advanced" id="gcAdvanced">
+          <div class="gc-form-fields gc-form-fields--advanced">
+            <div class="form-group">
+              <label class="form-label">Birthday</label>
+              <div class="gc-birthday">
+                <select id="gcBirthdayMonth" class="form-select">
+                  <option value="">Month</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <select id="gcBirthdayDay" class="form-select">
+                  <option value="">Day</option>
+                  <% for (let d = 1; d <= 31; d++) { %>
+                    <option value="<%= d %>"><%= d %></option>
+                  <% } %>
+                </select>
+              </div>
+            </div>
+            <div class="form-group gc-form-notes">
+              <label class="form-label" for="gcNotes">Notes</label>
+              <textarea id="gcNotes" class="form-input form-textarea" rows="2" placeholder="Internal notes..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card__footer form-footer">
+        <button type="button" onclick="addMember()" class="btn btn--primary">Add Member</button>
+      </div>
+    </div>
+
+    <!-- ── Members Table ──────────────────────────────────────────────────────── -->
+    <div class="card table-card">
+      <div class="card__header card__header--brand">
+        <h3 class="card__title">All Members</h3>
+        <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search">
+          <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/icons/sprite.svg#search"></use></svg>
+        </button>
+      </div>
+      <div class="filter-bar" id="filterBar">
+        <input type="text" id="searchInput" placeholder="Search by name, email or phone..." oninput="filterMembers()" class="form-input" style="width:20rem;" />
+        <div class="filter-radios">
+          <label class="form-check">
+            <input type="radio" name="statusFilter" value="all" onchange="filterMembers()" checked />
+            <span class="form-check__label">All</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="statusFilter" value="active" onchange="filterMembers()" />
+            <span class="form-check__label">Active</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="statusFilter" value="inactive" onchange="filterMembers()" />
+            <span class="form-check__label">Inactive</span>
+          </label>
+        </div>
+        <span id="memberCount" class="filter-bar__count"></span>
+      </div>
+
+      <% if (members.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#users"></use></svg>
+          </div>
+          <p class="empty-state__text">No members yet</p>
+        </div>
+      <% } else { %>
+        <table class="data-table" id="membersTable">
+          <thead>
+            <tr>
+              <th class="col-align-left">Member #</th>
+              <th class="col-align-left">Name</th>
+              <th class="col-align-left">Email</th>
+              <th class="col-align-left">Phone</th>
+              <th class="col-align-center">Joined</th>
+              <th class="col-align-center">Last Visit</th>
+              <th class="col-align-center">Visits</th>
+              <th class="col-align-center">Consent</th>
+              <th class="col-align-center">Active</th>
+              <th class="col-align-center"></th>
+            </tr>
+          </thead>
+          <tbody id="membersBody">
+            <% members.forEach(m => { %>
+              <tr class="item-row"
+                  data-id="<%= m.id %>"
+                  data-name="<%= (m.name || '').toLowerCase() %>"
+                  data-email="<%= (m.email || '').toLowerCase() %>"
+                  data-phone="<%= (m.phone || '').toLowerCase() %>"
+                  data-active="<%= m.is_active %>">
+                <td class="col-align-left">
+                  <span class="gc-member-number">GC-<%= String(m.id).padStart(3, '0') %></span>
+                </td>
+                <td class="col-align-left col-max-width">
+                  <p class="table-item__name"><%= m.name %></p>
+                </td>
+                <td class="col-align-left">
+                  <% if (m.email) { %>
+                    <a href="mailto:<%= m.email %>" class="table-link"><%= m.email %></a>
+                  <% } else { %>
+                    <span class="cell-empty">—</span>
+                  <% } %>
+                </td>
+                <td class="col-align-left">
+                  <% if (m.phone) { %>
+                    <span><%= m.phone %></span>
+                  <% } else { %>
+                    <span class="cell-empty">—</span>
+                  <% } %>
+                </td>
+                <td class="col-align-center">
+                  <span class="cell-date"><%= new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></span>
+                </td>
+                <td class="col-align-center">
+                  <% if (m.last_visit) { %>
+                    <span class="cell-date"><%= new Date(m.last_visit).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></span>
+                  <% } else { %>
+                    <span class="cell-empty">—</span>
+                  <% } %>
+                </td>
+                <td class="col-align-center">
+                  <span class="gc-visit-count"><%= m.visit_count %></span>
+                </td>
+                <td class="col-align-center">
+                  <% if (m.marketing_consent) { %>
+                    <svg class="icon gc-consent-icon gc-consent-icon--yes" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  <% } else { %>
+                    <span class="cell-empty">—</span>
+                  <% } %>
+                </td>
+                <td class="col-toggle col-align-center">
+                  <label class="smb-avail-switch" onclick="toggleActive(<%= m.id %>, <%= m.is_active %>)">
+                    <input type="checkbox" <%= m.is_active ? 'checked' : '' %> readonly tabindex="-1" />
+                    <span class="smb-avail-label <%= m.is_active ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
+                      <%= m.is_active ? 'On' : 'Off' %>
+                    </span>
+                  </label>
+                </td>
+                <td class="col-delete col-align-center">
+                  <button class="btn-delete" onclick="deleteMember(<%= m.id %>, '<%= m.name.replace(/'/g, "\\'") %>')" title="Delete">
+                    <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="15" y1="9" x2="9" y2="15"/>
+                      <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+
+  </div><!-- /.gc-page -->
+  </main>
+</div>
+
+<%- include('../../partials/scripts') %>
+<script>
+  const MEMBERS_DATA = <%- JSON.stringify(members) %>;
+
+  // ── Advanced section toggle ──────────────────────────────────────────────────
+  function toggleAdvanced() {
+    const panel   = document.getElementById('gcAdvanced');
+    const chevron = document.getElementById('gcAdvancedChevron');
+    const open    = panel.classList.toggle('gc-advanced--open');
+    chevron.classList.toggle('gc-advanced-toggle__chevron--open', open);
+  }
+
+  // ── Filter bar ───────────────────────────────────────────────────────────────
+  function toggleFilterBar() {
+    const bar    = document.getElementById('filterBar');
+    const toggle = document.getElementById('filterToggle');
+    const open   = bar.classList.toggle('filter-bar--open');
+    toggle.classList.toggle('filter-toggle--active', open);
+    if (open) document.getElementById('searchInput')?.focus();
+  }
+
+  function filterMembers() {
+    const q      = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.querySelector('input[name="statusFilter"]:checked')?.value || 'all';
+    const rows   = document.querySelectorAll('#membersBody .item-row');
+    let visible  = 0;
+    rows.forEach(row => {
+      const matchSearch = !q ||
+        row.dataset.name.includes(q)  ||
+        row.dataset.email.includes(q) ||
+        row.dataset.phone.includes(q);
+      const isActive = row.dataset.active === 'true';
+      const matchStatus = status === 'all' || (status === 'active' && isActive) || (status === 'inactive' && !isActive);
+      const show = matchSearch && matchStatus;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    const countEl = document.getElementById('memberCount');
+    if (countEl) countEl.textContent = `${visible} of ${rows.length}`;
+  }
+
+  (function initCount() {
+    const rows = document.querySelectorAll('#membersBody .item-row');
+    const countEl = document.getElementById('memberCount');
+    if (countEl && rows.length) countEl.textContent = `${rows.length} of ${rows.length}`;
+  })();
+
+  // ── Add member ───────────────────────────────────────────────────────────────
+  async function addMember() {
+    const name = document.getElementById('gcName').value.trim();
+    if (!name) { showToast('Name is required', 'error'); return; }
+
+    const body = {
+      name,
+      email:             document.getElementById('gcEmail').value.trim()  || null,
+      phone:             document.getElementById('gcPhone').value.trim()  || null,
+      marketing_consent: document.getElementById('gcConsent').checked,
+      birthday_month:    document.getElementById('gcBirthdayMonth').value || null,
+      birthday_day:      document.getElementById('gcBirthdayDay').value   || null,
+      notes:             document.getElementById('gcNotes').value.trim()  || null,
+    };
+
+    try {
+      await api('POST', '/api/gourmet-club/members', body);
+      showToast('Member added');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Toggle active ─────────────────────────────────────────────────────────────
+  async function toggleActive(id, current) {
+    try {
+      await api('PUT', `/api/gourmet-club/members/${id}`, { is_active: !current });
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Delete member ─────────────────────────────────────────────────────────────
+  async function deleteMember(id, name) {
+    if (!confirm(`Delete member "${name}"? This cannot be undone.`)) return;
+    try {
+      await api('DELETE', `/api/gourmet-club/members/${id}`);
+      showToast('Member deleted');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+</script>
+
+</body>
+</html>

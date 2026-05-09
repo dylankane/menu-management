@@ -15,16 +15,10 @@
 
     <hr />
 
-    <!-- ── RESTAURANT HUB ──────────────────────────────────────────── -->
-    <a href="/admin/restaurant" class="sidebar__section-title <%= current === 'restaurant' ? 'sidebar__section-title--active' : '' %>">
-      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#building"></use></svg>
-      <span>Restaurant Hub</span>
-    </a>
-
     <!-- ── MENU ─────────────────────────────────────────────────────── -->
     <div class="sidebar__section" id="section-menu">
       <button class="sidebar__section-title" onclick="toggleSection('section-menu')">
-        <svg class="icon sidebar__section-icon"><use href="/icons/sprite.svg#menu-items"></use></svg>
+        <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#menu-items"></use></svg>
         <span>Menu</span>
         <svg class="icon sidebar__section-chevron"><use href="/icons/sprite.svg#chevron-down"></use></svg>
       </button>
@@ -52,10 +46,19 @@
       </div>
     </div>
 
+    <!-- ── RESTAURANT HUB ──────────────────────────────────────────── -->
+    <% if (features.restaurantHub) { %>
+    <a href="/admin/restaurant" class="sidebar__section-title <%= current === 'restaurant' ? 'sidebar__section-title--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#building"></use></svg>
+      <span>Restaurant Hub</span>
+    </a>
+    <% } %>
+
     <!-- ── GOURMET CLUB ───────────────────────────────────────────── -->
+    <% if (features.gourmetClub) { %>
     <div class="sidebar__section" id="section-gourmet-club">
       <button class="sidebar__section-title" onclick="toggleSection('section-gourmet-club')">
-        <svg class="icon sidebar__section-icon"><use href="/icons/sprite.svg#star"></use></svg>
+        <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#star"></use></svg>
         <span>Gourmet Club</span>
         <svg class="icon sidebar__section-chevron"><use href="/icons/sprite.svg#chevron-down"></use></svg>
       </button>
@@ -70,6 +73,7 @@
         </a>
       </div>
     </div>
+    <% } %>
 
     <hr />
 
@@ -81,6 +85,12 @@
       <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#user"></use></svg>
       Profile
     </a>
+    <% if (user.role === 'super_admin') { %>
+    <a href="/admin/config" class="sidebar__link <%= current === 'config' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#lock"></use></svg>
+      Config
+    </a>
+    <% } %>
     <a href="/admin/logout" class="sidebar__link sidebar__link--danger">
       <svg class="icon sidebar__icon"><use href="/icons/sprite.svg#logout"></use></svg>
       Logout
@@ -95,7 +105,7 @@
 </aside>
 
 <script>
-  const SIDEBAR_SECTIONS = ['section-menu', 'section-gourmet-club'];
+  const SIDEBAR_SECTIONS = ['section-menu', <%- features.gourmetClub ? "'section-gourmet-club'" : '' %>].filter(Boolean);
 
   const SECTION_PAGES = {
     'section-menu':         ['builder', 'menu-items', 'set-menus', 'tags'],
