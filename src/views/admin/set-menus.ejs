@@ -42,7 +42,12 @@
       <button onclick="openCreateModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Set Menu</button>
     </div>
 
-    <div class="smb-split">
+    <div class="smb-tabs">
+      <button class="smb-tabs__btn smb-tabs__btn--active" id="smb-tab-list" onclick="showListTab()">Set Menus</button>
+      <button class="smb-tabs__btn" id="smb-tab-detail" onclick="showDetailTab()">Builder</button>
+    </div>
+
+    <div class="smb-split" id="smb-split">
 
     <!-- ── LEFT PANEL ─────────────────────────────────────────────── -->
     <div class="smb-panel">
@@ -196,6 +201,19 @@ function getNote(translations) {
   const t = translations.find(t => t.lang === PRIMARY) || translations[0];
   return t ? (t.notes || '') : '';
 }
+// ── Mobile tab switching ──────────────────────────────────────────────────────
+function showListTab() {
+  document.getElementById('smb-split').classList.remove('smb-split--detail');
+  document.getElementById('smb-tab-list').classList.add('smb-tabs__btn--active');
+  document.getElementById('smb-tab-detail').classList.remove('smb-tabs__btn--active');
+}
+
+function showDetailTab() {
+  document.getElementById('smb-split').classList.add('smb-split--detail');
+  document.getElementById('smb-tab-detail').classList.add('smb-tabs__btn--active');
+  document.getElementById('smb-tab-list').classList.remove('smb-tabs__btn--active');
+}
+
 // ── Panel selection ───────────────────────────────────────────────────────────
 function selectSetMenu(id) {
   activeSmId = id;
@@ -205,6 +223,7 @@ function selectSetMenu(id) {
   );
   const sm = SM_DATA.find(s => s.id === id);
   if (sm) renderBuilder(sm);
+  showDetailTab();
 }
 
 // ── Refresh from API ──────────────────────────────────────────────────────────

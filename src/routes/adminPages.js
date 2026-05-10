@@ -13,6 +13,70 @@ const loadSettings      = require('../middleware/loadSettings');
 
 const router = express.Router();
 
+// ── Dashboard helpers ─────────────────────────────────────────────────────────
+const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+function buildDashCards(features, stats, todayHours, openDaysThisWeek, announcement, gcStats) {
+  const M = { feature: 'Menu',           featureKey: 'menu', icon: 'menu-items' };
+  const H = { feature: 'Restaurant Hub', featureKey: 'hub',  icon: 'building'   };
+  const G = { feature: 'Gourmet Club',   featureKey: 'gc',   icon: 'star'       };
+
+  const menuCards = [
+    { ...M, value: stats.liveItems   ?? 0, label: 'Live Items', link: '/admin/menu-items' },
+    { ...M, value: stats.totalSetMenus ?? 0, label: 'Set Menus',  link: '/admin/set-menus'  },
+    { ...M, value: stats.totalSpecials ?? 0, label: 'Specials',   link: '/admin/menu-items' },
+  ];
+
+  const todayOpen = todayHours && !todayHours.is_closed;
+  const hoursConfigured = todayOpen && todayHours.slot_1_from;
+
+  let hoursValue, hoursLabel, hoursIsStatus;
+  if (!todayHours) {
+    hoursValue = '—'; hoursLabel = 'Not configured'; hoursIsStatus = false;
+  } else if (todayHours.is_closed) {
+    hoursValue = 'Closed'; hoursLabel = 'Closed today'; hoursIsStatus = true;
+  } else if (hoursConfigured) {
+    hoursValue = 'Open';
+    hoursLabel  = `${todayHours.slot_1_from} – ${todayHours.slot_1_to}`;
+    if (todayHours.slot_2_active && todayHours.slot_2_from) {
+      hoursLabel += ` / ${todayHours.slot_2_from} – ${todayHours.slot_2_to}`;
+    }
+    hoursIsStatus = true;
+  } else {
+    hoursValue = '?'; hoursLabel = 'Hours not set'; hoursIsStatus = false;
+  }
+
+  const hubCards = [
+    { ...H, value: hoursValue, label: hoursLabel, link: '/admin/restaurant', isStatus: hoursIsStatus },
+    { ...H, value: openDaysThisWeek ?? '—', label: 'Open Days This Week', link: '/admin/restaurant' },
+    { ...H, value: announcement?.is_active ? 'Live' : 'Off', label: 'Announcement', link: '/admin/restaurant', isStatus: announcement?.is_active },
+  ];
+
+  const gcCards = [
+    { ...G, value: gcStats?.activeMembers   ?? 0, label: 'Active Members',    link: '/admin/gourmet-club/members' },
+    { ...G, value: gcStats?.totalMembers    ?? 0, label: 'Total Members',      link: '/admin/gourmet-club/members' },
+    { ...G, value: gcStats?.joinedThisMonth ?? 0, label: 'Joined This Month',  link: '/admin/gourmet-club'         },
+  ];
+
+  const active = [
+    features.menu          ? 'menu' : null,
+    features.restaurantHub ? 'hub'  : null,
+    features.gourmetClub   ? 'gc'   : null,
+  ].filter(Boolean);
+
+  if (active.length === 0) return [];
+  if (active.length === 3) return [menuCards[0], hubCards[0], gcCards[0]];
+  if (active.length === 1) {
+    if (features.menu)          return menuCards;
+    if (features.restaurantHub) return hubCards;
+    return gcCards;
+  }
+  // Two features
+  if (features.menu && features.restaurantHub) return [menuCards[0], menuCards[1], hubCards[0]];
+  if (features.menu && features.gourmetClub)   return [menuCards[0], menuCards[1], gcCards[0]];
+  return [gcCards[0], gcCards[1], hubCards[0]]; // hub + gc
+}
+
 // ── Login ─────────────────────────────────────────────────────────────────────
 
 router.get('/login', (req, res) => {
@@ -63,31 +127,95 @@ function restaurantName(res) {
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 router.get(['/', '/dashboard'], async (req, res, next) => {
   try {
+    const { menu: menuOn, restaurantHub: hubOn, gourmetClub: gcOn } = res.locals.features;
     const menuUrl = `${process.env.APP_URL || 'http://localhost:3000'}/menu`;
+    const todayDay = DAYS[new Date().getDay()];
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-    const [[totalDishes, totalCategories, totalSubCategories, totalSetMenus, totalSpecials], qrDataUrl] = await Promise.all([
-      Promise.all([
-        prisma.menuItem.count(),
+    const [menuStats, qrDataUrl, recentItems, hubData, gcData] = await Promise.all([
+      menuOn ? Promise.all([
+        prisma.menuItem.count({ where: { is_available: true } }),
         prisma.category.count({ where: { parent_id: null } }),
         prisma.category.count({ where: { parent_id: { not: null } } }),
         prisma.setMenu.count(),
         prisma.menuItem.count({ where: { is_special: true } }),
-      ]),
-      QRCode.toDataURL(menuUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }),
+        prisma.setMenu.count({ where: { is_available: true } }),
+      ]) : Promise.resolve(null),
+      menuOn ? QRCode.toDataURL(menuUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }) : Promise.resolve(null),
+      menuOn ? prisma.menuItem.findMany({
+        take: 5,
+        orderBy: { created_at: 'desc' },
+        select: { id: true, price: true, is_available: true, created_at: true, image_url: true, translations: true },
+      }) : Promise.resolve([]),
+      hubOn ? Promise.all([
+        prisma.openingHours.findMany(),
+        prisma.announcement.findFirst(),
+        prisma.openingHoursOverride.findFirst({ where: { date: { gte: new Date() } }, orderBy: { date: 'asc' } }),
+        prisma.restaurantContact.findFirst(),
+      ]) : Promise.resolve(null),
+      gcOn ? Promise.all([
+        prisma.gourmetClubMember.count({ where: { is_active: true } }),
+        prisma.gourmetClubMember.count(),
+        prisma.gourmetClubMember.count({ where: { created_at: { gte: startOfMonth } } }),
+        prisma.gourmetClubMember.findFirst({ orderBy: { created_at: 'desc' } }),
+      ]) : Promise.resolve(null),
     ]);
 
-    const recentItems = await prisma.menuItem.findMany({
-      take: 5,
-      orderBy: { created_at: 'desc' },
-      select: { id: true, price: true, is_available: true, created_at: true, image_url: true, translations: true },
-    });
+    const stats = menuStats ? {
+      liveItems:          menuStats[0] + menuStats[5],
+      totalCategories:    menuStats[1],
+      totalSubCategories: menuStats[2],
+      totalSetMenus:      menuStats[3],
+      totalSpecials:      menuStats[4],
+    } : {};
+
+    const allHours     = hubData ? hubData[0] : [];
+    const announcement = hubData ? hubData[1] : null;
+    const nextOverride = hubData ? hubData[2] : null;
+    const contact      = hubData ? hubData[3] : null;
+    const hoursMap    = Object.fromEntries(allHours.map(h => [h.day, h]));
+    const todayHours  = hoursMap[todayDay] || null;
+
+    const openDaysThisWeek = allHours.filter(h => !h.is_closed && h.slot_1_from).length;
+    const configuredDays   = allHours.filter(h => h.slot_1_from || h.is_closed).length;
+    let nextDayOff = null;
+    const todayIdx = new Date().getDay();
+    for (let i = 1; i <= 7; i++) {
+      const dh = hoursMap[DAYS[(todayIdx + i) % 7]];
+      if (dh && dh.is_closed) { nextDayOff = DAYS[(todayIdx + i) % 7]; break; }
+    }
+    const tomorrowDay = DAYS[(todayIdx + 1) % 7];
+    const hoursLastUpdated = allHours.length
+      ? allHours.reduce((max, h) => h.updated_at > max ? h.updated_at : max, allHours[0].updated_at)
+      : null;
+    const SOCIAL_FIELDS = ['instagram_url','facebook_url','tripadvisor_url','google_url','twitter_url','linkedin_url','youtube_url'];
+    const socialCount = contact ? SOCIAL_FIELDS.filter(f => contact[f]).length : 0;
+    const hubStats = { openDaysThisWeek, configuredDays, nextDayOff, tomorrowDay, hoursLastUpdated, socialCount };
+
+    const gcStats = gcData ? {
+      activeMembers:   gcData[0],
+      totalMembers:    gcData[1],
+      joinedThisMonth: gcData[2],
+      lastMember:      gcData[3],
+    } : null;
+
+    const cards = buildDashCards(res.locals.features, stats, todayHours, openDaysThisWeek, announcement, gcStats);
 
     res.render('admin/dashboard', {
       user: req.user,
-      stats: { totalDishes, totalCategories, totalSubCategories, totalSetMenus, totalSpecials },
+      cards,
+      stats,
       recentItems,
       qrDataUrl,
       menuUrl,
+      todayHours,
+      todayDay,
+      hoursMap,
+      hubStats,
+      announcement,
+      nextOverride,
+      contact,
+      gcStats,
       current: 'dashboard',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,
@@ -97,6 +225,7 @@ router.get(['/', '/dashboard'], async (req, res, next) => {
 
 // ── Builder ───────────────────────────────────────────────────────────────────
 router.get('/builder', async (req, res, next) => {
+  if (!res.locals.features.menu) return res.redirect('/admin');
   try {
     const WITH_TRANS = { translations: { orderBy: { lang: 'asc' } } };
     const DISH_INCLUDE = {
@@ -155,6 +284,7 @@ router.get('/builder', async (req, res, next) => {
 
 // ── Menu Items ────────────────────────────────────────────────────────────────
 router.get('/menu-items', async (req, res, next) => {
+  if (!res.locals.features.menu) return res.redirect('/admin');
   try {
     const [items, categories, allergens, dietaryTags] = await Promise.all([
       prisma.menuItem.findMany({
@@ -187,6 +317,7 @@ router.get('/menu-items', async (req, res, next) => {
 
 // ── Set Menus ─────────────────────────────────────────────────────────────────
 router.get('/set-menus', async (req, res, next) => {
+  if (!res.locals.features.menu) return res.redirect('/admin');
   try {
     const [setMenus, categories, dishes, courses, allergens, dietaryTags] = await Promise.all([
       prisma.setMenu.findMany({
@@ -255,6 +386,7 @@ router.get('/set-menus', async (req, res, next) => {
 
 // ── Courses ───────────────────────────────────────────────────────────────────
 router.get('/courses', async (req, res, next) => {
+  if (!res.locals.features.menu) return res.redirect('/admin');
   try {
     const courses = await prisma.course.findMany({
       include: { translations: true },
@@ -270,6 +402,7 @@ router.get('/courses', async (req, res, next) => {
 
 // ── Tags (allergens + dietary) ────────────────────────────────────────────────
 router.get('/tags', async (req, res, next) => {
+  if (!res.locals.features.menu) return res.redirect('/admin');
   try {
     const [allergens, dietaryTags] = await Promise.all([
       prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),

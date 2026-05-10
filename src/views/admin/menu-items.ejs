@@ -79,6 +79,7 @@
           <button onclick="openAddDishModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Create Item</button>
         </div>
       <% } else { %>
+        <div class="table-scroll-x">
         <table class="data-table" id="itemsTable">
           <tbody id="itemsBody">
             <% items.forEach(item => { %>
@@ -187,6 +188,7 @@
             <% }) %>
           </tbody>
         </table>
+        </div>
       <% } %>
     </div>
   </main>

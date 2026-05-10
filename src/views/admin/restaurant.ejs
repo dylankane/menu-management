@@ -101,7 +101,7 @@
             <% } %>
             <% if (contact.map_url) { %>
               <span class="info-grid__label">Map</span>
-              <span class="info-grid__value"><a href="<%= contact.map_url %>" target="_blank">View on map →</a></span>
+              <span class="info-grid__value">Embed URL set</span>
             <% } %>
           </div>
         <% } %>
@@ -167,19 +167,7 @@
     <div class="card table-card">
       <div class="card__header card__header--brand">
         <h3 class="card__title">Announcement</h3>
-        <div class="header-actions">
-          <% if (hasAnnContent) { %>
-            <label class="smb-avail-switch" title="Toggle live">
-              <input type="checkbox" id="annActiveToggle"
-                     <%= announcement.is_active ? 'checked' : '' %>
-                     onchange="toggleAnnouncement(this.checked)">
-              <span class="smb-avail-label smb-avail-label--<%= announcement.is_active ? 'on' : 'off' %>" id="annActiveLabel">
-                <%= announcement.is_active ? 'Live' : 'Off' %>
-              </span>
-            </label>
-          <% } %>
-          <button onclick="openEditAnnouncementModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">Edit</button>
-        </div>
+        <button onclick="openEditAnnouncementModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">Edit</button>
       </div>
 
       <% if (!hasAnnContent) { %>
@@ -188,11 +176,21 @@
           <button onclick="openEditAnnouncementModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Create Announcement</button>
         </div>
       <% } else { %>
+        <div class="ann-toggle-row">
+          <label class="smb-avail-switch" title="Toggle live">
+            <input type="checkbox" id="annActiveToggle"
+                   <%= announcement.is_active ? 'checked' : '' %>
+                   onchange="toggleAnnouncement(this.checked)">
+            <span class="smb-avail-label smb-avail-label--<%= announcement.is_active ? 'on' : 'off' %>" id="annActiveLabel">
+              <%= announcement.is_active ? 'Live' : 'Off' %>
+            </span>
+          </label>
+        </div>
         <div class="ann-preview card__body">
           <% if (announcement.image_url) { %>
             <img src="<%= announcement.image_url %>" alt="" class="ann-preview__image" />
           <% } %>
-          <div>
+          <div class="ann-preview__text">
             <p class="ann-preview__title"><%= announcement.title || '—' %></p>
             <% if (announcement.body) { %>
               <p class="ann-preview__body"><%= announcement.body %></p>
@@ -385,8 +383,8 @@
         <input type="text" id="cAddress" value="<%= contact.address || '' %>" class="form-input" />
       </div>
       <div class="form-group">
-        <label class="form-label">Map URL <span class="hint">(Google Maps link)</span></label>
-        <input type="url" id="cMapUrl" value="<%= contact.map_url || '' %>" class="form-input" />
+        <label class="form-label">Map Embed <span class="hint">(Google Maps → Share → Embed a map → paste the URL or the full iframe code)</span></label>
+        <input type="text" id="cMapUrl" value="<%= contact.map_url || '' %>" class="form-input" placeholder="https://www.google.com/maps/embed?pb=... or paste full iframe" />
       </div>
 
       <hr />
@@ -628,13 +626,15 @@
 
   async function submitContact() {
     const SOCIAL_KEYS = <%- JSON.stringify(['instagram_url','facebook_url','tripadvisor_url','google_url','twitter_url','linkedin_url','youtube_url']) %>;
+    const rawMapUrl = document.getElementById('cMapUrl').value.trim();
+    const mapSrcMatch = rawMapUrl.match(/src="([^"]+)"/);
     const body = {
       phone:              document.getElementById('cPhone').value.trim(),
       whatsapp:           document.getElementById('cWhatsapp').value.trim(),
       email_general:      document.getElementById('cEmailGeneral').value.trim(),
       email_reservations: document.getElementById('cEmailRes').value.trim(),
       address:            document.getElementById('cAddress').value.trim(),
-      map_url:            document.getElementById('cMapUrl').value.trim(),
+      map_url:            mapSrcMatch ? mapSrcMatch[1] : rawMapUrl,
     };
     SOCIAL_KEYS.forEach(k => {
       body[k] = document.getElementById(`cSocial_${k}`)?.value.trim() || '';

@@ -18,12 +18,12 @@
       <div class="card__header card__header--accent">
         <h3 class="card__title">Add Member</h3>
       </div>
-      <div class="card__body">
-        <div class="gc-form-fields">
-          <div class="form-group">
-            <label class="form-label" for="gcName">Name <span class="form-required">*</span></label>
-            <input type="text" id="gcName" class="form-input" placeholder="Full name" />
-          </div>
+      <div class="card__body form-stack">
+        <div class="form-group">
+          <label class="form-label" for="gcName">Name <span class="form-required">*</span></label>
+          <input type="text" id="gcName" class="form-input" placeholder="Full name" />
+        </div>
+        <div class="form-grid-2">
           <div class="form-group">
             <label class="form-label" for="gcEmail">Email</label>
             <input type="email" id="gcEmail" class="form-input" placeholder="email@example.com" />
@@ -32,13 +32,11 @@
             <label class="form-label" for="gcPhone">Phone</label>
             <input type="tel" id="gcPhone" class="form-input" placeholder="+34 600 000 000" />
           </div>
-          <div class="form-group gc-form-consent">
-            <label class="form-check">
-              <input type="checkbox" id="gcConsent" />
-              <span class="form-check__label">Marketing consent</span>
-            </label>
-          </div>
         </div>
+        <label class="form-check">
+          <input type="checkbox" id="gcConsent" />
+          <span class="form-check__label">Marketing consent</span>
+        </label>
 
         <!-- Advanced section -->
         <button type="button" class="gc-advanced-toggle" id="gcAdvancedToggle" onclick="toggleAdvanced()">
@@ -46,7 +44,7 @@
           Advanced
         </button>
         <div class="gc-advanced" id="gcAdvanced">
-          <div class="gc-form-fields gc-form-fields--advanced">
+          <div class="form-stack">
             <div class="form-group">
               <label class="form-label">Birthday</label>
               <div class="gc-birthday">
@@ -73,9 +71,9 @@
                 </select>
               </div>
             </div>
-            <div class="form-group gc-form-notes">
+            <div class="form-group">
               <label class="form-label" for="gcNotes">Notes</label>
-              <textarea id="gcNotes" class="form-input form-textarea" rows="2" placeholder="Internal notes..."></textarea>
+              <textarea id="gcNotes" class="form-textarea" rows="2" placeholder="Internal notes..."></textarea>
             </div>
           </div>
         </div>
@@ -112,6 +110,7 @@
         <span id="memberCount" class="filter-bar__count"></span>
       </div>
 
+      <div class="table-scroll">
       <% if (members.length === 0) { %>
         <div class="empty-state">
           <div class="empty-state__icon">
@@ -207,6 +206,7 @@
           </tbody>
         </table>
       <% } %>
+      </div><!-- /.table-scroll -->
     </div>
 
   </div><!-- /.gc-page -->

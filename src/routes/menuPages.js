@@ -72,6 +72,11 @@ const CATEGORY_INCLUDE = (lang, primary) => ({
 
 router.get('/', async (req, res, next) => {
   try {
+    const account = await prisma.clientAccount.findFirst();
+    if (account && account.has_menu === false) {
+      return res.status(404).send('Not found');
+    }
+
     const settingsRow = await prisma.restaurantSettings.findFirst();
     const settings = settingsRow || {
       restaurant_name:   process.env.RESTAURANT_NAME || 'Our Menu',

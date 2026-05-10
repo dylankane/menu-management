@@ -24,8 +24,9 @@ module.exports = async function loadSettings(req, res, next) {
     ]);
     res.locals.settings = settings || DEFAULTS;
     res.locals.features = {
-      restaurantHub: account?.has_restaurant_hub ?? false,
-      gourmetClub:   account?.has_gourmet_club   ?? false,
+      menu:          account?.has_menu            ?? true,
+      restaurantHub: account?.has_restaurant_hub  ?? false,
+      gourmetClub:   account?.has_gourmet_club    ?? false,
     };
     next();
   } catch (err) {

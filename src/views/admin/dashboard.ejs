@@ -5,155 +5,288 @@
 
 <%- include('../partials/sidebar', { current, user, restaurantName }) %>
 
+<%
+  function dashItemName(item) {
+    const primary = settings.primary_language || 'en';
+    const t = (item.translations || []).find(t => t.lang === primary)
+           || (item.translations || [])[0];
+    return t ? (t.name || '—') : '—';
+  }
+%>
+
 <div class="main">
   <header class="page-header">
     <h2 class="page-header__title">Dashboard</h2>
-    <%- include('../partials/lang-selector') %>
     <span class="page-header__meta"><%= new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) %></span>
   </header>
 
   <main class="page-body">
+  <div class="dash-page">
 
-    <!-- Stats cards -->
+    <!-- ── Stat cards ────────────────────────────────────────────────────────── -->
     <div class="stats-grid">
-      <div class="card dash-card stat-card">
-        <div class="stat-card__body">
-          <p class="stat-card__label">Total Items</p>
-          <p class="stat-card__value"><%= stats.totalDishes %></p>
-          <a href="/admin/menu-items" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
-        </div>
-      </div>
-      <div class="card dash-card stat-card">
-        <div class="stat-card__body">
-          <p class="stat-card__label">Set Menus</p>
-          <p class="stat-card__value"><%= stats.totalSetMenus %></p>
-          <a href="/admin/set-menus" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
-        </div>
-      </div>
-      <div class="card dash-card stat-card">
-        <div class="stat-card__body">
-          <p class="stat-card__label">Specials</p>
-          <p class="stat-card__value"><%= stats.totalSpecials %></p>
-          <a href="/admin/menu-items" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
-        </div>
-      </div>
-      <div class="card dash-card stat-card">
-        <div class="stat-card__body">
-          <p class="stat-card__label">Categories</p>
-          <p class="stat-card__value"><%= stats.totalCategories %></p>
-          <a href="/admin/categories" class="stat-card__sub btn--pill link--slide">Manage <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
-        </div>
-      </div>
-    </div>
-
-    <!-- QR Code -->
-    <div class="card dash-card qr-section">
-      <img src="<%= qrDataUrl %>" alt="Menu QR Code" />
-      <div>
-        <h3 class="qr-section__title">Customer Menu QR Code</h3>
-        <p class="qr-section__desc">Customers scan this to view your menu. Print it and place it on tables.</p>
-        <p class="qr-section__url"><%= menuUrl %></p>
-        <div class="qr-section__actions">
-          <a href="<%= menuUrl %>" target="_blank" class="btn btn--pill btn--outline-accent btn--sm">Preview Menu</a>
-          <a href="<%= qrDataUrl %>" download="menu-qr-code.png" class="btn btn--pill btn--outline-brand btn--sm">Download QR</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick actions -->
-    <div class="actions-grid">
-      <a href="/admin/menu-items" class="card dash-card action-card">
-        <svg class="icon action-card__icon"><use href="/icons/sprite.svg#menu-items"></use></svg>
-        <div>
-          <p class="action-card__title">Manage Menu Items</p>
-          <p class="action-card__sub">Add, edit, or remove dishes</p>
-        </div>
-      </a>
-      <a href="/admin/categories" class="card dash-card action-card">
-        <svg class="icon action-card__icon"><use href="/icons/sprite.svg#categories"></use></svg>
-        <div>
-          <p class="action-card__title">Manage Categories</p>
-          <p class="action-card__sub">Organise your menu sections</p>
-        </div>
-      </a>
-      <a href="/admin/set-menus" class="card dash-card action-card">
-        <svg class="icon action-card__icon"><use href="/icons/sprite.svg#set-menus"></use></svg>
-        <div>
-          <p class="action-card__title">Manage Set Menus</p>
-          <p class="action-card__sub">Daily menus and tasting menus</p>
-        </div>
-      </a>
-    </div>
-
-    <!-- Recent items -->
-    <%
-      function dashItemName(item) {
-        const primary = settings.primary_language || 'en';
-        const t = (item.translations || []).find(t => t.lang === primary)
-               || (item.translations || [])[0];
-        return t ? (t.name || '—') : '—';
-      }
-    %>
-    <div class="card table-card">
-      <div class="card__header card__header--brand">
-        <h3 class="card__title">Recently Added Items</h3>
-        <a href="/admin/menu-items" class="card__action btn--pill link--slide link--slide--accent">View all <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
-      </div>
-      <% if (recentItems.length === 0) { %>
-        <div class="empty-state">
-          <div class="empty-state__icon">
-            <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
-          </div>
-          <p class="empty-state__text">No items yet</p>
-          <a href="/admin/menu-items" class="btn btn--pill btn--outline-brand btn--sm">+ Add Item</a>
+      <% if (cards.length === 0) { %>
+        <div class="card" style="grid-column: 1 / -1; padding: 2rem; text-align: center;">
+          <p style="color: var(--text-muted);">No features are currently active. Visit <a href="/admin/config">Config</a> to enable features.</p>
         </div>
       <% } else { %>
-        <table class="data-table">
-          <tbody>
-            <% recentItems.forEach(item => { %>
-              <tr>
-                <td class="col-thumb col-align-left">
-                  <% if (item.image_url) { %>
-                    <img src="<%= item.image_url %>" alt="" class="table-thumb table-thumb--clickable"
-                         onclick="openLightbox('<%= item.image_url %>')" />
-                  <% } else { %>
-                    <div class="table-thumb-placeholder">🍴</div>
-                  <% } %>
-                </td>
-                <td class="col-name col-align-left">
-                  <p class="table-item__name"><%= dashItemName(item) %></p>
-                </td>
-                <td class="col-align-left">
-                  <span class="table-item__desc"><%= new Date(item.created_at).toLocaleDateString('en-GB') %></span>
-                </td>
-                <td class="col-price col-align-center">
-                  <span class="item-price">€<%= Number(item.price).toFixed(2) %></span>
-                </td>
-                <td class="col-toggle col-align-center">
-                  <label class="smb-avail-switch">
-                    <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
-                    <span class="smb-avail-label <%= item.is_available ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
-                      <%= item.is_available ? 'Live' : 'Off' %>
-                    </span>
-                  </label>
-                </td>
-                <td class="col-details col-align-center">
-                  <button class="btn-view" title="View details">
-                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
-                  </button>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
+        <% cards.forEach(card => { %>
+          <div class="card dash-card stat-card">
+            <div class="stat-card__body">
+              <span class="stat-card__feature">
+                <svg class="icon"><use href="/icons/sprite.svg#<%= card.icon %>"></use></svg>
+                <%= card.feature %>
+              </span>
+              <p class="stat-card__value<%= card.isStatus ? ' stat-card__value--status' : '' %>"><%= card.value %></p>
+              <p class="stat-card__label"><%= card.label %></p>
+              <% if (card.meta) { %><p class="stat-card__meta"><%= card.meta %></p><% } %>
+              <a href="<%= card.link %>" class="stat-card__sub btn--pill link--slide">Manage</a>
+            </div>
+          </div>
+        <% }) %>
       <% } %>
     </div>
 
+    <!-- ── Tabbed sections ──────────────────────────────────────────────────── -->
+    <div class="dash-tabs">
+
+      <div class="dash-tab-bar">
+        <% if (features.menu) { %><button class="dash-tab">Menu</button><% } %>
+        <% if (features.restaurantHub) { %><button class="dash-tab">Restaurant Hub</button><% } %>
+        <% if (features.gourmetClub) { %><button class="dash-tab">Gourmet Club</button><% } %>
+      </div>
+
+      <div class="dash-tab-panels" id="dashTabPanels">
+
+    <!-- ── Menu panel ────────────────────────────────────────────────────────── -->
+    <% if (features.menu) { %>
+    <div class="dash-tab-panel">
+
+      <div class="card dash-card qr-section">
+        <img src="<%= qrDataUrl %>" alt="Menu QR Code" />
+        <div>
+          <h3 class="qr-section__title">Customer Menu QR Code</h3>
+          <p class="qr-section__desc">Customers scan this to view your menu. Print it and place it on tables.</p>
+          <p class="qr-section__url"><%= menuUrl %></p>
+          <div class="qr-section__actions">
+            <a href="<%= menuUrl %>" target="_blank" class="btn btn--pill btn--outline-accent btn--sm">Preview Menu</a>
+            <a href="<%= qrDataUrl %>" download="menu-qr-code.png" class="btn btn--pill btn--outline-brand btn--sm">Download QR</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card table-card">
+        <div class="card__header card__header--brand">
+          <h3 class="card__title">Recently Added</h3>
+          <a href="/admin/menu-items" class="card__action btn--pill link--slide link--slide--accent">View all <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+        </div>
+        <% if (recentItems.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon">
+              <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
+            </div>
+            <p class="empty-state__text">No items yet</p>
+            <a href="/admin/menu-items" class="btn btn--pill btn--outline-brand btn--sm">+ Add Item</a>
+          </div>
+        <% } else { %>
+          <table class="data-table">
+            <tbody>
+              <% recentItems.forEach(item => { %>
+                <tr>
+                  <td class="col-thumb col-align-left">
+                    <% if (item.image_url) { %>
+                      <img src="<%= item.image_url %>" alt="" class="table-thumb table-thumb--clickable"
+                           onclick="openLightbox('<%= item.image_url %>')" />
+                    <% } else { %>
+                      <div class="table-thumb-placeholder">🍴</div>
+                    <% } %>
+                  </td>
+                  <td class="col-name col-align-left">
+                    <p class="table-item__name"><%= dashItemName(item) %></p>
+                  </td>
+                  <td class="col-align-left">
+                    <span class="table-item__desc"><%= new Date(item.created_at).toLocaleDateString('en-GB') %></span>
+                  </td>
+                  <td class="col-price col-align-center">
+                    <span class="item-price">€<%= Number(item.price).toFixed(2) %></span>
+                  </td>
+                  <td class="col-toggle col-align-center">
+                    <label class="smb-avail-switch">
+                      <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
+                      <span class="smb-avail-label <%= item.is_available ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
+                        <%= item.is_available ? 'Live' : 'Off' %>
+                      </span>
+                    </label>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ── Restaurant Hub panel ──────────────────────────────────────────────── -->
+    <% if (features.restaurantHub) { %>
+    <%
+      const HUB_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+      const HUB_DAY_ABBR = { monday:'Mon', tuesday:'Tue', wednesday:'Wed', thursday:'Thu', friday:'Fri', saturday:'Sat', sunday:'Sun' };
+    %>
+    <div class="dash-tab-panel">
+
+      <!-- Week strip -->
+      <div class="card hub-week-strip">
+        <% HUB_DAYS.forEach(function(dayKey) { %>
+          <% const dh = hoursMap[dayKey]; %>
+          <% const isDayOpen = dh && !dh.is_closed && dh.slot_1_from; %>
+          <% const isDayClosed = dh && dh.is_closed; %>
+          <div class="hub-day<%= dayKey === todayDay ? ' hub-day--today' : '' %><%= isDayOpen ? ' hub-day--open' : isDayClosed ? ' hub-day--closed' : ' hub-day--unset' %>">
+            <span class="hub-day__name"><%= HUB_DAY_ABBR[dayKey] %></span>
+            <span class="hub-day__dot"></span>
+            <% if (isDayOpen) { %>
+              <span class="hub-day__hours"><%= dh.slot_1_from %> – <%= dh.slot_1_to %></span>
+              <% if (dh.slot_2_active && dh.slot_2_from) { %>
+                <span class="hub-day__hours hub-day__hours--slot2"><%= dh.slot_2_from %> – <%= dh.slot_2_to %></span>
+              <% } %>
+            <% } else if (isDayClosed) { %>
+              <span class="hub-day__hours">Closed</span>
+            <% } else { %>
+              <span class="hub-day__hours">—</span>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+
+      <!-- Bottom grid: announcement + info stats -->
+      <div class="hub-bottom-grid">
+
+        <div class="card hub-announcement">
+          <% if (announcement && (announcement.title || announcement.body)) { %>
+            <div class="hub-announcement__bar">
+              <div class="hub-announcement__bar-left">
+                <span class="hub-announcement__dot<%= announcement.is_active ? ' hub-announcement__dot--live' : '' %>"></span>
+                <span class="hub-announcement__status"><%= announcement.is_active ? 'Live' : 'Off' %></span>
+              </div>
+              <a href="/admin/restaurant" class="hub-announcement__link btn--pill link--slide">Manage</a>
+            </div>
+            <div class="hub-ann-preview">
+              <% if (announcement.image_url) { %>
+                <img src="<%= announcement.image_url %>" alt="" class="hub-ann-preview__bg" />
+              <% } %>
+              <div class="hub-ann-preview__overlay">
+                <p class="ann-preview__title"><%= announcement.title || '—' %></p>
+                <% if (announcement.body) { %>
+                  <p><%= announcement.body.length > 100 ? announcement.body.substring(0, 100) + '…' : announcement.body %></p>
+                <% } %>
+                <% if (announcement.cta_active && announcement.cta_label) { %>
+                  <span class="ann-preview__cta"><%= announcement.cta_label %> →</span>
+                <% } %>
+              </div>
+            </div>
+            <p class="hub-announcement__meta">Updated <%= new Date(announcement.updated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></p>
+          <% } else { %>
+            <div class="hub-announcement__empty">
+              <svg class="icon hub-announcement__empty-icon"><use href="/icons/sprite.svg#building"></use></svg>
+              <p>No announcement configured</p>
+              <a href="/admin/restaurant" class="btn btn--pill btn--outline-brand btn--sm">Configure</a>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="hub-info-panel">
+          <div class="card dash-card stat-card hub-info-stat">
+            <div class="stat-card__body">
+              <span class="stat-card__feature">Opening Hours</span>
+              <p class="stat-card__value"><%= hubStats.configuredDays %>/7</p>
+              <p class="stat-card__label">Days Configured</p>
+            </div>
+          </div>
+          <div class="card dash-card stat-card hub-info-stat">
+            <div class="stat-card__body">
+              <span class="stat-card__feature">Next Holiday Hours</span>
+              <% if (nextOverride) { %>
+                <p class="stat-card__value"><%= new Date(nextOverride.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) %></p>
+              <% } else { %>
+                <p class="stat-card__value">None</p>
+              <% } %>
+              <p class="stat-card__label"><%= (nextOverride && nextOverride.note) ? nextOverride.note : '—' %></p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Hours + social + map row -->
+      <div class="hub-map-grid">
+
+        <div class="card dash-card stat-card">
+          <div class="stat-card__body">
+            <span class="stat-card__feature">Opening Hours</span>
+            <% if (hubStats.hoursLastUpdated) { %>
+              <p class="stat-card__value"><%= new Date(hubStats.hoursLastUpdated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) %></p>
+              <p class="stat-card__label">Last Updated</p>
+            <% } else { %>
+              <p class="stat-card__value">—</p>
+              <p class="stat-card__label">Never Updated</p>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="card dash-card stat-card">
+          <div class="stat-card__body">
+            <span class="stat-card__feature">Social Links</span>
+            <p class="stat-card__value"><%= hubStats.socialCount %>/7</p>
+            <p class="stat-card__label">Configured</p>
+          </div>
+        </div>
+
+        <div class="card hub-map-card">
+          <% if (contact && contact.map_url) { %>
+            <iframe src="<%= contact.map_url %>" class="hub-map-iframe" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <% } else { %>
+            <div class="hub-map-empty">
+              <p>No map embed URL set</p>
+              <a href="/admin/restaurant" class="btn btn--pill btn--outline-brand btn--sm">Configure</a>
+            </div>
+          <% } %>
+        </div>
+
+      </div>
+
+    </div>
+    <% } %>
+
+    <!-- ── Gourmet Club panel ────────────────────────────────────────────────── -->
+    <% if (features.gourmetClub) { %>
+    <div class="dash-tab-panel">
+      <div class="card">
+        <div class="card__header card__header--brand">
+          <h3 class="card__title">Latest Member</h3>
+          <a href="/admin/gourmet-club" class="card__action btn--pill link--slide link--slide--accent">Overview <svg class="icon"><use href="/icons/sprite.svg#arrow-up-right"></use></svg></a>
+        </div>
+        <div class="card__body">
+          <% if (gcStats && gcStats.lastMember) { %>
+            <div class="gc-last-member">
+              <span class="gc-last-member__number">GC-<%= String(gcStats.lastMember.id).padStart(3, '0') %></span>
+              <p class="gc-last-member__name"><%= gcStats.lastMember.name %></p>
+              <p class="gc-last-member__date">Joined <%= new Date(gcStats.lastMember.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></p>
+            </div>
+          <% } else { %>
+            <p class="card__note">No members yet.</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+      </div><!-- /.dash-tab-panels -->
+    </div><!-- /.dash-tabs -->
+
+  </div><!-- /.dash-page -->
   </main>
 </div>
 
-<!-- ── Image Lightbox ─────────────────────────────────────────────────────── -->
 <div id="imageLightbox" class="lightbox hidden" onclick="closeLightbox()">
   <img id="lightboxImg" src="" alt="" class="lightbox__img" onclick="event.stopPropagation()" />
   <button class="lightbox__close" onclick="closeLightbox()">&times;</button>
@@ -165,15 +298,58 @@
     document.getElementById('lightboxImg').src = src;
     document.getElementById('imageLightbox').classList.remove('hidden');
   }
-
   function closeLightbox() {
     document.getElementById('imageLightbox').classList.add('hidden');
     document.getElementById('lightboxImg').src = '';
   }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeLightbox();
-  });
+  (function() {
+    const tabs    = [...document.querySelectorAll('.dash-tab')];
+    const panels  = [...document.querySelectorAll('.dash-tab-panel')];
+    const container = document.getElementById('dashTabPanels');
+    if (!tabs.length || !panels.length) return;
+
+    let current = 0;
+
+    // Position all non-first panels off-screen to the right
+    panels.forEach((p, i) => {
+      if (i > 0) p.style.transform = 'translateX(100%)';
+    });
+
+    // Set container height to active panel
+    function syncHeight(panel) {
+      container.style.height = panel.scrollHeight + 'px';
+    }
+    syncHeight(panels[0]);
+    tabs[0].classList.add('dash-tab--active');
+
+    tabs.forEach((tab, newIdx) => {
+      tab.addEventListener('click', () => {
+        if (newIdx === current) return;
+
+        const dir      = newIdx > current ? 1 : -1;
+        const outPanel = panels[current];
+        const inPanel  = panels[newIdx];
+
+        // Snap incoming into position off-screen without transition
+        inPanel.style.transition = 'none';
+        inPanel.style.transform  = `translateX(${dir * 100}%)`;
+        inPanel.offsetHeight; // force reflow
+
+        // Re-enable transitions and animate both
+        inPanel.style.transition  = '';
+        outPanel.style.transition = '';
+        outPanel.style.transform  = `translateX(${-dir * 100}%)`;
+        inPanel.style.transform   = 'translateX(0)';
+        syncHeight(inPanel);
+
+        tabs[current].classList.remove('dash-tab--active');
+        tab.classList.add('dash-tab--active');
+        current = newIdx;
+      });
+    });
+  })();
 </script>
 </body>
 </html>

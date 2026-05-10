@@ -1,88 +1,110 @@
 <!DOCTYPE html>
 <html lang="<%= lang %>">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><%= restaurantName %></title>
-  <link rel="stylesheet" href="/css/menu.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= restaurantName %> - Menu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/menu.css">
 </head>
 <body>
+  <div class="menu-container">
+    <header class="menu-header">
+      <h1 class="restaurant-name">Lumière</h1>
+      <p class="menu-subtitle">Cuisine Française Contemporaine</p>
+      <div class="menu-divider"></div>
+    </header>
 
-  <header class="menu-header">
-    <div class="menu-header__inner">
-      <h1 class="menu-header__name"><%= restaurantName %></h1>
-    </div>
-  </header>
-
-  <main class="menu-main">
-
-    <%
-      function isVisible(mic) {
-        const mi = mic && mic.menu_item;
-        return mi && mi.is_available;
-      }
-      function catHasContent(cat) {
-        return (cat.menu_item_categories || []).some(isVisible) ||
-               (cat.children || []).some(child => (child.menu_item_categories || []).some(isVisible));
-      }
-    %>
-
-    <% categories.forEach(cat => {
-      if (!catHasContent(cat)) return;
-      const catT = pickT(cat.translations);
-    %>
-      <section class="menu-section">
-        <h2 class="menu-section__title"><%= catT.name || cat.slug %></h2>
-        <% if (catT.description) { %>
-          <p class="menu-section__desc"><%= catT.description %></p>
-        <% } %>
-
-        <!-- Direct items in this category -->
-        <% const directItems = (cat.menu_item_categories || []).filter(isVisible); %>
-        <% if (directItems.length > 0) { %>
-          <div class="menu-items">
-            <% directItems.forEach(mic => {
-              const item = mic.menu_item;
-            %>
-              <%- include('../partials/menu-item', { item }) %>
-            <% }) %>
-          </div>
-        <% } %>
-
-        <!-- Subcategories -->
-        <% if (cat.children) { %>
-          <% cat.children.forEach(child => {
-            const childItems = (child.menu_item_categories || []).filter(isVisible);
-            if (childItems.length === 0) return;
-            const childT = pickT(child.translations);
-          %>
-            <h3 class="menu-subsection__title"><%= childT.name || child.slug %></h3>
-            <div class="menu-items">
-              <% childItems.forEach(mic => {
-                const item = mic.menu_item;
-              %>
-                <%- include('../partials/menu-item', { item }) %>
-              <% }) %>
-            </div>
-          <% }) %>
-        <% } %>
-      </section>
-    <% }) %>
-
-    <% if (categories.length === 0) { %>
-      <div class="menu-empty">
-        <div class="menu-empty__icon">
-          <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
+    <% if (categories && categories.length > 0) { %>
+      <nav id="categoryNav" class="category-nav">
+        <div class="category-nav-inner">
+          <% categories.forEach((category, index) => { %>
+            <% const categoryTrans = pickT(category.translations); %>
+            <a href="#category-<%= category.id %>" class="category-nav-link<%= index === 0 ? ' active' : '' %>" data-category="<%= category.id %>">
+              <%= categoryTrans.name || 'Category' %>
+            </a>
+          <% }); %>
         </div>
-        <p class="menu-empty__text">Menu coming soon</p>
-      </div>
+      </nav>
     <% } %>
 
-  </main>
+    <main class="menu-content">
+      <% if (categories && categories.length > 0) { %>
+        <% categories.forEach(category => { %>
+          <% const categoryTrans = pickT(category.translations); %>
+          <section class="category-section" id="category-<%= category.id %>">
+            <div class="category-header">
+              <h2 class="category-title"><%= categoryTrans.name || 'Category' %></h2>
+              <% if (categoryTrans.description) { %>
+                <p class="category-description"><%= categoryTrans.description %></p>
+              <% } %>
+            </div>
 
-  <footer class="menu-footer">
-    <p><%= restaurantName %></p>
-  </footer>
+            <% if (category.menu_item_categories && category.menu_item_categories.length > 0) { %>
+              <div class="menu-items-grid">
+                <% category.menu_item_categories.forEach(mic => { %>
+                  <% if (mic.menu_item && mic.menu_item.is_available) { %>
+                    <%- include('../partials/menu-item', { 
+                      item: mic.menu_item, 
+                      pickT: pickT,
+                      lang: lang 
+                    }) %>
+                  <% } %>
+                <% }); %>
+              </div>
+            <% } %>
 
+            <% if (category.children && category.children.length > 0) { %>
+              <% category.children.forEach(subcategory => { %>
+                <% const subTrans = pickT(subcategory.translations); %>
+                <% if (subcategory.menu_item_categories && subcategory.menu_item_categories.length > 0) { %>
+                  <div class="subcategory-section">
+                    <div class="subcategory-header">
+                      <h3 class="subcategory-title"><%= subTrans.name || 'Subcategory' %></h3>
+                      <% if (subTrans.description) { %>
+                        <p class="subcategory-description"><%= subTrans.description %></p>
+                      <% } %>
+                    </div>
+                    <div class="menu-items-grid">
+                      <% subcategory.menu_item_categories.forEach(mic => { %>
+                        <% if (mic.menu_item && mic.menu_item.is_available) { %>
+                          <%- include('../partials/menu-item', { 
+                            item: mic.menu_item, 
+                            pickT: pickT,
+                            lang: lang 
+                          }) %>
+                        <% } %>
+                      <% }); %>
+                    </div>
+                  </div>
+                <% } %>
+              <% }); %>
+            <% } %>
+          </section>
+        <% }); %>
+      <% } else { %>
+        <div class="category-section">
+          <div class="category-header">
+            <p class="category-description">Menu coming soon...</p>
+          </div>
+        </div>
+      <% } %>
+    </main>
+
+    <footer class="menu-footer">
+      <p class="menu-footer-text">Bon Appétit</p>
+    </footer>
+  </div>
+
+  <div id="imageModal" class="image-modal">
+    <button class="image-modal-close" aria-label="Close">&times;</button>
+    <div class="image-modal-content">
+      <img id="modalImage" class="image-modal-img" src="" alt="">
+    </div>
+  </div>
+
+  <script src="/js/menu.js"></script>
 </body>
 </html>

@@ -39,7 +39,12 @@
       <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Category</button>
     </div>
 
-    <div class="smb-split">
+    <div class="smb-tabs">
+      <button class="smb-tabs__btn smb-tabs__btn--active" id="smb-tab-list" onclick="showListTab()">Categories</button>
+      <button class="smb-tabs__btn" id="smb-tab-detail" onclick="showDetailTab()">Builder</button>
+    </div>
+
+    <div class="smb-split" id="smb-split">
 
     <!-- ── LEFT PANEL (SIDEBAR) ─────────────────────────────────────── -->
     <div class="smb-panel">
@@ -72,7 +77,6 @@
                 <% } else { %>
                   <span class="builder-chevron-spacer"></span>
                 <% } %>
-                <span class="smb-avail smb-avail--<%= cat.is_active ? 'on' : 'off' %>"></span>
                 <div class="smb-item__info" onclick="selectCategory(<%= cat.id %>)">
                   <span class="smb-item__name"><%= catName(cat) %></span>
                   <% if (cat.children && cat.children.length > 0) { %>
@@ -89,7 +93,6 @@
                   <% cat.children.filter(sub => sub.is_active).forEach(sub => { %>
                     <div class="smb-item smb-item--sub" data-cat-id="<%= sub.id %>" onclick="selectCategory(<%= sub.id %>)">
                       <span class="smb-item__handle smb-item__handle--sub">&#8801;</span>
-                      <span class="smb-avail smb-avail--<%= sub.is_active ? 'on' : 'off' %>"></span>
                       <div class="smb-item__info">
                         <span class="smb-item__name"><%= catName(sub) %></span>
                         <span class="smb-item__price"><%= sub._count ? (cat.is_protected ? sub._count.set_menu_categories : (sub._count.menu_item_categories + sub._count.set_menu_categories)) : 0 %> <%= cat.is_protected ? 'set menus' : 'items' %></span>
@@ -149,6 +152,8 @@
             </div>
           </div>
           <div class="smb-header__bar">
+            <img id="builder-cat-img" src="" alt="" class="table-thumb table-thumb--clickable hidden"
+                 onclick="openCatEditLightbox(this.src)" />
             <div class="category-breadcrumbs smb-header__cats" id="builder-breadcrumb"></div>
             <button class="btn btn--pill link--slide" onclick="openAddSubModal(activeCatId, activeCatName)" id="builder-add-sub-btn">+ Subcategory</button>
             <button class="btn btn--pill link--slide" id="builder-add-item-btn" onclick="openAddToCatModal(activeCatId, activeCatName)">+ Item</button>
@@ -210,6 +215,19 @@ function esc(str) {
   return div.innerHTML;
 }
 
+// ── Mobile tab switching ──────────────────────────────────────────────────────
+function showListTab() {
+  document.getElementById('smb-split').classList.remove('smb-split--detail');
+  document.getElementById('smb-tab-list').classList.add('smb-tabs__btn--active');
+  document.getElementById('smb-tab-detail').classList.remove('smb-tabs__btn--active');
+}
+
+function showDetailTab() {
+  document.getElementById('smb-split').classList.add('smb-split--detail');
+  document.getElementById('smb-tab-detail').classList.add('smb-tabs__btn--active');
+  document.getElementById('smb-tab-list').classList.remove('smb-tabs__btn--active');
+}
+
 // ── Panel selection ───────────────────────────────────────────────────────────
 function selectCategory(id) {
   activeCatId = id;
@@ -228,6 +246,7 @@ function selectCategory(id) {
     activeCatName = getName(cat.translations);
     renderBuilder(cat);
   }
+  showDetailTab();
 }
 
 function findCategory(id) {
@@ -281,6 +300,16 @@ function renderBuilder(cat) {
     }
   } else {
     breadcrumbEl.innerHTML = '';
+  }
+
+  // Category image
+  const catImg = document.getElementById('builder-cat-img');
+  if (cat.image_url) {
+    catImg.src = cat.image_url;
+    catImg.classList.remove('hidden');
+  } else {
+    catImg.src = '';
+    catImg.classList.add('hidden');
   }
 
   // Language completion tags

@@ -53,6 +53,7 @@ model ClientAccount {
   tax_number          String?
   plan                String?
   notes               String?
+  has_menu            Boolean  @default(true)
   has_restaurant_hub  Boolean  @default(false)
   has_gourmet_club    Boolean  @default(false)
   max_languages       Int      @default(3)
@@ -99,6 +100,7 @@ model OpeningHours {
   slot_2_from   String?
   slot_2_to     String?
   note          String?
+  updated_at    DateTime @updatedAt
 
   @@map("opening_hours")
 }

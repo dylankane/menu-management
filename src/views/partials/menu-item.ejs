@@ -1,71 +1,61 @@
-<%
-  // item.translations is the full array; pickT is passed from the route helper
-  const tr = pickT(item.translations);
-  const name = tr.name || '';
-  const desc = tr.description || '';
-
-  // Calculate discounted price if applicable
-  let displayPrice = Number(item.price);
-  let originalPrice = null;
-  if (item.has_discount && item.discount_value) {
-    originalPrice = displayPrice;
-    if (item.discount_type === 'percent') {
-      displayPrice = displayPrice * (1 - Number(item.discount_value) / 100);
-    } else {
-      displayPrice = displayPrice - Number(item.discount_value);
-    }
-    displayPrice = Math.max(0, displayPrice);
-  }
+<% 
+  const itemTrans = pickT(item.translations);
+  const itemName = itemTrans.name || 'Menu Item';
+  const itemDescription = itemTrans.description || '';
+  const itemPublicNotes = itemTrans.public_notes || '';
+  
+  const finalPrice = item.has_discount 
+    ? (item.discount_type === 'percent' 
+        ? parseFloat(item.price) * (1 - parseFloat(item.discount_value) / 100)
+        : parseFloat(item.price) - parseFloat(item.discount_value))
+    : parseFloat(item.price);
 %>
-<div class="menu-item">
-  <div class="menu-item__inner">
 
-    <% if (item.image_url) { %>
-      <img src="<%= item.image_url %>" alt="<%= name %>" class="menu-item__image" />
-    <% } %>
-
-    <div class="menu-item__body">
-      <div class="menu-item__top">
-        <div class="menu-item__info">
-          <h4 class="menu-item__name">
-            <%= name %>
-            <% if (item.is_special) { %><span class="menu-item__special">⭐</span><% } %>
-          </h4>
-          <% if (desc) { %>
-            <p class="menu-item__desc"><%= desc %></p>
-          <% } %>
-        </div>
-
-        <div class="menu-item__price">
-          <% if (originalPrice !== null) { %>
-            <p class="menu-item__price-original">€<%= originalPrice.toFixed(2) %></p>
-            <p class="menu-item__price-current">€<%= displayPrice.toFixed(2) %></p>
-          <% } else { %>
-            <p class="menu-item__price-current">€<%= displayPrice.toFixed(2) %></p>
-          <% } %>
-        </div>
-      </div>
-
-      <%
-        const hasTags = (item.dietary && item.dietary.length > 0) ||
-                        (item.allergens && item.allergens.length > 0);
-      %>
-      <% if (hasTags) { %>
-        <div class="menu-item__tags">
-          <% if (item.dietary) { item.dietary.forEach(d => {
-            const dT = pickT(d.dietary_tag.translations);
-          %>
-            <span class="menu-tag menu-tag--dietary"><%= dT.name || '' %></span>
-          <% }) } %>
-          <% if (item.allergens) { item.allergens.forEach(a => {
-            const aT = pickT(a.allergen.translations);
-          %>
-            <span class="menu-tag menu-tag--allergen" title="Contains: <%= aT.name || '' %>">
-              <%= aT.name || '' %>
-            </span>
-          <% }) } %>
-        </div>
+<article class="menu-item" data-item-id="<%= item.id %>">
+  <div class="menu-item-header">
+    <h4 class="menu-item-name"><%= itemName %></h4>
+    <span class="menu-item-price">€<%= finalPrice.toFixed(2) %></span>
+  </div>
+  
+  <% if (itemDescription) { %>
+    <p class="menu-item-description"><%= itemDescription %></p>
+  <% } %>
+  
+  <% if (itemPublicNotes) { %>
+    <div class="public-notes"><%= itemPublicNotes %></div>
+  <% } %>
+  
+  <% if ((item.allergens && item.allergens.length > 0) || (item.dietary && item.dietary.length > 0) || item.is_special) { %>
+    <div class="menu-item-tags">
+      <% if (item.is_special) { %>
+        <span class="tag tag-special">Chef's Special</span>
+      <% } %>
+      
+      <% if (item.dietary && item.dietary.length > 0) { %>
+        <% item.dietary.forEach(d => { %>
+          <% const dietaryTrans = pickT(d.dietary_tag.translations); %>
+          <span class="tag tag-dietary"><%= dietaryTrans.name || 'Dietary' %></span>
+        <% }); %>
+      <% } %>
+      
+      <% if (item.allergens && item.allergens.length > 0) { %>
+        <% item.allergens.forEach(a => { %>
+          <% const allergenTrans = pickT(a.allergen.translations); %>
+          <span class="tag tag-allergen"><%= allergenTrans.name || 'Allergen' %></span>
+        <% }); %>
       <% } %>
     </div>
-  </div>
-</div>
+  <% } %>
+  
+  <% if (item.image_url) { %>
+    <button 
+      class="menu-item-image-trigger" 
+      data-image="<%= item.image_url %>"
+      data-name="<%= itemName %>"
+      data-description="<%= itemDescription %>"
+      type="button"
+    >
+      image
+    </button>
+  <% } %>
+</article>

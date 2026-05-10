@@ -19,6 +19,21 @@
 
         <div class="config-row">
           <div class="config-row__info">
+            <p class="config-row__name">Menu</p>
+            <p class="config-row__desc">Customer-facing menu, menu builder, items, set menus and categories.</p>
+          </div>
+          <label class="smb-avail-switch">
+            <input type="checkbox" id="cfgMenu"
+                   <%= account.has_menu !== false ? 'checked' : '' %>
+                   onchange="updateLabel('cfgMenuLabel', this.checked)">
+            <span class="smb-avail-label smb-avail-label--<%= account.has_menu !== false ? 'on' : 'off' %>" id="cfgMenuLabel">
+              <%= account.has_menu !== false ? 'On' : 'Off' %>
+            </span>
+          </label>
+        </div>
+
+        <div class="config-row">
+          <div class="config-row__info">
             <p class="config-row__name">Restaurant Hub</p>
             <p class="config-row__desc">Manage restaurant identity, contact info, opening hours and announcements.</p>
           </div>
@@ -74,6 +89,7 @@
 
   async function saveConfig() {
     const body = {
+      has_menu:           document.getElementById('cfgMenu').checked,
       has_restaurant_hub: document.getElementById('cfgRestaurantHub').checked,
       has_gourmet_club:   document.getElementById('cfgGourmetClub').checked,
       max_languages:      parseInt(document.getElementById('cfgMaxLanguages').value, 10),

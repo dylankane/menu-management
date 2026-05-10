@@ -24,7 +24,8 @@ app.use(
         fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
         scriptSrc:     ["'self'", "'unsafe-inline'"],
         scriptSrcAttr: ["'unsafe-inline'"],
-        imgSrc:     ["'self'", 'data:', 'blob:'],
+        imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
+        frameSrc:   ["https://www.google.com", "https://maps.google.com"],
       },
     },
   })

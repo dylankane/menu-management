@@ -1,3 +1,15 @@
+<!-- Mobile top bar (hidden on desktop) -->
+<div class="mobile-bar">
+  <button class="mobile-bar__hamburger" onclick="openSidebar()" aria-label="Open navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <span class="mobile-bar__name"><%= restaurantName %></span>
+  <%- include('./lang-selector') %>
+</div>
+
+<!-- Sidebar overlay (shown on mobile when sidebar is open) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <!-- Fixed left sidebar navigation -->
 <aside class="sidebar bg-dark">
   <div class="sidebar__header">
@@ -13,6 +25,7 @@
       Dashboard
     </a>
 
+    <% if (features.menu) { %>
     <hr />
 
     <!-- ── MENU ─────────────────────────────────────────────────────── -->
@@ -45,6 +58,7 @@
         </a>
       </div>
     </div>
+    <% } %>
 
     <!-- ── RESTAURANT HUB ──────────────────────────────────────────── -->
     <% if (features.restaurantHub) { %>
@@ -105,7 +119,7 @@
 </aside>
 
 <script>
-  const SIDEBAR_SECTIONS = ['section-menu', <%- features.gourmetClub ? "'section-gourmet-club'" : '' %>].filter(Boolean);
+  const SIDEBAR_SECTIONS = [<%- features.menu ? "'section-menu'" : '' %>, <%- features.gourmetClub ? "'section-gourmet-club'" : '' %>].filter(Boolean);
 
   const SECTION_PAGES = {
     'section-menu':         ['builder', 'menu-items', 'set-menus', 'tags'],
@@ -113,6 +127,18 @@
   };
 
   const CURRENT_PAGE = '<%= current %>';
+
+  function openSidebar() {
+    document.querySelector('.sidebar').classList.add('sidebar--open');
+    document.getElementById('sidebarOverlay').classList.add('sidebar-overlay--visible');
+    document.body.classList.add('sidebar-open');
+  }
+
+  function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('sidebar--open');
+    document.getElementById('sidebarOverlay').classList.remove('sidebar-overlay--visible');
+    document.body.classList.remove('sidebar-open');
+  }
 
   function toggleSection(id) {
     document.getElementById(id).classList.toggle('sidebar__section--collapsed');
