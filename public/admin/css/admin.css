@@ -2903,6 +2903,7 @@ svg.icon--empty-state {
   min-height: 100vh;
   background: var(--bg-base);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
@@ -2996,11 +2997,13 @@ svg.icon--empty-state {
 
 /* Profile */
 .profile-layout {
-  max-width: 55rem;
-  margin: auto;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.profile-layout .two-col {
+  align-items: stretch;
 }
 
 /* ── Set Menu Builder (split-panel layout) ───────────────────── */

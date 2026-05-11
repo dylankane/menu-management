@@ -16,6 +16,7 @@
     "communications": "Comunicaciones",
     "settings": "Configuración",
     "profile": "Perfil",
+    "profiles": "Perfiles",
     "support": "Soporte",
     "config": "Config",
     "logout": "Cerrar sesión",
@@ -109,7 +110,9 @@
     "image_removed": "Imagen eliminada",
     "announcement_live": "El anuncio está activo",
     "announcement_hidden": "Anuncio ocultado",
-    "error_select_date": "Por favor, selecciona una fecha"
+    "error_select_date": "Por favor, selecciona una fecha",
+    "user_created": "Usuario creado",
+    "user_deleted": "Usuario eliminado"
   },
   "login": {
     "title": "Acceso al Panel",
@@ -349,18 +352,26 @@
       "get_in_touch": "Contáctanos si estás interesado en esta función."
     },
     "profile": {
-      "title": "Configuración de Perfil",
+      "title": "Perfiles",
       "card_account": "Datos de la Cuenta",
       "card_password": "Cambiar Contraseña",
+      "card_staff": "Cuentas del Personal",
       "label_name": "Nombre",
       "label_email": "Correo electrónico",
       "label_role": "Rol",
+      "label_password": "Contraseña",
       "label_current_password": "Contraseña Actual",
       "label_new_password": "Nueva Contraseña",
       "label_confirm_password": "Confirmar Nueva Contraseña",
       "hint_min_chars": "Mínimo 8 caracteres",
       "btn_save_changes": "Guardar Cambios",
-      "btn_update_password": "Actualizar Contraseña"
+      "btn_update_password": "Actualizar Contraseña",
+      "btn_add_user": "+ Añadir Usuario",
+      "empty_no_staff": "Sin cuentas de personal aún",
+      "col_joined": "Alta",
+      "modal_add_user": "Añadir Usuario",
+      "role_admin": "Admin",
+      "role_super_admin": "Super Admin"
     },
     "support": {
       "title": "Soporte"

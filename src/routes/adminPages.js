@@ -446,12 +446,20 @@ router.get('/settings', async (req, res, next) => {
 // ── Profile ───────────────────────────────────────────────────────────────────
 router.get('/profile', async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: { id: true, email: true, name: true, role: true },
-    });
+    const usersWhere = req.user.role === 'super_admin' ? {} : { role: { not: 'super_admin' } };
+    const [user, users] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { id: true, email: true, name: true, role: true },
+      }),
+      prisma.user.findMany({
+        where:   usersWhere,
+        select:  { id: true, email: true, name: true, role: true, created_at: true },
+        orderBy: { created_at: 'asc' },
+      }),
+    ]);
     res.render('admin/profile', {
-      user, current: 'profile',
+      user, users, current: 'profile',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,
     });

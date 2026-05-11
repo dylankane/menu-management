@@ -16,6 +16,7 @@
     "communications": "Communications",
     "settings": "Settings",
     "profile": "Profile",
+    "profiles": "Profiles",
     "support": "Support",
     "config": "Config",
     "logout": "Logout",
@@ -109,7 +110,9 @@
     "image_removed": "Image removed",
     "announcement_live": "Announcement is now live",
     "announcement_hidden": "Announcement hidden",
-    "error_select_date": "Please select a date"
+    "error_select_date": "Please select a date",
+    "user_created": "User created",
+    "user_deleted": "User deleted"
   },
   "login": {
     "title": "Admin Login",
@@ -349,18 +352,26 @@
       "get_in_touch": "Get in touch if you are interested in this feature."
     },
     "profile": {
-      "title": "Profile Settings",
+      "title": "Profiles",
       "card_account": "Account Details",
       "card_password": "Change Password",
+      "card_staff": "Staff Accounts",
       "label_name": "Name",
       "label_email": "Email",
       "label_role": "Role",
+      "label_password": "Password",
       "label_current_password": "Current Password",
       "label_new_password": "New Password",
       "label_confirm_password": "Confirm New Password",
       "hint_min_chars": "Minimum 8 characters",
       "btn_save_changes": "Save Changes",
-      "btn_update_password": "Update Password"
+      "btn_update_password": "Update Password",
+      "btn_add_user": "+ Add User",
+      "empty_no_staff": "No staff accounts yet",
+      "col_joined": "Joined",
+      "modal_add_user": "Add User",
+      "role_admin": "Admin",
+      "role_super_admin": "Super Admin"
     },
     "support": {
       "title": "Support"

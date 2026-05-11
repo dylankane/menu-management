@@ -4,6 +4,64 @@ const bcrypt       = require('bcryptjs');
 const prisma       = require('../config/database');
 const { AppError } = require('../utils/errors');
 
+// GET /api/users
+async function listUsers(req, res, next) {
+  try {
+    const where = req.user.role === 'super_admin' ? {} : { role: { not: 'super_admin' } };
+    const users = await prisma.user.findMany({
+      where,
+      select: { id: true, email: true, name: true, role: true, is_active: true, created_at: true },
+      orderBy: { created_at: 'asc' },
+    });
+    res.json({ data: { users } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// POST /api/users
+async function createUser(req, res, next) {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) throw new AppError('A user with that email already exists', 409);
+
+    // Only a super_admin can create another super_admin
+    const assignedRole = (req.user.role === 'super_admin' && role === 'super_admin') ? 'super_admin' : 'admin';
+
+    const hashed = await bcrypt.hash(password, 12);
+    const user   = await prisma.user.create({
+      data: { name, email, password: hashed, role: assignedRole, is_active: true },
+      select: { id: true, email: true, name: true, role: true, created_at: true },
+    });
+    res.status(201).json({ data: { user } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// DELETE /api/users/:id
+async function deleteUser(req, res, next) {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    if (id === req.user.id) throw new AppError('You cannot delete your own account', 400);
+
+    const target = await prisma.user.findUnique({ where: { id } });
+    if (!target) throw new AppError('User not found', 404);
+
+    if (target.role === 'super_admin' && req.user.role !== 'super_admin') {
+      throw new AppError('Access denied', 403);
+    }
+
+    await prisma.user.delete({ where: { id } });
+    res.json({ data: { message: 'User deleted' } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // GET /api/users/me
 async function getMe(req, res, next) {
   try {
@@ -66,4 +124,4 @@ async function changePassword(req, res, next) {
   }
 }
 
-module.exports = { getMe, updateMe, changePassword };
+module.exports = { getMe, updateMe, changePassword, listUsers, createUser, deleteUser };

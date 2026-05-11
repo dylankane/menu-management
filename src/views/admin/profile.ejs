@@ -14,57 +14,121 @@
   <main class="page-body">
     <div class="profile-layout">
 
-      <!-- Update profile -->
-      <div class="card">
-        <div class="card__header card__header--accent">
-          <h3 class="card__title"><%= t('page.profile.card_account') %></h3>
+      <!-- Account details + Change password side by side -->
+      <div class="two-col">
+
+        <!-- Update profile -->
+        <div class="card">
+          <div class="card__header card__header--accent">
+            <h3 class="card__title"><%= t('page.profile.card_account') %></h3>
+          </div>
+          <div class="card__body form-stack">
+            <form onsubmit="updateProfile(event)" class="form-stack">
+              <div class="form-group">
+                <label class="form-label"><%= t('page.profile.label_name') %></label>
+                <input type="text" id="profileName" value="<%= user.name %>" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label"><%= t('page.profile.label_email') %></label>
+                <input type="email" id="profileEmail" value="<%= user.email %>" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label"><%= t('page.profile.label_role') %></label>
+                <input type="text" value="<%= user.role %>" disabled class="form-input" />
+              </div>
+              <div class="form-footer">
+                <button type="submit" class="btn btn--primary"><%= t('page.profile.btn_save_changes') %></button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div class="card__body form-stack">
-          <form onsubmit="updateProfile(event)" class="form-stack">
-            <div class="form-group">
-              <label class="form-label"><%= t('page.profile.label_name') %></label>
-              <input type="text" id="profileName" value="<%= user.name %>" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label"><%= t('page.profile.label_email') %></label>
-              <input type="email" id="profileEmail" value="<%= user.email %>" class="form-input" />
-            </div>
-            <div class="form-group">
-              <label class="form-label"><%= t('page.profile.label_role') %></label>
-              <input type="text" value="<%= user.role %>" disabled class="form-input" />
-            </div>
-            <div class="form-footer">
-              <button type="submit" class="btn btn--primary"><%= t('page.profile.btn_save_changes') %></button>
-            </div>
-          </form>
+
+        <!-- Change password -->
+        <div class="card">
+          <div class="card__header card__header--accent">
+            <h3 class="card__title"><%= t('page.profile.card_password') %></h3>
+          </div>
+          <div class="card__body">
+            <form onsubmit="changePassword(event)" class="form-stack">
+              <div class="form-group">
+                <label class="form-label"><%= t('page.profile.label_current_password') %></label>
+                <input type="password" id="currentPassword" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label"><%= t('page.profile.label_new_password') %></label>
+                <input type="password" id="newPassword" minlength="8" class="form-input" />
+                <p class="form-hint"><%= t('page.profile.hint_min_chars') %></p>
+              </div>
+              <div class="form-group">
+                <label class="form-label"><%= t('page.profile.label_confirm_password') %></label>
+                <input type="password" id="confirmPassword" class="form-input" />
+              </div>
+              <div class="form-footer">
+                <button type="submit" class="btn btn--primary"><%= t('page.profile.btn_update_password') %></button>
+              </div>
+            </form>
+          </div>
         </div>
+
       </div>
 
-      <!-- Change password -->
-      <div class="card">
+      <!-- Staff accounts table -->
+      <div class="card table-card">
         <div class="card__header card__header--accent">
-          <h3 class="card__title"><%= t('page.profile.card_password') %></h3>
+          <h3 class="card__title"><%= t('page.profile.card_staff') %></h3>
+          <button onclick="openAddUserModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.profile.btn_add_user') %></button>
         </div>
-        <div class="card__body">
-          <form onsubmit="changePassword(event)" class="form-stack">
-            <div class="form-group">
-              <label class="form-label"><%= t('page.profile.label_current_password') %></label>
-              <input type="password" id="currentPassword" class="form-input" />
+
+        <% if (users.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon">
+              <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#users"></use></svg>
             </div>
-            <div class="form-group">
-              <label class="form-label"><%= t('page.profile.label_new_password') %></label>
-              <input type="password" id="newPassword" minlength="8" class="form-input" />
-              <p class="form-hint"><%= t('page.profile.hint_min_chars') %></p>
-            </div>
-            <div class="form-group">
-              <label class="form-label"><%= t('page.profile.label_confirm_password') %></label>
-              <input type="password" id="confirmPassword" class="form-input" />
-            </div>
-            <div class="form-footer">
-              <button type="submit" class="btn btn--primary"><%= t('page.profile.btn_update_password') %></button>
-            </div>
-          </form>
-        </div>
+            <p class="empty-state__text"><%= t('page.profile.empty_no_staff') %></p>
+            <button onclick="openAddUserModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.profile.btn_add_user') %></button>
+          </div>
+        <% } else { %>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="col-align-left"><%= t('page.profile.label_name') %></th>
+                <th class="col-align-left"><%= t('page.profile.label_email') %></th>
+                <th class="col-align-center"><%= t('page.profile.label_role') %></th>
+                <th class="col-align-center"><%= t('page.profile.col_joined') %></th>
+                <th class="col-delete col-align-center"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach(function(u) { %>
+                <tr>
+                  <td class="col-align-left">
+                    <p class="table-item__name"><%= u.name %><% if (u.id === user.id) { %> <span class="tag tag--lang">You</span><% } %></p>
+                  </td>
+                  <td class="col-align-left">
+                    <p class="table-item__meta"><%= u.email %></p>
+                  </td>
+                  <td class="col-align-center">
+                    <p class="table-item__meta"><%= u.role === 'super_admin' ? t('page.profile.role_super_admin') : t('page.profile.role_admin') %></p>
+                  </td>
+                  <td class="col-align-center">
+                    <p class="table-item__meta"><%= new Date(u.created_at).toLocaleDateString() %></p>
+                  </td>
+                  <td class="col-delete col-align-center">
+                    <% if (u.id !== user.id) { %>
+                      <button class="btn-delete" onclick="deleteUser(<%= u.id %>, '<%= u.name.replace(/'/g, "\\'") %>')" title="Delete">
+                        <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                          <line x1="15" y1="9" x2="9" y2="15"/>
+                          <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                      </button>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
       </div>
 
     </div>
@@ -72,6 +136,46 @@
   <footer class="page-legal-footer">
     <a href="/admin/privacy"><%= t('common.legal_privacy') %> <svg class="icon page-legal-footer__icon"><use href="/admin/icons/sprite.svg#arrow-up-right"></use></svg></a>
   </footer>
+</div>
+
+<!-- Add User Modal -->
+<div id="addUserModal" class="modal-overlay hidden">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title"><%= t('page.profile.modal_add_user') %></h3>
+      <button onclick="closeAddUserModal()" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <div class="form-stack">
+        <div class="form-group">
+          <label class="form-label"><%= t('page.profile.label_name') %> <span class="form-required">*</span></label>
+          <input type="text" id="newUserName" class="form-input" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label"><%= t('page.profile.label_email') %> <span class="form-required">*</span></label>
+          <input type="email" id="newUserEmail" class="form-input" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label"><%= t('page.profile.label_password') %> <span class="form-required">*</span></label>
+          <input type="password" id="newUserPassword" class="form-input" minlength="8" autocomplete="new-password" />
+          <p class="form-hint"><%= t('page.profile.hint_min_chars') %></p>
+        </div>
+        <% if (user.role === 'super_admin') { %>
+          <div class="form-group">
+            <label class="form-label"><%= t('page.profile.label_role') %></label>
+            <select id="newUserRole" class="form-select">
+              <option value="admin"><%= t('page.profile.role_admin') %></option>
+              <option value="super_admin"><%= t('page.profile.role_super_admin') %></option>
+            </select>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeAddUserModal()" class="btn btn--secondary"><%= t('common.cancel') %></button>
+      <button type="button" onclick="submitAddUser()" class="btn btn--primary"><%= t('common.create') %></button>
+    </div>
+  </div>
 </div>
 
 <%- include('./partials/scripts') %>
@@ -108,6 +212,51 @@
     } catch (err) {
       showToast(err.message, 'error');
     }
+  }
+
+  function openAddUserModal() {
+    document.getElementById('newUserName').value     = '';
+    document.getElementById('newUserEmail').value    = '';
+    document.getElementById('newUserPassword').value = '';
+    const roleEl = document.getElementById('newUserRole');
+    if (roleEl) roleEl.value = 'admin';
+    openModal('addUserModal');
+  }
+
+  function closeAddUserModal() {
+    closeModal('addUserModal');
+  }
+
+  async function submitAddUser() {
+    const name     = document.getElementById('newUserName').value.trim();
+    const email    = document.getElementById('newUserEmail').value.trim();
+    const password = document.getElementById('newUserPassword').value;
+    const roleEl   = document.getElementById('newUserRole');
+    const role     = roleEl ? roleEl.value : 'admin';
+
+    if (!name || !email || !password) {
+      return showToast('Please fill in all fields', 'error');
+    }
+    try {
+      await api('POST', '/api/users', { name, email, password, role });
+      showToast(tr('user_created'));
+      closeAddUserModal();
+      reloadAfter();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteUser(id, name) {
+    confirmDelete('Delete user "' + name + '"?', async function () {
+      try {
+        await api('DELETE', '/api/users/' + id);
+        showToast(tr('user_deleted'));
+        reloadAfter();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
   }
 </script>
 

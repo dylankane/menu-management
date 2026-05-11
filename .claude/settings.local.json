@@ -53,7 +53,8 @@
       "Bash(set PRISMA_MIGRATE_SKIP_GENERATE=true)",
       "PowerShell(New-Item *)",
       "Bash(grep -E \"^\\(server\\\\.js|src/routes/adminPages\\\\.js\\)$\")",
-      "Bash(Get-ChildItem C:\\\\Users\\\\dylan\\\\menu-management\\\\public\\\\admin\\\\icons *)"
+      "Bash(Get-ChildItem C:\\\\Users\\\\dylan\\\\menu-management\\\\public\\\\admin\\\\icons *)",
+      "Bash(npm audit *)"
     ]
   }
 }

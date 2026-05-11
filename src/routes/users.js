@@ -11,6 +11,21 @@ const router = express.Router();
 // All user routes require authentication
 router.use(requireAuth);
 
+router.get('/', controller.listUsers);
+
+router.post(
+  '/',
+  [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('email').isEmail().withMessage('Must be a valid email'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+  ],
+  validate,
+  controller.createUser
+);
+
+router.delete('/:id', controller.deleteUser);
+
 router.get('/me', controller.getMe);
 
 router.put(
