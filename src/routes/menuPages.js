@@ -1,37 +1,51 @@
 // src/routes/menuPages.js
 // Public customer-facing menu — no authentication required.
-// Resolves the display language from: ?lang= → Accept-Language → primary_language → 'en'.
+// Language detection: ?lang= param → browser Accept-Language → first enabled language.
+// Translation fallback: requested lang → Spanish → English.
 
 const express = require('express');
 const prisma  = require('../config/database');
 
 const router = express.Router();
 
-// Detect the best language to use for this request
-function detectLang(req, enabledLangs, primaryLang) {
-  // 1. Explicit query param
+// Detect the best language for this request.
+// Priority: explicit ?lang= param → browser language → first enabled language.
+function detectLang(req, enabledLangs) {
   if (req.query.lang && enabledLangs.includes(req.query.lang)) {
     return req.query.lang;
   }
-  // 2. Accept-Language header (first match)
   const acceptHeader = req.headers['accept-language'] || '';
-  const preferred = acceptHeader.split(',').map(s => s.split(';')[0].trim().toLowerCase().substring(0, 2));
+  const preferred = acceptHeader
+    .split(',')
+    .map(s => s.split(';')[0].trim().toLowerCase().substring(0, 2));
   for (const code of preferred) {
     if (enabledLangs.includes(code)) return code;
   }
-  // 3. Primary language
-  return primaryLang || 'en';
+  return enabledLangs[0] || 'es';
 }
 
-// Pick the best translation from an array
-function pickT(translations, lang, primary) {
+// Pick the best translation from an array.
+// Fallback chain: requested lang → Spanish → English → first available.
+function pickT(translations, lang) {
   if (!translations || translations.length === 0) return {};
   const map = {};
   for (const t of translations) map[t.lang] = t;
-  return map[lang] || map[primary] || translations[0] || {};
+  return map[lang] || map['es'] || map['en'] || translations[0] || {};
 }
 
-const CATEGORY_INCLUDE = (lang, primary) => ({
+// Build an mt() function from static translation rows.
+// Fallback chain: requested lang → Spanish → English → key name.
+function buildMt(rows, lang) {
+  const maps = { [lang]: {}, es: {}, en: {} };
+  rows.forEach(r => {
+    if (maps[r.lang] !== undefined) maps[r.lang][r.key] = r.value || '';
+  });
+  return function mt(key) {
+    return maps[lang][key] || maps['es'][key] || maps['en'][key] || key;
+  };
+}
+
+const CATEGORY_INCLUDE = {
   where: { is_active: true, parent_id: null },
   include: {
     translations: true,
@@ -52,6 +66,36 @@ const CATEGORY_INCLUDE = (lang, primary) => ({
             },
           },
         },
+        set_menu_categories: {
+          orderBy: { display_order: 'asc' },
+          include: {
+            set_menu: {
+              include: {
+                translations: true,
+                courses: {
+                  orderBy: { display_order: 'asc' },
+                  include: {
+                    course: { include: { translations: true } },
+                    translations: true,
+                    dishes: {
+                      orderBy: { display_order: 'asc' },
+                      include: {
+                        dish: {
+                          include: {
+                            translations: true,
+                            allergens: { include: { allergen: { include: { translations: true } } } },
+                            dietary:   { include: { dietary_tag: { include: { translations: true } } } },
+                          },
+                        },
+                        translations: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     },
     menu_item_categories: {
@@ -66,10 +110,79 @@ const CATEGORY_INCLUDE = (lang, primary) => ({
         },
       },
     },
+    set_menu_categories: {
+      orderBy: { display_order: 'asc' },
+      include: {
+        set_menu: {
+          include: {
+            translations: true,
+            courses: {
+              orderBy: { display_order: 'asc' },
+              include: {
+                course: { include: { translations: true } },
+                translations: true,
+                dishes: {
+                  orderBy: { display_order: 'asc' },
+                  include: {
+                    dish: {
+                      include: {
+                        translations: true,
+                        allergens: { include: { allergen: { include: { translations: true } } } },
+                        dietary:   { include: { dietary_tag: { include: { translations: true } } } },
+                      },
+                    },
+                    translations: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   orderBy: { display_order: 'asc' },
+};
+
+// ── Legal / Privacy Page ──────────────────────────────────────────────────────
+router.get('/legal', async (req, res, next) => {
+  try {
+    const settings     = await prisma.restaurantSettings.findUnique({ where: { id: 1 } });
+    const enabledLangs = settings?.enabled_languages || ['es', 'en'];
+    const lang         = detectLang(req, enabledLangs);
+    res.render('customer/legal', {
+      lang,
+      enabledLangs,
+      restaurantName: settings?.restaurant_name || 'Restaurant',
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
+// ── Gourmet Club Sign-up Page ─────────────────────────────────────────────────
+router.get('/club-join', async (req, res, next) => {
+  try {
+    const settings     = await prisma.restaurantSettings.findUnique({ where: { id: 1 } });
+    const enabledLangs = settings?.enabled_languages || ['es', 'en'];
+    const lang         = detectLang(req, enabledLangs);
+
+    const langsToFetch = [...new Set([lang, 'es', 'en'])];
+    const staticRows   = await prisma.staticTranslation.findMany({ where: { lang: { in: langsToFetch } } });
+    const mt           = buildMt(staticRows, lang);
+
+    res.render('customer/club-join', {
+      lang,
+      enabledLangs,
+      restaurantName: settings?.restaurant_name || 'Restaurant',
+      mt,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Customer Menu ─────────────────────────────────────────────────────────────
 router.get('/', async (req, res, next) => {
   try {
     const account = await prisma.clientAccount.findFirst();
@@ -77,40 +190,46 @@ router.get('/', async (req, res, next) => {
       return res.status(404).send('Not found');
     }
 
-    const settingsRow = await prisma.restaurantSettings.findFirst();
-    const settings = settingsRow || {
+    const settingsRow  = await prisma.restaurantSettings.findFirst();
+    const settings     = settingsRow || {
       restaurant_name:   process.env.RESTAURANT_NAME || 'Our Menu',
-      primary_language:  'en',
-      enabled_languages: ['en', 'es'],
+      enabled_languages: ['es', 'en'],
     };
 
     const enabledLangs = settings.enabled_languages;
-    const primaryLang  = settings.primary_language;
-    const lang         = detectLang(req, enabledLangs, primaryLang);
+    const lang         = detectLang(req, enabledLangs);
 
-    const categories = await prisma.category.findMany(CATEGORY_INCLUDE(lang, primaryLang));
+    const langsToFetch = [...new Set([lang, 'es', 'en'])];
+    const [categories, staticRows] = await Promise.all([
+      prisma.category.findMany(CATEGORY_INCLUDE),
+      prisma.staticTranslation.findMany({ where: { lang: { in: langsToFetch } } }),
+    ]);
 
-    // Filter to categories that have at least one visible item
-    function isVisible(mi) {
-      return mi && mi.is_available;
-    }
+    function isVisible(mi)      { return mi && mi.is_available; }
+    function isSetMenuVisible(sm){ return sm && sm.is_available; }
     function catHasContent(cat) {
-      const directVisible = (cat.menu_item_categories || []).some(mic => isVisible(mic.menu_item));
-      const childVisible  = (cat.children || []).some(child =>
+      const directItems    = (cat.menu_item_categories || []).some(mic => isVisible(mic.menu_item));
+      const directSetMenus = (cat.set_menu_categories  || []).some(smc => isSetMenuVisible(smc.set_menu));
+      const childItems     = (cat.children || []).some(child =>
         (child.menu_item_categories || []).some(mic => isVisible(mic.menu_item))
       );
-      return directVisible || childVisible;
+      const childSetMenus  = (cat.children || []).some(child =>
+        (child.set_menu_categories  || []).some(smc => isSetMenuVisible(smc.set_menu))
+      );
+      return directItems || directSetMenus || childItems || childSetMenus;
     }
 
     const visibleCategories = categories.filter(catHasContent);
+    const mt                = buildMt(staticRows, lang);
 
-    res.render('menu/index', {
+    res.render('customer/index', {
       categories: visibleCategories,
       settings,
       lang,
-      primaryLang,
+      enabledLangs,
       restaurantName: settings.restaurant_name,
-      pickT: (translations) => pickT(translations, lang, primaryLang),
+      pickT: (translations) => pickT(translations, lang),
+      mt,
     });
   } catch (err) {
     next(err);

@@ -1,0 +1,151 @@
+<!-- Shared JS utilities — included at the bottom of every admin page -->
+
+<!-- Toast notification container -->
+<div id="toast" class="toast hidden"></div>
+
+<script>
+  // ── UI translations (server-injected) ─────────────────────────────────────
+  window.UI_TRANS = <%- JSON.stringify(uiStrings || {}) %>;
+
+  // Translate a toast key, with optional {placeholder} substitution.
+  function tr(key, vars) {
+    const section = UI_TRANS.toast || {};
+    let str = section[key];
+    if (str === undefined) str = key;
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        str = str.replace('{' + k + '}', vars[k]);
+      });
+    }
+    return str;
+  }
+
+  // ── HTML escape ──────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Toast notification ────────────────────────────────────────────────────
+  function showToast(message, type) {
+    const el = document.getElementById('toast');
+    el.textContent = message;
+    el.className = 'toast toast--' + (type === 'error' ? 'error' : 'success');
+    clearTimeout(el._timer);
+    el._timer = setTimeout(function () { el.classList.add('hidden'); }, 4500);
+  }
+
+  // ── Modal helpers ─────────────────────────────────────────────────────────
+  function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // ── API helper ────────────────────────────────────────────────────────────
+  async function api(method, url, data) {
+    const opts = { method: method };
+    if (data instanceof FormData) {
+      opts.body = data;
+    } else if (data) {
+      opts.headers = { 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(data);
+    }
+    const res  = await fetch(url, opts);
+    const json = await res.json();
+    if (!res.ok) {
+      const raw = json.errors ? json.errors.map(function (e) { return e.message; }).join(', ') : (json.error || 'Something went wrong');
+      const message = sanitiseClientError(raw);
+      const err = new Error(message);
+      err.status = res.status;
+      throw err;
+    }
+    return json;
+  }
+
+  function sanitiseClientError(message) {
+    const TECHNICAL_PATTERNS = [/prisma/i, /unique constraint/i, /foreign key/i, /p\d{4}/i, /stack trace/i, /at Object\./i];
+    if (!message || message.length > 120 || TECHNICAL_PATTERNS.some(function (p) { return p.test(message); })) {
+      return (UI_TRANS.modal && UI_TRANS.modal.generic_error) || 'Something went wrong — please try again.';
+    }
+    return message;
+  }
+
+  // ── UI message library ────────────────────────────────────────────────────
+  const UI_MESSAGES = {
+    itemAlreadyInCategory:    (UI_TRANS.modal && UI_TRANS.modal.item_already_in_category)    || 'That item is already in this category.',
+    setMenuAlreadyInCategory: (UI_TRANS.modal && UI_TRANS.modal.set_menu_already_in_category) || 'That set menu is already in this category.',
+    cannotDelete:             (UI_TRANS.modal && UI_TRANS.modal.cannot_delete)               || 'This item is protected and cannot be deleted.',
+    hasChildren:              (UI_TRANS.modal && UI_TRANS.modal.has_children)                || 'Remove all subcategories before deleting.',
+    genericError:             (UI_TRANS.modal && UI_TRANS.modal.generic_error)               || 'Something went wrong — please refresh and try again.',
+  };
+
+  // ── Confirm delete ────────────────────────────────────────────────────────
+  function confirmDelete(message, callback) {
+    if (window.confirm(message || (UI_TRANS.modal && UI_TRANS.modal.confirm_delete) || 'Are you sure you want to delete this?')) {
+      callback();
+    }
+  }
+
+  // ── Reload after short delay ──────────────────────────────────────────────
+  function reloadAfter(ms) {
+    setTimeout(function () { location.reload(); }, ms || 600);
+  }
+
+  // ── Clear a staged image upload preview ───────────────────────────────────
+  function clearImagePreview(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    if (input) input.value = '';
+    const wrap = document.getElementById(previewId);
+    if (wrap) wrap.classList.add('hidden');
+  }
+
+  // ── Language tab switcher ─────────────────────────────────────────────────
+  function switchLangTab(btn, lang) {
+    const container = btn.closest('[data-lang-container]');
+    container.querySelectorAll('.lang-tab').forEach(function (t) { t.classList.remove('lang-tab--active'); });
+    btn.classList.add('lang-tab--active');
+    container.querySelectorAll('.lang-panel').forEach(function (p) { p.classList.remove('lang-panel--active'); });
+    const panel = container.querySelector('.lang-panel[data-lang="' + lang + '"]');
+    if (panel) panel.classList.add('lang-panel--active');
+  }
+
+  function resetLangTabs(container, primaryLang) {
+    container.querySelectorAll('.lang-tab').forEach(function (t) { t.classList.remove('lang-tab--active'); });
+    const primaryTab = container.querySelector('.lang-tab[data-lang="' + primaryLang + '"]');
+    if (primaryTab) primaryTab.classList.add('lang-tab--active');
+    container.querySelectorAll('.lang-panel').forEach(function (p) { p.classList.remove('lang-panel--active'); });
+    const primaryPanel = container.querySelector('.lang-panel[data-lang="' + primaryLang + '"]');
+    if (primaryPanel) primaryPanel.classList.add('lang-panel--active');
+  }
+
+  // ── Auto-capitalise ───────────────────────────────────────────────────────
+  function toTitleCase(str) {
+    return str.replace(/\S+/g, function (w) { return w.charAt(0).toUpperCase() + w.slice(1); });
+  }
+
+  function toSentenceCase(str) {
+    return str
+      .trim()
+      .replace(/(^\s*|[.!?]\s+)([a-z])/g, function (_, prefix, ch) { return prefix + ch.toUpperCase(); })
+      .replace(/^([a-z])/, function (ch) { return ch.toUpperCase(); });
+  }
+
+  document.addEventListener('blur', function (e) {
+    const mode = e.target.dataset.capitalize;
+    if (!mode) return;
+    const val = e.target.value;
+    if (!val.trim()) return;
+    e.target.value = mode === 'title' ? toTitleCase(val) : toSentenceCase(val);
+  }, true);
+</script>
+
+<script src="/admin/js/ui-lang.js"></script>

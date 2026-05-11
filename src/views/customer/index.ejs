@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= restaurantName %> - Menu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/customer/css/menu.css">
+</head>
+<body>
+  <%- include('./partials/topbar', { lang, enabledLangs }) %>
+  <div class="menu-container">
+    <header class="menu-header">
+      <h1 class="restaurant-name"><%= restaurantName %></h1>
+      <p class="menu-subtitle"><%= mt('menu.subtitle') %></p>
+      <div class="menu-divider"></div>
+    </header>
+
+    <% if (categories && categories.length > 0) { %>
+      <nav id="categoryNav" class="category-nav">
+        <div class="category-nav-inner">
+          <% categories.forEach((category, index) => { %>
+            <% const categoryTrans = pickT(category.translations); %>
+            <a href="#category-<%= category.id %>" class="category-nav-link<%= index === 0 ? ' active' : '' %>" data-category="<%= category.id %>">
+              <%= categoryTrans.name || 'Category' %>
+            </a>
+          <% }); %>
+        </div>
+      </nav>
+    <% } %>
+
+    <main class="menu-content">
+      <% if (categories && categories.length > 0) { %>
+        <% categories.forEach(category => { %>
+          <% const categoryTrans = pickT(category.translations); %>
+          <section class="category-section" id="category-<%= category.id %>">
+            <div class="category-header">
+              <h2 class="category-title"><%= categoryTrans.name || 'Category' %></h2>
+              <% if (categoryTrans.description) { %>
+                <p class="category-description"><%= categoryTrans.description %></p>
+              <% } %>
+            </div>
+
+            <%
+              const items = (category.menu_item_categories || [])
+                .filter(mic => mic.menu_item && mic.menu_item.is_available)
+                .map(mic => ({ type: 'item', data: mic.menu_item, order: mic.display_order }));
+
+              const setMenus = (category.set_menu_categories || [])
+                .filter(smc => smc.set_menu && smc.set_menu.is_available)
+                .map(smc => ({ type: 'set_menu', data: smc.set_menu, order: smc.display_order }));
+
+              const allContent = [...items, ...setMenus].sort((a, b) => a.order - b.order);
+            %>
+
+            <% if (allContent.length > 0) { %>
+              <div class="menu-items-grid">
+                <% allContent.forEach(content => { %>
+                  <% if (content.type === 'item') { %>
+                    <%- include('./partials/menu-item', {
+                      item: content.data,
+                      pickT: pickT,
+                      lang: lang,
+                      mt: mt
+                    }) %>
+                  <% } else if (content.type === 'set_menu') { %>
+                    <%- include('./partials/set-menu', {
+                      setMenu: content.data,
+                      pickT: pickT,
+                      lang: lang,
+                      mt: mt
+                    }) %>
+                  <% } %>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <% if (category.children && category.children.length > 0) { %>
+              <% category.children.forEach(subcategory => { %>
+                <% const subTrans = pickT(subcategory.translations); %>
+                <%
+                  const subItems = (subcategory.menu_item_categories || [])
+                    .filter(mic => mic.menu_item && mic.menu_item.is_available)
+                    .map(mic => ({ type: 'item', data: mic.menu_item, order: mic.display_order }));
+
+                  const subSetMenus = (subcategory.set_menu_categories || [])
+                    .filter(smc => smc.set_menu && smc.set_menu.is_available)
+                    .map(smc => ({ type: 'set_menu', data: smc.set_menu, order: smc.display_order }));
+
+                  const subAllContent = [...subItems, ...subSetMenus].sort((a, b) => a.order - b.order);
+                %>
+
+                <% if (subAllContent.length > 0) { %>
+                  <div class="subcategory-section">
+                    <div class="subcategory-header">
+                      <h3 class="subcategory-title"><%= subTrans.name || 'Subcategory' %></h3>
+                      <% if (subTrans.description) { %>
+                        <p class="subcategory-description"><%= subTrans.description %></p>
+                      <% } %>
+                    </div>
+                    <div class="menu-items-grid">
+                      <% subAllContent.forEach(content => { %>
+                        <% if (content.type === 'item') { %>
+                          <%- include('./partials/menu-item', {
+                            item: content.data,
+                            pickT: pickT,
+                            lang: lang,
+                            mt: mt
+                          }) %>
+                        <% } else if (content.type === 'set_menu') { %>
+                          <%- include('./partials/set-menu', {
+                            setMenu: content.data,
+                            pickT: pickT,
+                            lang: lang,
+                            mt: mt
+                          }) %>
+                        <% } %>
+                      <% }); %>
+                    </div>
+                  </div>
+                <% } %>
+              <% }); %>
+            <% } %>
+          </section>
+        <% }); %>
+      <% } else { %>
+        <div class="category-section">
+          <div class="category-header">
+            <p class="category-description"><%= mt('menu.empty') %></p>
+          </div>
+        </div>
+      <% } %>
+    </main>
+
+    <section class="club-banner">
+      <div class="club-banner-content">
+        <svg class="club-banner-icon"><use href="/customer/icons/sprite.svg#star-outline"></use></svg>
+        <div class="club-banner-text">
+          <h3 class="club-banner-title"><%= mt('club.banner.title') %></h3>
+          <p class="club-banner-description"><%= mt('club.banner.desc') %></p>
+        </div>
+        <a href="/menu/club-join?lang=<%= lang %>" class="club-banner-btn"><%= mt('club.banner.btn') %></a>
+      </div>
+    </section>
+
+    <footer class="menu-footer">
+      <p class="menu-footer-text"><%= mt('footer.tagline') %></p>
+      <div class="menu-footer-links">
+        <a href="/menu/legal" class="menu-footer-link"><%= mt('footer.legal') %></a>
+      </div>
+    </footer>
+  </div>
+
+  <div id="imageModal" class="image-modal">
+    <button class="image-modal-close" aria-label="Close">&times;</button>
+    <div class="image-modal-content">
+      <img id="modalImage" class="image-modal-img" src="" alt="">
+    </div>
+  </div>
+
+  <%- include('./partials/info-modal', { mt }) %>
+
+  <script src="/customer/js/menu.js"></script>
+  <%- include('./partials/cookie-banner', { mt }) %>
+</body>
+</html>

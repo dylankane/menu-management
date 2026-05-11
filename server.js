@@ -25,7 +25,8 @@ app.use(
         scriptSrc:     ["'self'", "'unsafe-inline'"],
         scriptSrcAttr: ["'unsafe-inline'"],
         imgSrc:     ["'self'", 'data:', 'blob:', 'https:'],
-        frameSrc:   ["https://www.google.com", "https://maps.google.com"],
+        frameSrc:        ["'self'", "https://www.google.com", "https://maps.google.com"],
+        frameAncestors:  ["'self'"],
       },
     },
   })
@@ -80,7 +81,8 @@ app.use('/api/settings',       require('./src/routes/restaurantSettings'));
 app.use('/api/client-account', require('./src/routes/clientAccount'));
 app.use('/api/restaurant',     require('./src/routes/restaurant'));
 app.use('/api/super-admin',    require('./src/routes/superAdmin'));
-app.use('/api/gourmet-club',   require('./src/routes/gourmetClub'));
+app.use('/api/gourmet-club',        require('./src/routes/gourmetClub'));
+app.use('/api/static-translations', require('./src/routes/staticTranslations'));
 
 // ── Admin page routes ─────────────────────────────────────────────────────────
 app.use('/admin', require('./src/routes/adminPages'));
@@ -96,14 +98,42 @@ app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Route not found' });
   }
-  res.status(404).send('Page not found');
+  const isAdmin = req.path.startsWith('/admin');
+  res.status(404).render('shared/404', {
+    restaurantName: process.env.RESTAURANT_NAME || 'Restaurant',
+    returnUrl:      isAdmin ? '/admin' : '/menu',
+    returnLabel:    isAdmin ? 'Back to Dashboard' : 'Back to Menu',
+  });
 });
+
+// ── Prisma error sanitiser ────────────────────────────────────────────────────
+// Maps Prisma client error codes to human-readable messages.
+// Raw Prisma messages must never reach the client.
+function sanitiseError(err) {
+  const code = err.code; // Prisma errors carry a .code property
+  if (code) {
+    switch (code) {
+      case 'P2002': return 'That record already exists — please use a unique value.';
+      case 'P2025': return 'Record not found.';
+      case 'P2003': return 'This action is not allowed because other records depend on it.';
+      case 'P2014': return 'This change would break a required relationship between records.';
+      case 'P2000': return 'One of the values provided is too long for this field.';
+      default:      return 'Something went wrong — please try again.';
+    }
+  }
+  // AppError messages are intentionally user-facing — pass them through
+  if (err.name === 'AppError') return err.message;
+  // Any other server error — return generic message
+  if (!err.status || err.status >= 500) return 'Something went wrong — please try again.';
+  // 4xx errors with explicit messages (validation etc.) — pass through
+  return err.message || 'Something went wrong.';
+}
 
 // ── Global error handler ─────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   const status  = err.status || 500;
-  const message = err.message || 'Internal server error';
+  const message = sanitiseError(err);
 
   if (status >= 500) {
     console.error('=== ERROR DETAILS ===');
@@ -115,14 +145,26 @@ app.use((err, req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return res.status(status).json({ error: message });
   }
-  res.status(status).send(message);
+
+  const isAdmin = req.path.startsWith('/admin');
+  const viewData = {
+    restaurantName: process.env.RESTAURANT_NAME || 'Restaurant',
+    returnUrl:      isAdmin ? '/admin' : '/menu',
+    returnLabel:    isAdmin ? 'Back to Dashboard' : 'Back to Menu',
+  };
+
+  const view = status === 403 ? 'shared/403' : 'shared/500';
+  res.status(status).render(view, viewData);
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
+const { syncStaticTranslations } = require('./src/helpers/staticTextSync');
+
 app.listen(PORT, () => {
   console.log(`[${process.env.RESTAURANT_NAME || 'Menu System'}] running on port ${PORT}`);
   console.log(`  Admin: ${process.env.APP_URL || `http://localhost:${PORT}`}/admin`);
   console.log(`  Menu:  ${process.env.APP_URL || `http://localhost:${PORT}`}/menu`);
+  syncStaticTranslations().catch(err => console.error('[i18n] Static sync error:', err.message));
 });
 
 module.exports = app;

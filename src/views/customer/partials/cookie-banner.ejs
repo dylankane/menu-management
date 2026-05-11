@@ -1,0 +1,87 @@
+<%
+  /*
+   * Cookie Consent Banner
+   * ─────────────────────
+   * DISABLED BY DEFAULT — the banner only shows when GA_MEASUREMENT_ID is set
+   * in the environment. To activate for a client:
+   *   1. Add GA_MEASUREMENT_ID=G-XXXXXXXXXX to their .env
+   *   2. The banner will appear automatically on first visit.
+   *
+   * Consent is stored in localStorage under the key 'cookie_consent'.
+   * Values: 'accepted' | 'declined'
+   * Google Analytics is only loaded after the user accepts.
+   */
+  const gaId = process.env.GA_MEASUREMENT_ID || null;
+%>
+
+<% if (gaId) { %>
+
+<!-- ── Google Analytics (deferred until consent) ───────────────────────── -->
+<script>
+  (function () {
+    var GA_ID = '<%= gaId %>';
+
+    function loadGA() {
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+      s.async = true;
+      document.head.appendChild(s);
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', GA_ID, { anonymize_ip: true });
+    }
+
+    function initConsent() {
+      var consent = localStorage.getItem('cookie_consent');
+      if (consent === 'accepted') {
+        loadGA();
+        return;
+      }
+      if (consent === 'declined') {
+        return;
+      }
+      var banner = document.getElementById('cookieBanner');
+      if (banner) banner.classList.add('is-visible');
+    }
+
+    function acceptCookies() {
+      localStorage.setItem('cookie_consent', 'accepted');
+      var banner = document.getElementById('cookieBanner');
+      if (banner) banner.classList.remove('is-visible');
+      loadGA();
+    }
+
+    function declineCookies() {
+      localStorage.setItem('cookie_consent', 'declined');
+      var banner = document.getElementById('cookieBanner');
+      if (banner) banner.classList.remove('is-visible');
+    }
+
+    window.acceptCookies  = acceptCookies;
+    window.declineCookies = declineCookies;
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initConsent);
+    } else {
+      initConsent();
+    }
+  })();
+</script>
+
+<!-- ── Cookie Banner UI ─────────────────────────────────────────────────── -->
+<div id="cookieBanner" class="cookie-banner" role="region" aria-label="Cookie consent">
+  <div class="cookie-banner__inner">
+    <p class="cookie-banner__text">
+      <%= mt('cookie.text') %>
+      <a href="/menu/legal"><%= mt('cookie.privacy_link') %></a>
+    </p>
+    <div class="cookie-banner__actions">
+      <button class="cookie-btn cookie-btn--decline" onclick="declineCookies()"><%= mt('cookie.btn_decline') %></button>
+      <button class="cookie-btn cookie-btn--accept" onclick="acceptCookies()"><%= mt('cookie.btn_accept') %></button>
+    </div>
+  </div>
+</div>
+
+<% } %>

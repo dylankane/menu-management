@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Server Error — <%= restaurantName %></title>
+  <link rel="stylesheet" href="/shared/css/error.css" />
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-code">500</div>
+    <hr class="error-divider" />
+    <p class="error-title-en">Something Went Wrong</p>
+    <p class="error-title-es">Algo salió mal</p>
+    <p class="error-message-en">An unexpected error occurred. Please try again or contact support.</p>
+    <p class="error-message-es">Ocurrió un error inesperado. Por favor inténtalo de nuevo o contacta al soporte.</p>
+    <a href="<%= returnUrl %>" class="error-btn"><%= returnLabel %></a>
+  </div>
+</body>
+</html>

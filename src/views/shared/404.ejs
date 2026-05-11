@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Page Not Found — <%= restaurantName %></title>
+  <link rel="stylesheet" href="/shared/css/error.css" />
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-code">404</div>
+    <hr class="error-divider" />
+    <p class="error-title-en">Page Not Found</p>
+    <p class="error-title-es">Página no encontrada</p>
+    <p class="error-message-en">The page you are looking for does not exist or has been moved.</p>
+    <p class="error-message-es">La página que buscas no existe o ha sido movida.</p>
+    <a href="<%= returnUrl %>" class="error-btn"><%= returnLabel %></a>
+  </div>
+</body>
+</html>

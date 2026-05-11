@@ -1,0 +1,72 @@
+<% 
+  const itemTrans = pickT(item.translations);
+  const itemName = itemTrans.name || 'Menu Item';
+  const itemDescription = itemTrans.description || '';
+  const itemPublicNotes = itemTrans.public_notes || '';
+  
+  const finalPrice = item.has_discount 
+    ? (item.discount_type === 'percent' 
+        ? parseFloat(item.price) * (1 - parseFloat(item.discount_value) / 100)
+        : parseFloat(item.price) - parseFloat(item.discount_value))
+    : parseFloat(item.price);
+%>
+
+<article class="menu-item" data-item-id="<%= item.id %>">
+  <div class="menu-item-header">
+    <h4 class="menu-item-name">
+      <%= itemName %>
+      <% if (item.is_special) { %>
+        <span class="special-indicator">
+          <svg class="icon icon-star">
+            <use href="/customer/icons/sprite.svg#star"></use>
+          </svg>
+        </span>
+      <% } %>
+    </h4>
+    <span class="menu-item-price">€<%= finalPrice.toFixed(2) %></span>
+  </div>
+  
+  <% if (itemDescription) { %>
+    <p class="menu-item-description"><%= itemDescription %></p>
+  <% } %>
+  
+  <% if (itemPublicNotes) { %>
+    <div class="public-notes"><%= itemPublicNotes %></div>
+  <% } %>
+  
+  <% if (item.image_url || (item.allergens && item.allergens.length > 0) || (item.dietary && item.dietary.length > 0)) { %>
+    <div class="menu-item-actions">
+      <% if (item.image_url) { %>
+        <button 
+          class="menu-item-image-trigger" 
+          data-image="<%= item.image_url %>"
+          data-name="<%= itemName %>"
+          data-description="<%= itemDescription %>"
+          type="button"
+        >
+          <svg class="icon">
+            <use href="/customer/icons/sprite.svg#photo"></use>
+          </svg>
+        </button>
+      <% } %>
+      <% if ((item.allergens && item.allergens.length > 0) || (item.dietary && item.dietary.length > 0)) { %>
+        <%
+          const dietaryList = (item.dietary || []).map(d => pickT(d.dietary_tag.translations).name).filter(Boolean);
+          const allergenList = (item.allergens || []).map(a => pickT(a.allergen.translations).name).filter(Boolean);
+        %>
+        <button 
+          type="button" 
+          class="menu-item-info-trigger" 
+          data-item-name="<%= itemName %>"
+          data-dietary="<%= JSON.stringify(dietaryList) %>"
+          data-allergens="<%= JSON.stringify(allergenList) %>"
+          aria-label="View allergen and dietary information"
+        >
+          <svg class="icon">
+            <use href="/customer/icons/sprite.svg#info-circle"></use>
+          </svg>
+        </button>
+      <% } %>
+    </div>
+  <% } %>
+</article>

@@ -1,0 +1,180 @@
+<!-- Mobile top bar (hidden on desktop) -->
+<div class="mobile-bar">
+  <button class="mobile-bar__hamburger" onclick="openSidebar()" aria-label="Open navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <span class="mobile-bar__name"><%= restaurantName %></span>
+  <%- include('./lang-selector') %>
+</div>
+
+<!-- Sidebar overlay (shown on mobile when sidebar is open) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Fixed left sidebar navigation -->
+<aside class="sidebar bg-dark">
+  <div class="sidebar__header">
+    <% if (settings.logo_svg_url) { %>
+      <img src="<%= settings.logo_svg_url %>" alt="<%= restaurantName %>" class="sidebar__logo sidebar__logo--svg">
+    <% } else { %>
+      <img src="<%= settings.logo_light_url || '/admin/media/logo-light.png' %>" alt="<%= restaurantName %>" class="sidebar__logo">
+    <% } %>
+    <h1 class="sidebar__restaurant-name"><%= restaurantName %></h1>
+    <p class="sidebar__label"><%= t('nav.admin_dashboard') %></p>
+  </div>
+
+  <nav class="sidebar__nav">
+
+    <a href="/admin" class="sidebar__link <%= current === 'dashboard' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#dashboard"></use></svg>
+      <%= t('nav.overview') %>
+    </a>
+
+    <% if (features.menu) { %>
+    <hr />
+
+    <!-- ── MENU ─────────────────────────────────────────────────────── -->
+    <div class="sidebar__section" id="section-menu">
+      <button class="sidebar__section-title" onclick="toggleSection('section-menu')">
+        <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#menu-items"></use></svg>
+        <span><%= t('nav.menu') %></span>
+        <svg class="icon sidebar__section-chevron"><use href="/admin/icons/sprite.svg#chevron-down"></use></svg>
+      </button>
+      <div class="sidebar__section-links">
+        <a href="/admin/builder" class="sidebar__link <%= current === 'builder' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#menu-builder"></use></svg>
+          <%= t('nav.builder') %>
+        </a>
+        <a href="/admin/menu-items" class="sidebar__link <%= current === 'menu-items' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#menu-items"></use></svg>
+          <%= t('nav.menu_items') %>
+        </a>
+        <a href="/admin/set-menus" class="sidebar__link <%= current === 'set-menus' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#set-menus"></use></svg>
+          <%= t('nav.set_menus') %>
+        </a>
+        <a href="/admin/tags" class="sidebar__link <%= current === 'tags' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#tags"></use></svg>
+          <%= t('nav.allergens_dietary') %>
+        </a>
+        <a href="/menu" target="_blank" class="sidebar__link">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#eye"></use></svg>
+          <%= t('nav.preview_menu') %>
+        </a>
+        <a href="/admin/menu-translations" class="sidebar__link <%= current === 'menu-translations' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#tags"></use></svg>
+          <%= t('nav.menu_translations') %>
+        </a>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- ── RESTAURANT HUB ──────────────────────────────────────────── -->
+    <% if (features.restaurantHub) { %>
+    <a href="/admin/restaurant" class="sidebar__section-title <%= current === 'restaurant' ? 'sidebar__section-title--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#building"></use></svg>
+      <span><%= t('nav.restaurant_hub') %></span>
+    </a>
+    <% } %>
+
+    <!-- ── GOURMET CLUB ───────────────────────────────────────────── -->
+    <% if (features.gourmetClub) { %>
+    <div class="sidebar__section" id="section-gourmet-club">
+      <button class="sidebar__section-title" onclick="toggleSection('section-gourmet-club')">
+        <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#star"></use></svg>
+        <span><%= t('nav.gourmet_club') %></span>
+        <svg class="icon sidebar__section-chevron"><use href="/admin/icons/sprite.svg#chevron-down"></use></svg>
+      </button>
+      <div class="sidebar__section-links">
+        <a href="/admin/gourmet-club" class="sidebar__link <%= current === 'gc-members' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#users"></use></svg>
+          <%= t('nav.members') %>
+        </a>
+        <a href="/admin/gourmet-club/raffles" class="sidebar__link <%= current === 'gc-raffles' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#star"></use></svg>
+          <%= t('nav.raffles') %>
+        </a>
+        <a href="/admin/gourmet-club/communications" class="sidebar__link <%= current === 'gc-communications' ? 'sidebar__link--active' : '' %>">
+          <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#phone"></use></svg>
+          <%= t('nav.communications') %>
+        </a>
+      </div>
+    </div>
+    <% } %>
+
+    <hr />
+
+    <a href="/admin/settings" class="sidebar__link <%= current === 'settings' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#settings"></use></svg>
+      <%= t('nav.settings') %>
+    </a>
+    <a href="/admin/profile" class="sidebar__link <%= current === 'profile' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#user"></use></svg>
+      <%= t('nav.profile') %>
+    </a>
+    <a href="/admin/support" class="sidebar__link <%= current === 'support' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#info"></use></svg>
+      <%= t('nav.support') %>
+    </a>
+    <% if (user.role === 'super_admin') { %>
+    <a href="/admin/config" class="sidebar__link <%= current === 'config' ? 'sidebar__link--active' : '' %>">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#lock"></use></svg>
+      <%= t('nav.config') %>
+    </a>
+    <% } %>
+    <a href="/admin/logout" class="sidebar__link sidebar__link--danger">
+      <svg class="icon sidebar__icon"><use href="/admin/icons/sprite.svg#logout"></use></svg>
+      <%= t('nav.logout') %>
+    </a>
+
+  </nav>
+
+  <div class="sidebar__footer">
+    <div class="sidebar__footer-section sidebar__footer-section--user">
+      <p class="sidebar__footer-label"><%= t('nav.logged_in_as') %></p>
+      <p class="sidebar__footer-name"><%= user.name || user.email %></p>
+    </div>
+    <div class="sidebar__footer-section sidebar__footer-section--boceto">
+      <a href="https://www.boceto42.eu" target="_blank" rel="noopener" class="sidebar__footer-boceto__link">
+        <img src="/admin/media/logo-light.png" alt="BOCETO" class="sidebar__footer-boceto__logo" />
+        <span>BOCETO</span>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<script>
+  const SIDEBAR_SECTIONS = [
+    <%- features.menu ? "'section-menu'" : '' %>,
+    <%- features.gourmetClub ? "'section-gourmet-club'" : '' %>
+  ].filter(Boolean);
+
+  const SECTION_PAGES = {
+    'section-menu': ['builder', 'menu-items', 'set-menus', 'tags', 'menu-translations'],
+    'section-gourmet-club': ['gc-members', 'gc-raffles', 'gc-communications'],
+  };
+
+  const CURRENT_PAGE = '<%= current %>';
+
+  function openSidebar() {
+    document.querySelector('.sidebar').classList.add('sidebar--open');
+    document.getElementById('sidebarOverlay').classList.add('sidebar-overlay--visible');
+    document.body.classList.add('sidebar-open');
+  }
+
+  function closeSidebar() {
+    document.querySelector('.sidebar').classList.remove('sidebar--open');
+    document.getElementById('sidebarOverlay').classList.remove('sidebar-overlay--visible');
+    document.body.classList.remove('sidebar-open');
+  }
+
+  function toggleSection(id) {
+    document.getElementById(id).classList.toggle('sidebar__section--collapsed');
+  }
+
+  (function initSidebarSections() {
+    SIDEBAR_SECTIONS.forEach(id => {
+      const isActive = (SECTION_PAGES[id] || []).includes(CURRENT_PAGE);
+      document.getElementById(id).classList.toggle('sidebar__section--collapsed', !isActive);
+    });
+  })();
+</script>

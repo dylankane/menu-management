@@ -1,0 +1,67 @@
+<%
+  // setMenu: SetMenu with courses (SetMenuCourse[]) and dishes (SetMenuDish[] uncategorized)
+  const smT  = pickT(setMenu.translations);
+  const name = smT.name        || '';
+  const desc = smT.description || '';
+%>
+<div class="set-menu-card">
+  <div class="set-menu-card__header">
+    <div class="set-menu-card__info">
+      <h3 class="set-menu-card__name"><%= name %></h3>
+      <% if (desc) { %>
+        <p class="set-menu-card__desc"><%= desc %></p>
+      <% } %>
+    </div>
+    <span class="set-menu-card__price">€<%= Number(setMenu.price).toFixed(2) %></span>
+  </div>
+
+  <% const hasCourses = setMenu.courses && setMenu.courses.length > 0; %>
+  <% const hasUncategorised = setMenu.dishes && setMenu.dishes.length > 0; %>
+
+  <% if (hasCourses || hasUncategorised) { %>
+    <div class="set-menu-card__courses">
+
+      <% (setMenu.courses || []).forEach(smc => { %>
+        <div>
+          <p class="set-course__title"><%= pickT(smc.course.translations).name || '' %></p>
+          <div class="set-course__items">
+            <% (smc.dishes || []).forEach(smd => {
+              const dishT = pickT(smd.dish.translations);
+              const noteT = (smd.translations || []).find(t => t.lang === lang) ||
+                            (smd.translations || []).find(t => t.lang === 'es') ||
+                            (smd.translations || []).find(t => t.lang === 'en') ||
+                            (smd.translations || [])[0];
+            %>
+              <div class="set-course__item">
+                <span class="set-course__dot">•</span>
+                <span class="set-course__name"><%= dishT.name || '' %></span>
+                <% if (noteT && noteT.notes) { %><span class="set-course__note"> — <%= noteT.notes %></span><% } %>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% }) %>
+
+      <% if (hasUncategorised) { %>
+        <div>
+          <div class="set-course__items">
+            <% (setMenu.dishes || []).forEach(smd => {
+              const dishT = pickT(smd.dish.translations);
+              const noteT = (smd.translations || []).find(t => t.lang === lang) ||
+                            (smd.translations || []).find(t => t.lang === 'es') ||
+                            (smd.translations || []).find(t => t.lang === 'en') ||
+                            (smd.translations || [])[0];
+            %>
+              <div class="set-course__item">
+                <span class="set-course__dot">•</span>
+                <span class="set-course__name"><%= dishT.name || '' %></span>
+                <% if (noteT && noteT.notes) { %><span class="set-course__note"> — <%= noteT.notes %></span><% } %>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+    </div>
+  <% } %>
+</div>

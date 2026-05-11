@@ -32,7 +32,9 @@ async function update(req, res, next) {
     const data = {};
     if (restaurant_name  !== undefined) data.restaurant_name  = restaurant_name;
     if (primary_language !== undefined) data.primary_language = primary_language;
-    if (req.uploadedFile)               data.logo_url         = req.uploadedFile;
+    if (req.uploadedFiles?.logo_light)  data.logo_light_url   = req.uploadedFiles.logo_light;
+    if (req.uploadedFiles?.logo_dark)   data.logo_dark_url    = req.uploadedFiles.logo_dark;
+    if (req.uploadedFiles?.logo_svg)    data.logo_svg_url     = req.uploadedFiles.logo_svg;
 
     const settings = await prisma.restaurantSettings.upsert({
       where: { id: 1 },

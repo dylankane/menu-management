@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="<%= uiLang %>">
+<%- include('../../partials/head', { title: t('page.gc.communications.title'), restaurantName, section: 'admin' }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<div class="main">
+  <header class="page-header page-header--minimal">
+    <h2 class="page-header__title"><%= t('page.gc.communications.title') %></h2>
+    <%- include('../partials/lang-selector') %>
+  </header>
+
+  <main class="page-body page-body--minimal">
+  <div class="dash-tab-panel">
+
+    <!-- ── Mailing list export card ─────────────────────────────────────────── -->
+    <div class="card dash-card qr-section">
+      <div class="qr-section__visual">
+        <svg class="icon"><use href="/admin/icons/sprite.svg#download"></use></svg>
+      </div>
+      <div>
+        <h3 class="qr-section__title"><%= t('page.gc.communications.mailing_title') %></h3>
+        <p class="qr-section__desc"><%= t('page.gc.communications.mailing_desc') %></p>
+        <p class="qr-section__url"><%= consentCount %> <%= consentCount !== 1 ? t('page.gc.communications.mailing_members_plural') : t('page.gc.communications.mailing_members_singular') %></p>
+        <div class="qr-section__actions">
+          <a href="/api/gourmet-club/members/export" class="btn btn--pill btn--outline-brand btn--sm" download><%= t('page.gc.communications.btn_download_csv') %></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header card__header--accent">
+        <h3 class="card__title"><%= t('page.gc.communications.templates_title') %></h3>
+      </div>
+      <div class="card__body">
+        <div class="gc-placeholder-section">
+          <span class="gc-placeholder-tag"><%= t('page.gc.communications.coming_soon_tag') %></span>
+          <p class="gc-placeholder-title"><%= t('page.gc.communications.templates_feature_title') %></p>
+          <p class="gc-placeholder-text"><%= t('page.gc.communications.templates_desc') %></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header card__header--brand">
+        <h3 class="card__title"><%= t('page.gc.communications.campaigns_title') %></h3>
+      </div>
+      <div class="card__body">
+        <div class="gc-placeholder-section">
+          <span class="gc-placeholder-tag"><%= t('page.gc.communications.coming_soon_tag') %></span>
+          <p class="gc-placeholder-title"><%= t('page.gc.communications.campaigns_feature_title') %></p>
+          <p class="gc-placeholder-text"><%= t('page.gc.communications.campaigns_desc') %></p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.dash-tab-panel -->
+  </main>
+</div>
+
+<%- include('../partials/scripts') %>
+
+</body>
+</html>

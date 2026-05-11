@@ -1,0 +1,82 @@
+<%
+  const setMenuTrans = pickT(setMenu.translations);
+  const finalPrice = setMenu.has_discount
+    ? (setMenu.discount_type === 'percent'
+        ? Number(setMenu.price) * (1 - Number(setMenu.discount_value) / 100)
+        : Number(setMenu.price) - Number(setMenu.discount_value))
+    : Number(setMenu.price);
+%>
+
+<article class="menu-item" data-set-menu-id="<%= setMenu.id %>">
+  <div class="menu-item-header">
+    <h4 class="menu-item-name">
+      <%= setMenuTrans.name || 'Set Menu' %>
+      <span class="set-menu-label">(<%= mt('menu.set_menu_label') %>)</span>
+    </h4>
+    <span class="menu-item-price">€<%= finalPrice.toFixed(2) %></span>
+  </div>
+
+  <% if (setMenuTrans.description) { %>
+    <p class="menu-item-description"><%= setMenuTrans.description %></p>
+  <% } %>
+
+  <% if (setMenu.courses && setMenu.courses.length > 0) { %>
+    <div class="set-menu-courses">
+      <% setMenu.courses.forEach(courseSection => { %>
+        <% const courseTrans = pickT(courseSection.course.translations); %>
+        <div class="set-menu-course">
+          <div class="set-menu-course-title"><%= courseTrans.name || 'Course' %></div>
+
+          <% const courseNoteTrans = pickT(courseSection.translations); %>
+          <% if (courseNoteTrans.public_notes) { %>
+            <div class="set-menu-course-note"><%= courseNoteTrans.public_notes %></div>
+          <% } %>
+
+          <% if (courseSection.dishes && courseSection.dishes.length > 0) { %>
+            <div class="set-menu-dishes">
+              <% courseSection.dishes.forEach(dishItem => { %>
+                <% if (dishItem.dish) { %>
+                  <% const dishTrans = pickT(dishItem.dish.translations); %>
+                  <% const dishNoteTrans = pickT(dishItem.translations); %>
+                  <div class="set-menu-dish">
+                    <div class="set-menu-dish-name">
+                      <%= dishTrans.name || 'Dish' %>
+                      <% if ((dishItem.dish.allergens && dishItem.dish.allergens.length > 0) || (dishItem.dish.dietary && dishItem.dish.dietary.length > 0)) { %>
+                        <%
+                          const dishDietaryList = (dishItem.dish.dietary || []).map(d => pickT(d.dietary_tag.translations).name).filter(Boolean);
+                          const dishAllergenList = (dishItem.dish.allergens || []).map(a => pickT(a.allergen.translations).name).filter(Boolean);
+                        %>
+                        <button
+                          type="button"
+                          class="info-btn info-btn-small"
+                          data-item-name="<%= dishTrans.name || 'Dish' %>"
+                          data-dietary="<%= JSON.stringify(dishDietaryList) %>"
+                          data-allergens="<%= JSON.stringify(dishAllergenList) %>"
+                          aria-label="View allergen and dietary information"
+                        >
+                          <svg class="icon">
+                            <use href="/customer/icons/sprite.svg#info-circle"></use>
+                          </svg>
+                        </button>
+                      <% } %>
+                    </div>
+                    <% if (dishTrans.description) { %>
+                      <div class="set-menu-dish-description"><%= dishTrans.description %></div>
+                    <% } %>
+                    <% if (dishNoteTrans.notes) { %>
+                      <div class="set-menu-dish-description"><%= dishNoteTrans.notes %></div>
+                    <% } %>
+                  </div>
+                <% } %>
+              <% }); %>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <% if (setMenuTrans.public_notes) { %>
+    <div class="public-notes"><%= setMenuTrans.public_notes %></div>
+  <% } %>
+</article>

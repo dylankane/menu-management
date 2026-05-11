@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Menu Builder', restaurantName }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.builder.title'), restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <%
-  const primary = settings.primary_language || 'en';
   const langs   = settings.enabled_languages || ['en', 'es'];
 
   function getName(translations) {
     if (!translations || !translations.length) return '—';
-    const t = translations.find(t => t.lang === primary) || translations[0];
+    const t = translations.find(t => t.lang === uiLang)
+           || translations.find(t => t.lang === 'en')
+           || translations[0];
     return t ? (t.name || '—') : '—';
   }
   
@@ -27,21 +28,21 @@
 
 <div class="main">
   <header class="page-header page-header--minimal">
-    <h2 class="page-header__title">Builder</h2>
-    <%- include('../partials/lang-selector') %>
+    <h2 class="page-header__title"><%= t('page.builder.title') %></h2>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body page-body--minimal">
   <div class="card table-card smb-card">
 
     <div class="card__header card__header--brand">
-      <h3 class="card__title">Menu Builder</h3>
-      <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Category</button>
+      <h3 class="card__title"><%= t('page.builder.card_title') %></h3>
+      <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.builder.btn_create_category') %></button>
     </div>
 
     <div class="smb-tabs">
-      <button class="smb-tabs__btn smb-tabs__btn--active" id="smb-tab-list" onclick="showListTab()">Categories</button>
-      <button class="smb-tabs__btn" id="smb-tab-detail" onclick="showDetailTab()">Builder</button>
+      <button class="smb-tabs__btn smb-tabs__btn--active" id="smb-tab-list" onclick="showListTab()"><%= t('page.builder.tab_categories') %></button>
+      <button class="smb-tabs__btn" id="smb-tab-detail" onclick="showDetailTab()"><%= t('page.builder.tab_builder') %></button>
     </div>
 
     <div class="smb-split" id="smb-split">
@@ -49,20 +50,20 @@
     <!-- ── LEFT PANEL (SIDEBAR) ─────────────────────────────────────── -->
     <div class="smb-panel">
       <div class="smb-panel__header smb-panel__header--col">
-        <h4 class="smb-panel__title">Categories</h4>
+        <h4 class="smb-panel__title"><%= t('page.builder.panel_title') %></h4>
         <label class="toggle-switch">
           <input type="checkbox" id="inactive-toggle-checkbox" onchange="toggleInactiveView()">
           <span class="toggle-switch__track">
-            <span class="toggle-switch__label toggle-switch__label--left">Live</span>
+            <span class="toggle-switch__label toggle-switch__label--left"><%= t('page.builder.toggle_live') %></span>
             <span class="toggle-switch__slider"></span>
-            <span class="toggle-switch__label toggle-switch__label--right">Off</span>
+            <span class="toggle-switch__label toggle-switch__label--right"><%= t('page.builder.toggle_off') %></span>
           </span>
         </label>
       </div>
 
       <div class="smb-panel__list" id="builder-list">
         <% if (categories.length === 0) { %>
-          <div class="smb-panel__empty">No categories yet</div>
+          <div class="smb-panel__empty"><%= t('page.builder.empty_no_categories') %></div>
         <% } %>
         
         <!-- Parent categories -->
@@ -73,14 +74,14 @@
               <div class="smb-item" data-cat-id="<%= cat.id %>">
                 <span class="smb-item__handle">&#8801;</span>
                 <% if (cat.children && cat.children.length > 0) { %>
-                  <svg class="icon builder-chevron builder-chevron--collapsed" onclick="toggleCatCollapse(event, <%= cat.id %>)"><use href="/icons/sprite.svg#chevron-down"></use></svg>
+                  <svg class="icon builder-chevron builder-chevron--collapsed" onclick="toggleCatCollapse(event, <%= cat.id %>)"><use href="/admin/icons/sprite.svg#chevron-down"></use></svg>
                 <% } else { %>
                   <span class="builder-chevron-spacer"></span>
                 <% } %>
                 <div class="smb-item__info" onclick="selectCategory(<%= cat.id %>)">
                   <span class="smb-item__name"><%= catName(cat) %></span>
                   <% if (cat.children && cat.children.length > 0) { %>
-                    <span class="smb-item__price"><%= cat.children.filter(s => s.is_active).length %> subs</span>
+                    <span class="smb-item__price"><%= cat.children.filter(s => s.is_active).length %> <%= t('page.builder.subs_label') %></span>
                   <% } else { %>
                     <span class="smb-item__price"><%= cat._count ? (cat._count.menu_item_categories + cat._count.set_menu_categories) : 0 %> items</span>
                   <% } %>
@@ -95,7 +96,7 @@
                       <span class="smb-item__handle smb-item__handle--sub">&#8801;</span>
                       <div class="smb-item__info">
                         <span class="smb-item__name"><%= catName(sub) %></span>
-                        <span class="smb-item__price"><%= sub._count ? (cat.is_protected ? sub._count.set_menu_categories : (sub._count.menu_item_categories + sub._count.set_menu_categories)) : 0 %> <%= cat.is_protected ? 'set menus' : 'items' %></span>
+                        <span class="smb-item__price"><%= sub._count ? (cat.is_protected ? sub._count.set_menu_categories : (sub._count.menu_item_categories + sub._count.set_menu_categories)) : 0 %> <%= cat.is_protected ? t('page.builder.set_menu_label') : t('page.builder.items_label') %></span>
                       </div>
                     </div>
                   <% }) %>
@@ -118,10 +119,10 @@
       <!-- Empty state -->
       <div class="smb-empty" id="builder-empty">
         <div class="empty-state__icon">
-          <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#categories"></use></svg>
+          <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#categories"></use></svg>
         </div>
-        <p class="empty-state__text">Select a category to start building</p>
-        <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Create New Category</button>
+        <p class="empty-state__text"><%= t('page.builder.empty_select') %></p>
+        <button onclick="openAddCategoryModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.builder.btn_add_new_category') %></button>
       </div>
 
       <!-- Builder content (JS-rendered) -->
@@ -139,8 +140,8 @@
             </label>
             <div class="smb-header__actions">
               <button class="btn-view" onclick="openCatViewModal(activeCatId)" title="View details">
-                <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-                <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+                <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
               </button>
               <button class="btn-delete" id="builder-delete-btn" onclick="confirmDeleteCat()" title="Delete">
                 <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -154,9 +155,12 @@
           <div class="smb-header__bar">
             <img id="builder-cat-img" src="" alt="" class="table-thumb table-thumb--clickable hidden"
                  onclick="openCatEditLightbox(this.src)" />
+            <div id="builder-cat-placeholder" class="table-thumb-placeholder">
+              <svg class="icon"><use href="/admin/icons/sprite.svg#categories"></use></svg>
+            </div>
             <div class="category-breadcrumbs smb-header__cats" id="builder-breadcrumb"></div>
-            <button class="btn btn--pill link--slide" onclick="openAddSubModal(activeCatId, activeCatName)" id="builder-add-sub-btn">+ Subcategory</button>
-            <button class="btn btn--pill link--slide" id="builder-add-item-btn" onclick="openAddToCatModal(activeCatId, activeCatName)">+ Item</button>
+            <button class="btn btn--pill link--slide" onclick="openAddSubModal(activeCatId, activeCatName)" id="builder-add-sub-btn"><%= t('page.builder.btn_add_sub') %></button>
+            <button class="btn btn--pill link--slide" id="builder-add-item-btn" onclick="openAddToCatModal(activeCatId, activeCatName)"><%= t('page.builder.btn_add_item') %></button>
           </div>
         </div>
 
@@ -173,15 +177,15 @@
   </main><!-- /.page-body -->
 </div><!-- /.main -->
 
-<%- include('../partials/modals/create-edit/category', { langs, primary, categories }) %>
-<%- include('../partials/modals/view/category') %>
-<%- include('../partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
-<%- include('../partials/modals/view/menu-item') %>
-<%- include('../partials/modals/view/set-menu', { langs, primary }) %>
-<%- include('../partials/modals/add/add-item', { langs, primary, dishes: allItems }) %>
+<%- include('./partials/modals/create-edit/category', { langs, primary, categories }) %>
+<%- include('./partials/modals/view/category') %>
+<%- include('./partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
+<%- include('./partials/modals/view/menu-item') %>
+<%- include('./partials/modals/view/set-menu', { langs, primary }) %>
+<%- include('./partials/modals/add/add-item', { langs, primary, dishes: allItems }) %>
 
-<%- include('../partials/scripts') %>
-<script src="/js/sortable.min.js"></script>
+<%- include('./partials/scripts') %>
+<script src="/admin/js/sortable.min.js"></script>
 <script>
 // ── Data ─────────────────────────────────────────────────────────────────────
 let CATS_DATA  = <%- JSON.stringify(categories) %>;
@@ -303,13 +307,16 @@ function renderBuilder(cat) {
   }
 
   // Category image
-  const catImg = document.getElementById('builder-cat-img');
+  const catImg         = document.getElementById('builder-cat-img');
+  const catPlaceholder = document.getElementById('builder-cat-placeholder');
   if (cat.image_url) {
     catImg.src = cat.image_url;
     catImg.classList.remove('hidden');
+    catPlaceholder.classList.add('hidden');
   } else {
     catImg.src = '';
     catImg.classList.add('hidden');
+    catPlaceholder.classList.remove('hidden');
   }
 
   // Language completion tags
@@ -406,8 +413,8 @@ function renderSubcatSection(sub) {
             : `<button onclick="openAddToCatModal(${sub.id}, '${esc(getName(sub.translations))}')" class="btn btn--pill link--slide btn--sm">+ Item</button>`
           }
           <button class="btn-view" onclick="openCatViewModal(${sub.id})" title="View details">
-            <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-            <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+            <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+            <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
           </button>
           <button class="btn-delete" onclick="deleteCategory(${sub.id}, '${esc(getName(sub.translations))}')" title="Delete">
             <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -441,8 +448,8 @@ function renderDishRow(mic, catId) {
         <span class="smb-dish__name">${esc(getName(mic.menu_item.translations))}</span>
       </div>
       <button class="btn-view" onclick="openBuilderItemView(${mic.menu_item.id})" title="View details">
-        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+        <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+        <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
       </button>
       <button class="btn-delete" onclick="removeItemFromCat(${mic.menu_item.id}, ${catId})" title="Remove">
         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -460,8 +467,8 @@ function renderSetMenuRow(smc, catId) {
         <span class="smb-dish__name">${esc(getName(smc.set_menu.translations))}</span>
       </div>
       <button class="btn-view" onclick="openBuilderSmView(${smc.set_menu.id})" title="View details">
-        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+        <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+        <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
       </button>
       <button class="btn-delete" onclick="removeSetMenuFromCat(${smc.set_menu.id}, ${catId})" title="Remove">
         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">

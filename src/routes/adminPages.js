@@ -10,72 +10,12 @@ const prisma            = require('../config/database');
 const { signToken, verifyToken } = require('../utils/jwt');
 const { requireAuth, requireSuperAdmin } = require('../middleware/auth');
 const loadSettings      = require('../middleware/loadSettings');
+const { resolveUiLang } = require('../helpers/i18n');
 
 const router = express.Router();
 
 // ── Dashboard helpers ─────────────────────────────────────────────────────────
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
-
-function buildDashCards(features, stats, todayHours, openDaysThisWeek, announcement, gcStats) {
-  const M = { feature: 'Menu',           featureKey: 'menu', icon: 'menu-items' };
-  const H = { feature: 'Restaurant Hub', featureKey: 'hub',  icon: 'building'   };
-  const G = { feature: 'Gourmet Club',   featureKey: 'gc',   icon: 'star'       };
-
-  const menuCards = [
-    { ...M, value: stats.liveItems   ?? 0, label: 'Live Items', link: '/admin/menu-items' },
-    { ...M, value: stats.totalSetMenus ?? 0, label: 'Set Menus',  link: '/admin/set-menus'  },
-    { ...M, value: stats.totalSpecials ?? 0, label: 'Specials',   link: '/admin/menu-items' },
-  ];
-
-  const todayOpen = todayHours && !todayHours.is_closed;
-  const hoursConfigured = todayOpen && todayHours.slot_1_from;
-
-  let hoursValue, hoursLabel, hoursIsStatus;
-  if (!todayHours) {
-    hoursValue = '—'; hoursLabel = 'Not configured'; hoursIsStatus = false;
-  } else if (todayHours.is_closed) {
-    hoursValue = 'Closed'; hoursLabel = 'Closed today'; hoursIsStatus = true;
-  } else if (hoursConfigured) {
-    hoursValue = 'Open';
-    hoursLabel  = `${todayHours.slot_1_from} – ${todayHours.slot_1_to}`;
-    if (todayHours.slot_2_active && todayHours.slot_2_from) {
-      hoursLabel += ` / ${todayHours.slot_2_from} – ${todayHours.slot_2_to}`;
-    }
-    hoursIsStatus = true;
-  } else {
-    hoursValue = '?'; hoursLabel = 'Hours not set'; hoursIsStatus = false;
-  }
-
-  const hubCards = [
-    { ...H, value: hoursValue, label: hoursLabel, link: '/admin/restaurant', isStatus: hoursIsStatus },
-    { ...H, value: openDaysThisWeek ?? '—', label: 'Open Days This Week', link: '/admin/restaurant' },
-    { ...H, value: announcement?.is_active ? 'Live' : 'Off', label: 'Announcement', link: '/admin/restaurant', isStatus: announcement?.is_active },
-  ];
-
-  const gcCards = [
-    { ...G, value: gcStats?.activeMembers   ?? 0, label: 'Active Members',    link: '/admin/gourmet-club/members' },
-    { ...G, value: gcStats?.totalMembers    ?? 0, label: 'Total Members',      link: '/admin/gourmet-club/members' },
-    { ...G, value: gcStats?.joinedThisMonth ?? 0, label: 'Joined This Month',  link: '/admin/gourmet-club'         },
-  ];
-
-  const active = [
-    features.menu          ? 'menu' : null,
-    features.restaurantHub ? 'hub'  : null,
-    features.gourmetClub   ? 'gc'   : null,
-  ].filter(Boolean);
-
-  if (active.length === 0) return [];
-  if (active.length === 3) return [menuCards[0], hubCards[0], gcCards[0]];
-  if (active.length === 1) {
-    if (features.menu)          return menuCards;
-    if (features.restaurantHub) return hubCards;
-    return gcCards;
-  }
-  // Two features
-  if (features.menu && features.restaurantHub) return [menuCards[0], menuCards[1], hubCards[0]];
-  if (features.menu && features.gourmetClub)   return [menuCards[0], menuCards[1], gcCards[0]];
-  return [gcCards[0], gcCards[1], hubCards[0]]; // hub + gc
-}
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
@@ -116,6 +56,24 @@ router.get('/logout', (req, res) => {
   res.redirect('/admin/login');
 });
 
+// ── Privacy (public — linked from login page) ─────────────────────────────────
+router.get('/privacy', (req, res) => {
+  res.render('admin/privacy');
+});
+
+// ── UI language switch ─────────────────────────────────────────────────────────
+router.post('/set-ui-lang', (req, res) => {
+  const lang = resolveUiLang(req.body?.lang);
+  res.cookie('ui_lang', lang, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+  });
+  const returnTo = req.headers.referer || '/admin';
+  res.redirect(returnTo);
+});
+
 // ── All routes below require auth and restaurant settings ─────────────────────
 router.use(requireAuth);
 router.use(loadSettings);
@@ -128,22 +86,30 @@ function restaurantName(res) {
 router.get(['/', '/dashboard'], async (req, res, next) => {
   try {
     const { menu: menuOn, restaurantHub: hubOn, gourmetClub: gcOn } = res.locals.features;
-    const menuUrl = `${process.env.APP_URL || 'http://localhost:3000'}/menu`;
-    const todayDay = DAYS[new Date().getDay()];
+    const menuUrl      = `${process.env.APP_URL || 'http://localhost:3000'}/menu`;
+    const gcJoinUrl    = `${process.env.APP_URL || 'http://localhost:3000'}/club-join`;
+    const todayDay     = DAYS[new Date().getDay()];
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-    const [menuStats, qrDataUrl, recentItems, hubData, gcData] = await Promise.all([
+    const [menuStats, qrDataUrl, recentItems, hubData, gcData, gcJoinQrDataUrl] = await Promise.all([
       menuOn ? Promise.all([
-        prisma.menuItem.count({ where: { is_available: true } }),
-        prisma.category.count({ where: { parent_id: null } }),
-        prisma.category.count({ where: { parent_id: { not: null } } }),
-        prisma.setMenu.count(),
-        prisma.menuItem.count({ where: { is_special: true } }),
-        prisma.setMenu.count({ where: { is_available: true } }),
+        prisma.menuItem.count(),                                                                         // [0] all menu items
+        prisma.category.count({ where: { parent_id: null } }),                                          // [1] categories
+        prisma.category.count({ where: { parent_id: { not: null } } }),                                 // [2] subcategories
+        prisma.setMenu.count(),                                                                          // [3] all set menus
+        prisma.menuItem.count({ where: { is_special: true } }),                                         // [4] special items
+        prisma.setMenu.count({ where: { is_special: true } }),                                          // [5] special set menus
+        prisma.menuItem.count({ where: { has_discount: true } }),                                       // [6] items with discount
+        prisma.setMenu.count({ where: { has_discount: true } }),                                        // [7] set menus with discount
+        prisma.menuItem.count({ where: { is_available: false } }),                                      // [8] deactivated items
+        prisma.setMenu.count({ where: { is_available: false } }),                                       // [9] deactivated set menus
+        prisma.menuItem.findFirst({ orderBy: { updated_at: 'desc' }, select: { updated_at: true } }),   // [10] latest item update
+        prisma.setMenu.findFirst({ orderBy: { updated_at: 'desc' }, select: { updated_at: true } }),    // [11] latest set menu update
+        prisma.category.findFirst({ orderBy: { updated_at: 'desc' }, select: { updated_at: true } }),  // [12] latest category update
       ]) : Promise.resolve(null),
       menuOn ? QRCode.toDataURL(menuUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }) : Promise.resolve(null),
       menuOn ? prisma.menuItem.findMany({
-        take: 5,
+        take: 6,
         orderBy: { created_at: 'desc' },
         select: { id: true, price: true, is_available: true, created_at: true, image_url: true, translations: true },
       }) : Promise.resolve([]),
@@ -158,15 +124,26 @@ router.get(['/', '/dashboard'], async (req, res, next) => {
         prisma.gourmetClubMember.count(),
         prisma.gourmetClubMember.count({ where: { created_at: { gte: startOfMonth } } }),
         prisma.gourmetClubMember.findFirst({ orderBy: { created_at: 'desc' } }),
+        prisma.gourmetClubMember.findMany({ take: 3, orderBy: { created_at: 'desc' } }),
+        prisma.gourmetClubMember.count({ where: { marketing_consent: true } }),
+        prisma.raffle.findFirst({ where: { status: 'active' }, orderBy: { draw_date: 'asc' } }),
+        prisma.raffle.findFirst({ where: { status: 'drawn' }, orderBy: { drawn_at: 'desc' }, include: { winner: { select: { name: true } } } }),
       ]) : Promise.resolve(null),
+      gcOn ? QRCode.toDataURL(gcJoinUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }) : Promise.resolve(null),
     ]);
 
     const stats = menuStats ? {
-      liveItems:          menuStats[0] + menuStats[5],
+      totalItems:         menuStats[0] + menuStats[3],
       totalCategories:    menuStats[1],
       totalSubCategories: menuStats[2],
       totalSetMenus:      menuStats[3],
-      totalSpecials:      menuStats[4],
+      totalSpecials:      menuStats[4] + menuStats[5],
+      discountCount:      menuStats[6] + menuStats[7],
+      deactivatedCount:   menuStats[8] + menuStats[9],
+      menuLastUpdated: (() => {
+        const dates = [menuStats[10]?.updated_at, menuStats[11]?.updated_at, menuStats[12]?.updated_at].filter(Boolean);
+        return dates.length ? dates.reduce((max, d) => d > max ? d : max, dates[0]) : null;
+      })(),
     } : {};
 
     const allHours     = hubData ? hubData[0] : [];
@@ -193,17 +170,24 @@ router.get(['/', '/dashboard'], async (req, res, next) => {
     const hubStats = { openDaysThisWeek, configuredDays, nextDayOff, tomorrowDay, hoursLastUpdated, socialCount };
 
     const gcStats = gcData ? {
-      activeMembers:   gcData[0],
-      totalMembers:    gcData[1],
-      joinedThisMonth: gcData[2],
-      lastMember:      gcData[3],
+      activeMembers:      gcData[0],
+      totalMembers:       gcData[1],
+      joinedThisMonth:    gcData[2],
+      lastMember:         gcData[3],
+      recentMembers:      gcData[4],
+      consentCount:       gcData[5],
+      activeRaffle:       gcData[6] || null,
+      lastWinnerName:     gcData[7]?.winner?.name ?? null,
+      daysUntilDraw: (() => {
+        if (!gcData[6]?.draw_date) return null;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const d = new Date(gcData[6].draw_date); d.setHours(0, 0, 0, 0);
+        return Math.max(0, Math.round((d - today) / 86400000));
+      })(),
     } : null;
-
-    const cards = buildDashCards(res.locals.features, stats, todayHours, openDaysThisWeek, announcement, gcStats);
 
     res.render('admin/dashboard', {
       user: req.user,
-      cards,
       stats,
       recentItems,
       qrDataUrl,
@@ -216,6 +200,8 @@ router.get(['/', '/dashboard'], async (req, res, next) => {
       nextOverride,
       contact,
       gcStats,
+      gcJoinUrl,
+      gcJoinQrDataUrl,
       current: 'dashboard',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,
@@ -368,9 +354,11 @@ router.get('/set-menus', async (req, res, next) => {
       prisma.allergenTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
       prisma.dietaryTag.findMany({ include: { translations: true }, orderBy: { id: 'asc' } }),
     ]);
-    const primary = res.locals.settings?.primary_language || 'en';
+    const uiLang = res.locals.uiLang || 'en';
     const getName = (translations) => {
-      const t = (translations || []).find(t => t.lang === primary) || (translations || [])[0];
+      const t = (translations || []).find(t => t.lang === uiLang)
+             || (translations || []).find(t => t.lang === 'en')
+             || (translations || [])[0];
       return (t?.name || '').toLowerCase();
     };
     dishes.sort((a, b)  => getName(a.translations).localeCompare(getName(b.translations)));
@@ -450,10 +438,7 @@ router.get('/settings', async (req, res, next) => {
       maxLanguages: acc.max_languages ?? 3,
       settings: res.locals.settings,
       account: acc,
-      features: {
-        restaurantHub: acc.has_restaurant_hub ?? false,
-        gourmetClub:   acc.has_gourmet_club  ?? false,
-      },
+      features: res.locals.features,
     });
   } catch (err) { next(err); }
 });
@@ -473,35 +458,97 @@ router.get('/profile', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Support ───────────────────────────────────────────────────────────────────
+router.get('/support', (req, res) => {
+  res.render('admin/support', {
+    user: req.user,
+    current: 'support',
+    restaurantName: restaurantName(res),
+    settings: res.locals.settings,
+  });
+});
+
 // ── Gourmet Club ──────────────────────────────────────────────────────────────
 router.get('/gourmet-club', async (req, res, next) => {
   if (!res.locals.features.gourmetClub) return res.redirect('/admin');
   try {
-    const [totalMembers, activeMembers, consentCount] = await Promise.all([
-      prisma.gourmetClubMember.count(),
-      prisma.gourmetClubMember.count({ where: { is_active: true } }),
-      prisma.gourmetClubMember.count({ where: { marketing_consent: true } }),
+    const gcJoinUrl = `${process.env.APP_URL || 'http://localhost:3000'}/club-join`;
+    const [members, consentCount, gcJoinQrDataUrl, clientAccount] = await Promise.all([
+      prisma.gourmetClubMember.findMany({
+        orderBy: { created_at: 'desc' },
+        include: { _count: { select: { visits: true } } },
+      }),
+      prisma.gourmetClubMember.count({ where: { is_active: true, marketing_consent: true } }),
+      QRCode.toDataURL(gcJoinUrl, { width: 200, margin: 2, color: { dark: '#111827', light: '#ffffff' } }),
+      prisma.clientAccount.findFirst(),
     ]);
-    res.render('admin/gourmet-club/overview', {
-      user: req.user, current: 'gourmet-club-dashboard',
+    res.render('admin/gourmet-club/members', {
+      user: req.user, current: 'gc-members',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,
-      stats: { totalMembers, activeMembers, consentCount },
+      members,
+      consentCount,
+      gcJoinUrl,
+      gcJoinQrDataUrl,
+      gcPaperFormFrontUrl: clientAccount?.gc_paper_form_front_url || null,
+      gcPaperFormBackUrl:  clientAccount?.gc_paper_form_back_url  || null,
     });
   } catch (err) { next(err); }
 });
 
-router.get('/gourmet-club/members', async (req, res, next) => {
+router.get('/gourmet-club/raffles', async (req, res, next) => {
   if (!res.locals.features.gourmetClub) return res.redirect('/admin');
   try {
-    const members = await prisma.gourmetClubMember.findMany({
+    const raffles = await prisma.raffle.findMany({
       orderBy: { created_at: 'desc' },
+      include: { winner: { select: { id: true, name: true, email: true } } },
     });
-    res.render('admin/gourmet-club/members', {
-      user: req.user, current: 'members',
+    res.render('admin/gourmet-club/raffles', {
+      user: req.user, current: 'gc-raffles',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,
-      members,
+      raffles,
+    });
+  } catch (err) { next(err); }
+});
+
+router.get('/gourmet-club/communications', async (req, res, next) => {
+  if (!res.locals.features.gourmetClub) return res.redirect('/admin');
+  try {
+    const consentCount = await prisma.gourmetClubMember.count({ where: { is_active: true, marketing_consent: true } });
+    res.render('admin/gourmet-club/communications', {
+      user: req.user, current: 'gc-communications',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+      consentCount,
+    });
+  } catch (err) { next(err); }
+});
+
+// ── Menu Translations ─────────────────────────────────────────────────────────
+router.get('/menu-translations', async (req, res, next) => {
+  if (!res.locals.features.menu) return res.redirect('/admin');
+  try {
+    const [rows, settings] = await Promise.all([
+      prisma.staticTranslation.findMany({ orderBy: [{ key: 'asc' }, { lang: 'asc' }] }),
+      prisma.restaurantSettings.findFirst({ select: { enabled_languages: true } }),
+    ]);
+    const enabledLangs = (settings?.enabled_languages) || ['en', 'es'];
+
+    // Group rows by key: { key -> { lang -> value } }
+    const byKey = {};
+    rows.forEach(r => {
+      if (!byKey[r.key]) byKey[r.key] = {};
+      byKey[r.key][r.lang] = r.value;
+    });
+
+    res.render('admin/menu-translations', {
+      user: req.user,
+      current: 'menu-translations',
+      restaurantName: restaurantName(res),
+      settings: res.locals.settings,
+      byKey,
+      enabledLangs,
     });
   } catch (err) { next(err); }
 });

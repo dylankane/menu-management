@@ -1,0 +1,226 @@
+<!-- ── Category View Modal ────────────────────────────────────────────────── -->
+<div id="catViewModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+
+    <div class="modal__header">
+      <h3 id="catViewTitle" class="modal__title">—</h3>
+      <button onclick="closeModal('catViewModal')" class="modal__close">&times;</button>
+    </div>
+
+    <div class="modal__body modal__body--view">
+
+      <!-- Translations — all languages stacked, divider below -->
+      <div id="catViewTranslations" class="view-langs"></div>
+
+      <!-- Image (left) + Info (right) -->
+      <div class="view-hero">
+
+        <!-- Image or placeholder -->
+        <img id="catViewImg" src="" alt="" class="view-hero__img hidden"
+             onclick="openCatViewLightbox(this.src)" />
+        <div id="catViewImgPlaceholder" class="view-hero__img-placeholder hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+            <line x1="2" y1="2" x2="22" y2="22"/>
+          </svg>
+        </div>
+
+        <!-- Info column -->
+        <div class="view-hero__meta">
+          <div class="view-info-row">
+            <span class="form-label">Status</span>
+            <div id="catViewStatus" class="view-hero__badges"></div>
+          </div>
+          <div class="view-info-row">
+            <span class="form-label">Type</span>
+            <span id="catViewType" class="view-section__value"></span>
+          </div>
+          <div id="catViewParentRow" class="view-info-row hidden">
+            <span class="form-label">Parent</span>
+            <span id="catViewParent" class="view-section__value"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subcategories — top-level only -->
+      <div id="catViewChildrenSection" class="view-section hidden">
+        <span class="form-label">Subcategories</span>
+        <div id="catViewChildren"></div>
+      </div>
+
+      <!-- Internal notes -->
+      <div class="view-info-row">
+        <span class="form-label">Notes <span class="hint">(internal only)</span></span>
+        <p id="catViewNotes" class="view-section__value view-section__value--muted"></p>
+      </div>
+
+    </div>
+
+    <div class="modal__footer">
+      <button onclick="closeModal('catViewModal')" class="btn btn--secondary">Close</button>
+      <button onclick="_catViewToEdit()" class="btn btn--primary">Edit Category</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Lightbox for category view modal -->
+<div id="catViewLightbox" class="lightbox hidden" onclick="closeCatViewLightbox()">
+  <img id="catViewLightboxImg" src="" alt="" class="lightbox__img" onclick="event.stopPropagation()" />
+  <button class="lightbox__close" onclick="closeCatViewLightbox()">&times;</button>
+</div>
+
+<script>
+  let _viewingCat = null;
+
+  function openCatViewLightbox(src) {
+    document.getElementById('catViewLightboxImg').src = src;
+    document.getElementById('catViewLightbox').classList.remove('hidden');
+  }
+  function closeCatViewLightbox() {
+    document.getElementById('catViewLightbox').classList.add('hidden');
+    document.getElementById('catViewLightboxImg').src = '';
+  }
+
+  function openCatViewModal(id) {
+    const cat = _findCat(id);
+    if (!cat) return;
+    _viewingCat = cat;
+    _populateCatViewModal(cat);
+    openModal('catViewModal');
+  }
+
+  function _findCat(id) {
+    const data = typeof CATS_DATA !== 'undefined' ? CATS_DATA : [];
+    for (const cat of data) {
+      if (cat.id === id) return cat;
+      if (cat.children) {
+        const child = cat.children.find(c => c.id === id);
+        if (child) return child;
+      }
+    }
+    return null;
+  }
+
+  function _populateCatViewModal(cat) {
+    const byLang       = {};
+    (cat.translations || []).forEach(t => { byLang[t.lang] = t; });
+    const primaryTrans = byLang[PRIMARY] || Object.values(byLang)[0] || {};
+
+    // Title
+    document.getElementById('catViewTitle').textContent = primaryTrans.name || '—';
+
+    // Translations
+    const transContainer = document.getElementById('catViewTranslations');
+    transContainer.innerHTML = '';
+    LANGS.forEach(lang => {
+      const t   = byLang[lang] || {};
+      const div = document.createElement('div');
+      div.className = 'view-lang-block';
+      div.innerHTML =
+        `<span class="view-lang-block__tag">${esc(lang.toUpperCase())}</span>` +
+        `<div class="view-lang-block__content">` +
+          `<p class="view-lang-block__name">${esc(t.name || '—')}</p>` +
+          `<p class="view-lang-block__desc">${esc(t.description || '—')}</p>` +
+          `<p class="view-lang-block__desc view-lang-block__desc--notes">${esc(t.public_notes || '—')}</p>` +
+        `</div>`;
+      transContainer.appendChild(div);
+    });
+
+    // Image or placeholder
+    const imgEl         = document.getElementById('catViewImg');
+    const placeholderEl = document.getElementById('catViewImgPlaceholder');
+    if (cat.image_url) {
+      imgEl.src = cat.image_url;
+      imgEl.classList.remove('hidden');
+      placeholderEl.classList.add('hidden');
+    } else {
+      imgEl.classList.add('hidden');
+      placeholderEl.classList.remove('hidden');
+    }
+
+    // Status
+    document.getElementById('catViewStatus').innerHTML =
+      `<span class="smb-avail smb-avail--${cat.is_active ? 'on' : 'off'}"></span>` +
+      `<span class="smb-avail-label">${cat.is_active ? 'Active' : 'Inactive'}</span>`;
+
+    // Type + parent
+    const data      = typeof CATS_DATA !== 'undefined' ? CATS_DATA : [];
+    const isSubcat  = !!cat.parent_id;
+    const parentCat = isSubcat ? data.find(c => c.id === cat.parent_id) : null;
+    const parentTrans = parentCat
+      ? ((parentCat.translations || []).find(t => t.lang === PRIMARY) || (parentCat.translations || [])[0] || {})
+      : {};
+
+    document.getElementById('catViewType').textContent = isSubcat ? 'Subcategory' : 'Top-level';
+
+    const parentRow = document.getElementById('catViewParentRow');
+    if (isSubcat) {
+      document.getElementById('catViewParent').textContent = parentTrans.name || '—';
+      parentRow.classList.remove('hidden');
+    } else {
+      parentRow.classList.add('hidden');
+    }
+
+    // Subcategories
+    const childrenSection = document.getElementById('catViewChildrenSection');
+    const children        = !isSubcat ? (cat.children || []) : [];
+    if (children.length > 0) {
+      childrenSection.classList.remove('hidden');
+      const childContainer = document.getElementById('catViewChildren');
+      childContainer.innerHTML = '';
+      children.forEach(child => {
+        const ct  = (child.translations || []).find(t => t.lang === PRIMARY) || (child.translations || [])[0] || {};
+        const btn = document.createElement('button');
+        btn.className   = 'view-child-btn';
+        btn.textContent = ct.name || '—';
+        btn.onclick     = () => { _viewingCat = child; _populateCatViewModal(child); };
+        childContainer.appendChild(btn);
+      });
+    } else {
+      childrenSection.classList.add('hidden');
+    }
+
+    // Internal notes
+    document.getElementById('catViewNotes').textContent = cat.notes || '—';
+  }
+
+  function _catViewToEdit() {
+    if (!_viewingCat) return;
+    closeModal('catViewModal');
+    window._onCatSaved = (updatedCat) => {
+      if (updatedCat) {
+        // Update in-memory data
+        const data   = typeof CATS_DATA !== 'undefined' ? CATS_DATA : [];
+        const topIdx = data.findIndex(c => c.id === updatedCat.id);
+        if (topIdx !== -1) {
+          data[topIdx] = updatedCat;
+        } else {
+          for (const parent of data) {
+            const childIdx = (parent.children || []).findIndex(c => c.id === updatedCat.id);
+            if (childIdx !== -1) { parent.children[childIdx] = updatedCat; break; }
+          }
+        }
+
+        // Update left panel item name
+        const panelName = document.querySelector(`.smb-item[data-cat-id="${updatedCat.id}"] .smb-item__name`);
+        if (panelName && typeof getName === 'function') {
+          panelName.textContent = getName(updatedCat.translations);
+        }
+
+        // Re-render builder detail if this is the active category
+        if (typeof activeCatId !== 'undefined' && activeCatId === updatedCat.id && typeof renderBuilder === 'function') {
+          activeCatName = getName(updatedCat.translations);
+          renderBuilder(updatedCat);
+        }
+
+        _viewingCat = updatedCat;
+        _populateCatViewModal(updatedCat);
+      }
+      openModal('catViewModal');
+    };
+    openEditCategoryModal(_viewingCat);
+  }
+</script>

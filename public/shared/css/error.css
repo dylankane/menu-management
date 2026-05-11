@@ -1,0 +1,109 @@
+/* ============================================================
+   error.css — Shared error page styles
+   Neutral styling — sits between admin and customer branding.
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f2f4;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #1a1a1a;
+}
+
+/* ── Card ─────────────────────────────────────────────────── */
+.error-card {
+  background: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+  padding: 3rem 3.5rem;
+  max-width: 540px;
+  width: 90%;
+  text-align: center;
+}
+
+/* ── Code ─────────────────────────────────────────────────── */
+.error-code {
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -2px;
+  color: #233D4D;
+  font-family: 'Courier New', Courier, monospace;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Divider ──────────────────────────────────────────────── */
+.error-divider {
+  width: 3rem;
+  height: 3px;
+  background-color: #FE7F2D;
+  border: none;
+  margin: 1.25rem auto;
+}
+
+/* ── Title block ──────────────────────────────────────────── */
+.error-title-en {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #233D4D;
+  margin-bottom: 0.25rem;
+  letter-spacing: 0.01em;
+}
+
+.error-title-es {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #233D4D;
+  font-style: italic;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Message block ────────────────────────────────────────── */
+.error-message-en {
+  font-size: 0.9375rem;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 0.4rem;
+}
+
+.error-message-es {
+  font-size: 0.9375rem;
+  color: #374151;
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* ── Button ───────────────────────────────────────────────── */
+.error-btn {
+  display: inline-block;
+  padding: 0.65rem 1.75rem;
+  background-color: #233D4D;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 3px;
+  font-family: Georgia, serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  transition: background-color 0.2s ease;
+}
+
+.error-btn:hover {
+  background-color: #FE7F2D;
+}

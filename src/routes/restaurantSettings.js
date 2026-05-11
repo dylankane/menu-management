@@ -5,7 +5,7 @@ const { body }        = require('express-validator');
 const controller      = require('../controllers/restaurantSettings');
 const { requireAuth } = require('../middleware/auth');
 const { validate }    = require('../middleware/validate');
-const { upload }      = require('../middleware/upload');
+const { uploadFields } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.get('/', controller.get);
 
 router.put(
   '/',
-  upload('logo'),
+  uploadFields([{ name: 'logo_light', subdir: 'logos' }, { name: 'logo_dark', subdir: 'logos' }, { name: 'logo_svg', subdir: 'logos' }]),
   [
     body('primary_language').optional().isString().withMessage('primary_language must be a string'),
   ],

@@ -1,0 +1,44 @@
+{
+  "menu.subtitle": "",
+  "menu.empty": "Menu coming soon...",
+  "menu.set_menu_label": "Set Menu",
+
+  "club.banner.title": "Join Our Gourmet Club",
+  "club.banner.desc": "Earn exclusive perks with every reservation and enter our monthly raffle to win a Chef's Special Tasting Menu for two.",
+  "club.banner.btn": "Join Now",
+
+  "footer.tagline": "Bon Appétit",
+  "footer.legal": "Legal",
+
+  "info.dietary_title": "Dietary Information",
+  "info.allergens_title": "Allergens",
+  "info.no_info": "No allergen or dietary information available.",
+
+  "cookie.text": "We use analytics cookies to improve your experience. By continuing, you accept their use.",
+  "cookie.privacy_link": "Privacy Policy",
+  "cookie.btn_decline": "Decline",
+  "cookie.btn_accept": "Accept",
+
+  "club_join.page_title": "Join the Gourmet Club",
+  "club_join.subtitle": "Gourmet Club",
+  "club_join.title": "Join Our Exclusive Gourmet Club",
+  "club_join.desc": "Become a valued member and enjoy special perks every time you dine with us. Plus, you'll be entered into our monthly raffle for a chance to win a Chef's Special Tasting Menu for two.",
+  "club_join.benefit1_title": "Exclusive Perks",
+  "club_join.benefit1_text": "Earn special rewards and benefits with every reservation",
+  "club_join.benefit2_title": "Monthly Raffle",
+  "club_join.benefit2_text": "Win a Chef's Special Tasting Menu for two",
+  "club_join.benefit3_title": "VIP Treatment",
+  "club_join.benefit3_text": "Priority reservations and personalized service",
+  "club_join.form_title": "Sign Up Today",
+  "club_join.label_name": "Full Name",
+  "club_join.label_email": "Email Address",
+  "club_join.label_phone": "Phone Number",
+  "club_join.optional": "Optional",
+  "club_join.consent_text": "By joining the Gourmet Club, you consent to receive marketing communications via email. Your data is protected and will not be shared with third parties.",
+  "club_join.btn_submit": "Join the Gourmet Club",
+  "club_join.btn_back": "← Back to Menu",
+  "club_join.toast_success": "Welcome to the Gourmet Club! Check your email for confirmation.",
+  "club_join.toast_name_required": "Please enter your name",
+  "club_join.toast_email_required": "Please enter your email",
+  "club_join.toast_error": "Something went wrong. Please try again."
+}

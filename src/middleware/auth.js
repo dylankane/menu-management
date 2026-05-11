@@ -44,7 +44,12 @@ function requireSuperAdmin(req, res, next) {
     if (req.path.startsWith('/api/')) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    return res.status(403).send('Access denied');
+    const isAdmin = req.path.startsWith('/admin');
+    return res.status(403).render('shared/403', {
+      restaurantName: process.env.RESTAURANT_NAME || 'Restaurant',
+      returnUrl:      isAdmin ? '/admin' : '/menu',
+      returnLabel:    isAdmin ? 'Back to Dashboard' : 'Back to Menu',
+    });
   }
   next();
 }

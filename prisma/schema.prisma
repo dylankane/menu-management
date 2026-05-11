@@ -22,6 +22,8 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  member_visits MemberVisit[]
+
   @@map("users")
 }
 
@@ -34,7 +36,9 @@ model RestaurantSettings {
   restaurant_name   String   @default("My Restaurant")
   primary_language  String   @default("en")
   enabled_languages Json     @default("[\"en\",\"es\"]")
-  logo_url          String?
+  logo_svg_url      String?
+  logo_light_url    String?
+  logo_dark_url     String?
   updated_at        DateTime @updatedAt
 
   @@map("restaurant_settings")
@@ -53,12 +57,14 @@ model ClientAccount {
   tax_number          String?
   plan                String?
   notes               String?
-  has_menu            Boolean  @default(true)
-  has_restaurant_hub  Boolean  @default(false)
-  has_gourmet_club    Boolean  @default(false)
-  max_languages       Int      @default(3)
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
+  has_menu                   Boolean  @default(true)
+  has_restaurant_hub         Boolean  @default(false)
+  has_gourmet_club           Boolean  @default(false)
+  max_languages              Int      @default(3)
+  gc_paper_form_front_url    String?
+  gc_paper_form_back_url     String?
+  created_at                 DateTime @default(now())
+  updated_at                 DateTime @updatedAt
 
   @@map("client_account")
 }
@@ -443,6 +449,7 @@ model SetMenuDishTranslation {
 // ─── GOURMET CLUB ─────────────────────────────────────────────────────────────
 // Loyalty and membership platform for valued guests.
 // member_number is the auto-increment id, displayed as "GC-001" in the UI.
+// source tracks the sign-up channel: "admin" | "qr_menu" | "reservation"
 model GourmetClubMember {
   id                 Int       @id @default(autoincrement())
   name               String
@@ -450,13 +457,79 @@ model GourmetClubMember {
   phone              String?
   birthday_month     Int?      // 1–12
   birthday_day       Int?      // 1–31
-  visit_count        Int       @default(0)
-  last_visit         DateTime? @db.Date
+  source             String    @default("admin")
   notes              String?
   is_active          Boolean   @default(true)
   marketing_consent  Boolean   @default(false)
   created_at         DateTime  @default(now())
   updated_at         DateTime  @updatedAt
 
+  visits      MemberVisit[]
+  raffle_wins Raffle[]
+
   @@map("gourmet_club_members")
+}
+
+// ─── MEMBER VISITS ────────────────────────────────────────────────────────────
+// Records each confirmed visit by a club member.
+// source: "manual" (staff-entered) | "reservation" | "pos" (future integrations)
+// added_by is null when created automatically via reservation or pos.
+model MemberVisit {
+  id         Int      @id @default(autoincrement())
+  member_id  Int
+  date       DateTime @db.Date
+  notes      String?
+  source     String   @default("manual")
+  added_by   Int?
+  created_at DateTime @default(now())
+
+  member GourmetClubMember @relation(fields: [member_id], references: [id], onDelete: Cascade)
+  user   User?             @relation(fields: [added_by],  references: [id], onDelete: SetNull)
+
+  @@map("member_visits")
+}
+
+// ─── STATIC TRANSLATIONS ─────────────────────────────────────────────────────
+// Key/value store for static text on customer-facing menu pages.
+// Keys are dot-namespaced strings (e.g. "menu.footer.tagline").
+// Seeded automatically on startup by src/helpers/staticTextSync.js.
+model StaticTranslation {
+  key        String
+  lang       String
+  value      String   @default("")
+  updated_at DateTime @updatedAt
+
+  @@id([key, lang])
+  @@map("static_translations")
+}
+
+// ─── RAFFLES ──────────────────────────────────────────────────────────────────
+// Each raffle has a defined period and prize. The draw picks one eligible member
+// at random. eligibility controls the pool:
+//   "all"  → every active member at draw time
+//   "new"  → only members who joined between start_date and end_date
+// status: "active" | "drawn" | "cancelled"
+// period_type is informational — dates define the actual window.
+model Raffle {
+  id                Int       @id @default(autoincrement())
+  title             String
+  description       String?
+  prize             String
+  prize_description String?
+  image_url         String?
+  period_type       String    // "monthly" | "quarterly" | "biannual" | "annual" | "custom"
+  eligibility String    @default("all")
+  start_date  DateTime  @db.Date
+  end_date    DateTime  @db.Date
+  draw_date   DateTime? @db.Date
+  status      String    @default("active")
+  winner_id   Int?
+  drawn_at    DateTime?
+  notes       String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  winner GourmetClubMember? @relation(fields: [winner_id], references: [id], onDelete: SetNull)
+
+  @@map("raffles")
 }

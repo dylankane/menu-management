@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Set Menus', restaurantName }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.set_menus.title'), restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <%
-  const primary = settings.primary_language || 'en';
   const langs   = settings.enabled_languages || ['en', 'es'];
 
   function tagName(translations) {
-    const t = (translations || []).find(t => t.lang === primary) || (translations || [])[0];
+    const t = (translations || []).find(t => t.lang === uiLang)
+           || (translations || []).find(t => t.lang === 'en')
+           || (translations || [])[0];
     return t ? (t.name || '') : '';
   }
   function catName(cat) { return tagName(cat.translations); }
@@ -29,8 +30,8 @@
 
 <div class="main">
   <header class="page-header page-header--minimal">
-    <h2 class="page-header__title">Set Menus</h2>
-    <%- include('../partials/lang-selector') %>
+    <h2 class="page-header__title"><%= t('page.set_menus.title') %></h2>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body page-body--minimal">
@@ -38,13 +39,13 @@
 
     <!-- Card title row — same pattern as all other pages -->
     <div class="card__header card__header--brand">
-      <h3 class="card__title">Set Menus</h3>
-      <button onclick="openCreateModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Set Menu</button>
+      <h3 class="card__title"><%= t('page.set_menus.card_title') %></h3>
+      <button onclick="openCreateModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.set_menus.btn_create') %></button>
     </div>
 
     <div class="smb-tabs">
-      <button class="smb-tabs__btn smb-tabs__btn--active" id="smb-tab-list" onclick="showListTab()">Set Menus</button>
-      <button class="smb-tabs__btn" id="smb-tab-detail" onclick="showDetailTab()">Builder</button>
+      <button class="smb-tabs__btn smb-tabs__btn--active" id="smb-tab-list" onclick="showListTab()"><%= t('page.set_menus.tab_list') %></button>
+      <button class="smb-tabs__btn" id="smb-tab-detail" onclick="showDetailTab()"><%= t('page.set_menus.tab_builder') %></button>
     </div>
 
     <div class="smb-split" id="smb-split">
@@ -52,12 +53,12 @@
     <!-- ── LEFT PANEL ─────────────────────────────────────────────── -->
     <div class="smb-panel">
       <div class="smb-panel__header">
-        <span class="smb-panel__title">All Menus</span>
+        <span class="smb-panel__title"><%= t('page.set_menus.panel_title') %></span>
       </div>
 
       <div class="smb-panel__list" id="smb-list">
         <% if (setMenus.length === 0) { %>
-          <div class="smb-panel__empty">No set menus yet</div>
+          <div class="smb-panel__empty"><%= t('page.set_menus.panel_empty') %></div>
         <% } %>
         <% setMenus.forEach(sm => { %>
           <div class="smb-item" data-sm-id="<%= sm.id %>" onclick="selectSetMenu(<%= sm.id %>)">
@@ -74,21 +75,21 @@
       <!-- Courses Library -->
       <div class="smb-library" id="smb-library">
         <div class="smb-library__header" onclick="toggleLibrary()">
-          <span>Course Library</span>
-          <svg class="icon smb-library__chevron" id="smb-lib-chevron"><use href="/icons/sprite.svg#chevron-down"></use></svg>
+          <span><%= t('page.set_menus.course_library') %></span>
+          <svg class="icon smb-library__chevron" id="smb-lib-chevron"><use href="/admin/icons/sprite.svg#chevron-down"></use></svg>
         </div>
         <div class="smb-library__body hidden" id="smb-library-body">
           <div class="smb-library__list" id="smb-library-list">
             <% if (courses.length === 0) { %>
-              <div class="smb-panel__empty">No courses yet</div>
+              <div class="smb-panel__empty"><%= t('page.set_menus.library_empty') %></div>
             <% } %>
             <% courses.forEach(c => { %>
               <div class="smb-library__item">
                 <span class="smb-library__item-name"><%= tName(c.translations) %></span>
                 <div class="smb-course__actions">
                   <button class="btn-view" onclick='openEditCourseModal(<%- JSON.stringify(c) %>)' title="Edit">
-                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                    <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+                    <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                   </button>
                   <button class="btn-delete" onclick="deleteCourse(<%= c.id %>, '<%= tName(c.translations).replace(/'/g, "\\'") %>')" title="Delete">
                     <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -112,10 +113,10 @@
       <!-- Empty state -->
       <div class="smb-empty" id="smb-empty">
         <div class="empty-state__icon">
-          <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#set-menus"></use></svg>
+          <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#set-menus"></use></svg>
         </div>
-        <p class="empty-state__text">Select a set menu to start building</p>
-        <button onclick="openCreateModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Create New Set Menu</button>
+        <p class="empty-state__text"><%= t('page.set_menus.empty_select') %></p>
+        <button onclick="openCreateModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.set_menus.btn_create') %></button>
       </div>
 
       <!-- Builder content (JS-rendered) -->
@@ -131,8 +132,8 @@
               <span class="smb-avail-label" id="smb-avail-label">Live</span>
             </label>
             <button class="btn-view" onclick="openSmViewModal(activeSmId)" title="View details">
-              <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-              <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+              <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+              <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
             </button>
             <button class="btn-delete" onclick="confirmDeleteSm()" title="Delete">
               <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -143,6 +144,11 @@
             </button>
           </div>
           <div class="smb-header__bar">
+            <img id="smb-img" src="" alt="" class="table-thumb table-thumb--clickable hidden"
+                 onclick="openSmViewLightbox(this.src)" />
+            <div id="smb-img-placeholder" class="table-thumb-placeholder">
+              <svg class="icon"><use href="/admin/icons/sprite.svg#set-menus"></use></svg>
+            </div>
             <div class="category-breadcrumbs smb-header__cats" id="smb-cats"></div>
             <button class="btn btn--pill link--slide" onclick="openAddCourseToSmModal()">+ Course</button>
             <button class="btn btn--pill link--slide" onclick="openSmAddItemModal(null)">+ Item</button>
@@ -168,16 +174,16 @@
 </div><!-- /.main -->
 
 
-<%- include('../partials/modals/view/set-menu', { langs, primary }) %>
-<%- include('../partials/modals/create-edit/course', { langs }) %>
-<%- include('../partials/modals/create-edit/set-menu', { langs, primary, categories }) %>
-<%- include('../partials/modals/create-edit/note', { langs }) %>
-<%- include('../partials/modals/add/add-course', { langs }) %>
-<%- include('../partials/modals/add/add-item', { langs, primary, dishes }) %>
-<%- include('../partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
+<%- include('./partials/modals/view/set-menu', { langs, primary }) %>
+<%- include('./partials/modals/create-edit/course', { langs }) %>
+<%- include('./partials/modals/create-edit/set-menu', { langs, primary, categories }) %>
+<%- include('./partials/modals/create-edit/note', { langs }) %>
+<%- include('./partials/modals/add/add-course', { langs }) %>
+<%- include('./partials/modals/add/add-item', { langs, primary, dishes }) %>
+<%- include('./partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
 
-<%- include('../partials/scripts') %>
-<script src="/js/sortable.min.js"></script>
+<%- include('./partials/scripts') %>
+<script src="/admin/js/sortable.min.js"></script>
 <script>
 // ── Data ─────────────────────────────────────────────────────────────────────
 let SM_DATA    = <%- JSON.stringify(setMenus) %>;
@@ -262,6 +268,19 @@ function renderBuilder(sm) {
   lbl.textContent  = sm.is_available ? 'Live' : 'Off';
   lbl.className    = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
 
+  // Image
+  const smImg         = document.getElementById('smb-img');
+  const smPlaceholder = document.getElementById('smb-img-placeholder');
+  if (sm.image_url) {
+    smImg.src = sm.image_url;
+    smImg.classList.remove('hidden');
+    smPlaceholder.classList.add('hidden');
+  } else {
+    smImg.src = '';
+    smImg.classList.add('hidden');
+    smPlaceholder.classList.remove('hidden');
+  }
+
   // Category breadcrumbs
   const catsEl = document.getElementById('smb-cats');
   catsEl.innerHTML = (sm.categories || []).map(c => {
@@ -305,8 +324,8 @@ function renderCourseSection(smc, smId) {
           <button onclick="openSmAddItemModal(${smc.id})" class="btn btn--pill link--slide btn--sm">+ Item</button>
           ${noteBtn}
           <button class="btn-view" title="View details">
-            <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-            <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+            <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+            <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
           </button>
           <button class="btn-delete" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="Remove">
             <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -341,8 +360,8 @@ function renderDishRow(smd, smId) {
       </div>
       ${noteBtn}
       <button class="btn-view" title="View details">
-        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+        <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+        <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
       </button>
       <button class="btn-delete" onclick="removeDish(${smId}, ${smd.id})" title="Remove">
         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">

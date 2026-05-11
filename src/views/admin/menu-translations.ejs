@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.menu_translations.title'), restaurantName, section: 'admin' }) %>
+<body>
+
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
+
+<div class="main">
+  <header class="page-header page-header--minimal">
+    <h2 class="page-header__title"><%= t('page.menu_translations.title') %></h2>
+    <%- include('./partials/lang-selector') %>
+  </header>
+
+  <main class="page-body page-body--minimal">
+    <div class="card">
+      <div class="card__header card__header--brand">
+        <h3 class="card__title"><%= t('page.menu_translations.card_title') %></h3>
+      </div>
+      <div class="card__body card__body--no-pad">
+        <p class="trans-intro"><%= t('page.menu_translations.intro') %></p>
+
+        <% const keys = Object.keys(byKey); %>
+        <% if (keys.length === 0) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon">
+              <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#translate"></use></svg>
+            </div>
+            <p class="empty-state__text"><%= t('page.menu_translations.empty_no_keys') %></p>
+          </div>
+        <% } else { %>
+          <div class="trans-table-wrap">
+            <table class="trans-table">
+              <thead>
+                <tr>
+                  <th class="trans-th trans-th--key"><%= t('page.menu_translations.col_key') %></th>
+                  <% enabledLangs.forEach(function(lang) { %>
+                    <th class="trans-th"><%= lang.toUpperCase() %></th>
+                  <% }); %>
+                  <th class="trans-th trans-th--missing"><%= t('page.menu_translations.col_missing') %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% keys.forEach(function(key) { %>
+                  <%
+                    var rowValues = byKey[key] || {};
+                    var missingCount = enabledLangs.filter(function(l) { return !rowValues[l]; }).length;
+                  %>
+                  <tr class="trans-row<%= missingCount > 0 ? ' trans-row--incomplete' : '' %>">
+                    <td class="trans-td trans-td--key">
+                      <span class="trans-key-label"><%= key %></span>
+                    </td>
+                    <% enabledLangs.forEach(function(lang) { %>
+                      <%
+                        var val = rowValues[lang] || '';
+                        var isEmpty = !val;
+                      %>
+                      <td class="trans-td trans-cell<%= isEmpty ? ' trans-cell--empty' : '' %>" data-key="<%= key %>" data-lang="<%= lang %>">
+                        <textarea class="trans-textarea" rows="2" placeholder="<%= key %>"><%= val %></textarea>
+                      </td>
+                    <% }); %>
+                    <td class="trans-td trans-td--missing">
+                      <span class="trans-missing<%= missingCount === 0 ? ' hidden' : '' %>"><%= missingCount %></span>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </main>
+</div>
+
+<%- include('./partials/scripts') %>
+<script src="/admin/js/menu-translations.js"></script>
+
+</body>
+</html>

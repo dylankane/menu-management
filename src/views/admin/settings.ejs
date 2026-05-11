@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Settings', restaurantName }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.settings.title'), restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <%
-  const s       = settings;
-  const primary = s.primary_language || 'en';
-  const langs   = s.enabled_languages || ['en', 'es'];
+  const s     = settings;
+  const langs = s.enabled_languages || ['en', 'es'];
   const LOCKED  = ['en', 'es'];
 
   const ALL_LANGS = [
@@ -58,8 +57,8 @@
 
 <div class="main">
   <header class="page-header">
-    <h2 class="page-header__title">Settings</h2>
-    <%- include('../partials/lang-selector') %>
+    <h2 class="page-header__title"><%= t('page.settings.title') %></h2>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body">
@@ -68,62 +67,53 @@
       <!-- ── Account & Billing ──────────────────────────────────────────────── -->
       <div class="card">
         <div class="card__header card__header--accent">
-          <h3 class="card__title">Account &amp; Billing</h3>
+          <h3 class="card__title"><%= t('page.settings.card_account') %></h3>
         </div>
         <div class="card__body form-stack">
           <div class="form-grid-2">
             <div class="form-group">
-              <label class="form-label">Manager Name</label>
+              <label class="form-label"><%= t('page.settings.label_manager_name') %></label>
               <input type="text" id="accOwnerName" class="form-input" value="<%= account.owner_name || '' %>" />
             </div>
             <div class="form-group">
-              <label class="form-label">Manager Phone</label>
+              <label class="form-label"><%= t('page.settings.label_manager_phone') %></label>
               <input type="tel" id="accOwnerPhone" class="form-input" value="<%= account.owner_phone || '' %>" />
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Manager Email</label>
+            <label class="form-label"><%= t('page.settings.label_manager_email') %></label>
             <input type="email" id="accOwnerEmail" class="form-input" value="<%= account.owner_email || '' %>" />
           </div>
           <div class="form-group">
-            <label class="form-label">Billing Address</label>
+            <label class="form-label"><%= t('page.settings.label_billing_address') %></label>
             <textarea id="accBillingAddress" rows="2" class="form-textarea"><%= account.billing_address || '' %></textarea>
           </div>
           <div class="form-group">
-            <label class="form-label">Notes</label>
+            <label class="form-label"><%= t('page.settings.label_notes') %></label>
             <textarea id="accNotes" rows="3" class="form-textarea"><%= account.notes || '' %></textarea>
           </div>
         </div>
         <div class="card__footer form-footer">
-          <button onclick="saveAccount()" class="btn btn--primary">Save</button>
+          <button onclick="saveAccount()" class="btn btn--primary"><%= t('common.save') %></button>
         </div>
       </div>
 
       <!-- ── Languages ──────────────────────────────────────────────────────── -->
       <div class="card">
         <div class="card__header card__header--accent">
-          <h3 class="card__title">Languages</h3>
-          <span class="card__meta">Max <%= maxLanguages %></span>
+          <h3 class="card__title"><%= t('page.settings.card_languages') %></h3>
+          <span class="card__meta"><%= t('page.settings.lang_max').replace('{max}', maxLanguages) %></span>
         </div>
         <div class="card__body form-stack">
-          <p class="card__note">
-            Choose which languages your menu and customer-facing content are available in. Translations are managed manually. Your primary language is shown first by default throughout your dashboard.
-          </p>
+          <p class="card__note"><%= t('page.settings.lang_note') %></p>
 
           <div class="lang-list">
             <% langs.forEach(lang => { %>
               <div class="lang-row">
                 <span class="lang-row__code"><%= lang %></span>
-                <div class="lang-row__primary">
-                  <% if (lang === primary) { %>
-                    <span class="lang-badge--primary">PRIMARY</span>
-                  <% } else { %>
-                    <button onclick="setPrimary('<%= lang %>')" class="btn btn--pill link--slide btn--sm">Set as Primary</button>
-                  <% } %>
-                </div>
                 <div class="lang-row__action">
                   <% if (LOCKED.includes(lang)) { %>
-                    <svg class="lang-row__lock"><use href="/icons/sprite.svg#lock"></use></svg>
+                    <svg class="lang-row__lock"><use href="/admin/icons/sprite.svg#lock"></use></svg>
                   <% } else { %>
                     <button onclick="removeLang('<%= lang %>')" class="btn-delete" title="Remove language">
                       <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -143,17 +133,21 @@
                   <option value="<%= l.code %>"><%= l.code.toUpperCase() %> — <%= l.label %></option>
                 <% }) %>
               </select>
-              <button onclick="addLang()" class="btn btn--primary btn--sm">Add</button>
+              <button onclick="addLang()" class="btn btn--primary btn--sm"><%= t('page.settings.lang_add_btn') %></button>
             </div>
           <% } %>
+
+          <div class="card-action">
+            <a href="/admin/menu-translations" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.settings.manage_static_translations') %></a>
+          </div>
         </div>
       </div>
 
       <!-- ── Plan & Features ───────────────────────────────────────────────── -->
       <div class="card settings-grid__full">
         <div class="card__header card__header--accent">
-          <h3 class="card__title">Plan &amp; Features</h3>
-          <% if (account.plan) { %><span class="card__meta">Plan: <%= account.plan %></span><% } %>
+          <h3 class="card__title"><%= t('page.settings.card_plan') %></h3>
+          <% if (account.plan) { %><span class="card__meta"><%= t('page.settings.plan_label').replace('{plan}', account.plan) %></span><% } %>
         </div>
         <div class="feature-list">
           <% MODULES.forEach(mod => { %>
@@ -172,11 +166,11 @@
               </div>
               <div class="feature-row__info">
                 <p class="feature-row__name"><%= mod.name %></p>
-                <p class="feature-row__desc"><%= mod.desc %><% if (!mod.included) { %> Get in touch if you are interested in this feature.<% } %></p>
+                <p class="feature-row__desc"><%= mod.desc %><% if (!mod.included) { %> <%= t('page.settings.get_in_touch') %><% } %></p>
               </div>
               <div class="feature-row__status">
                 <% if (!mod.included || mod.enquire) { %>
-                  <a href="#" class="btn btn--pill btn--outline-brand btn--sm">Contact Us</a>
+                  <a href="#" class="btn btn--pill btn--outline-brand btn--sm"><%= t('common.contact_us') %></a>
                 <% } %>
               </div>
             </div>
@@ -186,33 +180,37 @@
 
     </div>
   </main>
+  <footer class="page-legal-footer">
+    <a href="/admin/privacy"><%= t('common.legal_privacy') %> <svg class="icon page-legal-footer__icon"><use href="/admin/icons/sprite.svg#arrow-up-right"></use></svg></a>
+  </footer>
 </div>
 
 <!-- ── Remove language warning modal ────────────────────────────────────────── -->
 <div id="removeLangModal" class="modal-overlay hidden">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title">Remove Language</h3>
+      <h3 class="modal__title"><%= t('page.settings.modal_remove_lang_title') %></h3>
       <button onclick="closeModal('removeLangModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
-      <p>You are about to remove <strong id="removeLangCode"></strong> from enabled languages.</p>
+      <p id="removeLangBody1"></p>
       <p class="text-danger">
-        <strong>Warning:</strong> All translations in this language (menu item names, descriptions,
-        category names, allergen labels, etc.) will become inaccessible from the admin UI.
-        The data is <em>not deleted</em> from the database, but it will be hidden.
+        <strong><%= uiLang === 'es' ? 'Advertencia' : 'Warning' %>:</strong>
+        <%= t('page.settings.modal_remove_lang_warning') %>
       </p>
-      <p>Are you sure you want to continue?</p>
+      <p><%= t('page.settings.modal_remove_lang_confirm') %></p>
     </div>
     <div class="modal__footer">
-      <button type="button" onclick="closeModal('removeLangModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" id="confirmRemoveLangBtn" class="btn btn--outline-danger">Remove Language</button>
+      <button type="button" onclick="closeModal('removeLangModal')" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+      <button type="button" id="confirmRemoveLangBtn" class="btn btn--outline-danger"><%= t('page.settings.btn_remove_language') %></button>
     </div>
   </div>
 </div>
 
-<%- include('../partials/scripts') %>
+<%- include('./partials/scripts') %>
 <script>
+  const _removeLangBody1Tpl = <%- JSON.stringify(t('page.settings.modal_remove_lang_body_1')) %>;
+
   async function saveAccount() {
     const body = {
       owner_name:      document.getElementById('accOwnerName').value.trim()      || null,
@@ -225,15 +223,7 @@
     };
     try {
       await api('PUT', '/api/client-account', body);
-      showToast('Account saved');
-    } catch (err) { showToast(err.message, 'error'); }
-  }
-
-  async function setPrimary(lang) {
-    try {
-      await api('PUT', '/api/settings', { primary_language: lang });
-      showToast(`Primary language set to ${lang.toUpperCase()}`);
-      reloadAfter();
+      showToast(tr('account_saved'));
     } catch (err) { showToast(err.message, 'error'); }
   }
 
@@ -241,7 +231,7 @@
     const lang = document.getElementById('addLangSelect').value;
     try {
       await api('POST', '/api/settings/languages', { lang });
-      showToast(`${lang.toUpperCase()} added`);
+      showToast(tr('lang_added', { lang: lang.toUpperCase() }));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }
@@ -250,7 +240,7 @@
 
   function removeLang(lang) {
     pendingRemoveLang = lang;
-    document.getElementById('removeLangCode').textContent = lang.toUpperCase();
+    document.getElementById('removeLangBody1').textContent = _removeLangBody1Tpl.replace('{lang}', lang.toUpperCase());
     document.getElementById('confirmRemoveLangBtn').onclick = confirmRemoveLang;
     openModal('removeLangModal');
   }
@@ -259,7 +249,7 @@
     if (!pendingRemoveLang) return;
     try {
       await api('DELETE', `/api/settings/languages/${pendingRemoveLang}`);
-      showToast(`${pendingRemoveLang.toUpperCase()} removed`);
+      showToast(tr('lang_removed', { lang: pendingRemoveLang.toUpperCase() }));
       closeModal('removeLangModal');
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }

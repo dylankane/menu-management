@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aviso Legal / Legal Notice — <%= restaurantName %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/customer/css/menu.css">
+</head>
+<body>
+  <%- include('./partials/topbar', { lang, enabledLangs }) %>
+  <div class="menu-container">
+    <header class="menu-header">
+      <h1 class="restaurant-name"><%= restaurantName %></h1>
+      <div class="menu-divider"></div>
+    </header>
+
+    <div class="legal-container">
+      <a href="/menu" class="legal-back">← Volver al menú / Back to Menu</a>
+
+      <h2 class="legal-title">Aviso Legal</h2>
+      <p class="legal-subtitle">Legal Notice &amp; Privacy Policy</p>
+      <div class="legal-divider"></div>
+
+      <!-- ── SPANISH ────────────────────────────────────────────────────────── -->
+      <div class="legal-lang-section">
+        <p class="legal-lang-label">Español</p>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">1. Información del Titular</h3>
+          <p>
+            En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSICE), se informa que el titular de este sitio web es <strong><%= restaurantName %></strong>, con domicilio en España.
+          </p>
+          <p>
+            Para cualquier consulta puede contactarnos a través de los canales de comunicación disponibles en nuestra página principal.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">2. Objeto y Uso del Sitio Web</h3>
+          <p>
+            Este sitio web tiene como finalidad mostrar la carta y menús del restaurante, así como ofrecer la posibilidad de adherirse al Club Gourmet mediante el envío voluntario de datos personales.
+          </p>
+          <p>
+            El acceso y uso de esta web es de carácter libre y gratuito. El usuario se compromete a hacer un uso correcto del sitio web, de conformidad con la ley, las buenas costumbres y el orden público.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">3. Protección de Datos — Responsable del Tratamiento</h3>
+          <p>
+            De conformidad con el Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD), le informamos de lo siguiente:
+          </p>
+          <ul>
+            <li><strong>Responsable:</strong> <%= restaurantName %></li>
+            <li><strong>Finalidad:</strong> Gestionar la inscripción al Club Gourmet, enviar comunicaciones comerciales relacionadas con el restaurante y realizar sorteos periódicos entre los miembros.</li>
+            <li><strong>Base jurídica:</strong> Consentimiento expreso del interesado (art. 6.1.a RGPD).</li>
+            <li><strong>Destinatarios:</strong> Los datos no serán cedidos a terceros salvo obligación legal.</li>
+            <li><strong>Conservación:</strong> Los datos se conservarán mientras el usuario mantenga su condición de miembro activo o hasta que solicite su supresión.</li>
+            <li><strong>Derechos:</strong> Puede ejercer sus derechos de acceso, rectificación, supresión, limitación, portabilidad y oposición contactando con nosotros directamente.</li>
+          </ul>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">4. Cookies</h3>
+          <p>
+            Este sitio web puede utilizar cookies analíticas (Google Analytics) con el único fin de conocer el número de visitantes y el comportamiento general de navegación, de forma agregada y anónima. Estas cookies solo se activan si el usuario otorga su consentimiento mediante el aviso que aparece al acceder a la web.
+          </p>
+          <p>
+            Las cookies estrictamente necesarias para el funcionamiento del sitio (como las de sesión) están exentas de consentimiento conforme a la normativa vigente.
+          </p>
+          <p>
+            El usuario puede retirar su consentimiento en cualquier momento borrando las cookies de su navegador y recargando la página.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">5. Propiedad Intelectual</h3>
+          <p>
+            Todos los contenidos de este sitio web (textos, imágenes, diseño y código) son propiedad de <%= restaurantName %> o de sus proveedores, y están protegidos por las leyes de propiedad intelectual e industrial. Queda prohibida su reproducción total o parcial sin autorización expresa.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">6. Ley Aplicable y Jurisdicción</h3>
+          <p>
+            Las presentes condiciones se rigen por la legislación española. Para la resolución de cualquier conflicto, las partes se someten a los juzgados y tribunales competentes conforme a la ley.
+          </p>
+        </div>
+      </div>
+
+      <hr class="legal-separator" />
+
+      <!-- ── ENGLISH ─────────────────────────────────────────────────────────── -->
+      <div class="legal-lang-section">
+        <p class="legal-lang-label">English</p>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">1. Owner Information</h3>
+          <p>
+            In compliance with Article 10 of Spanish Law 34/2002 on Information Society Services and Electronic Commerce (LSSICE), the owner of this website is <strong><%= restaurantName %></strong>, based in Spain.
+          </p>
+          <p>
+            For any enquiries please contact us through the channels available on our main page.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">2. Purpose and Use of the Website</h3>
+          <p>
+            This website exists to display the restaurant's menu and offer the option to join the Gourmet Club by voluntarily providing personal data.
+          </p>
+          <p>
+            Access to and use of this website is free of charge. Users agree to use the site lawfully and in good faith.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">3. Data Protection — Data Controller</h3>
+          <p>
+            In accordance with EU Regulation 2016/679 (GDPR) and Spanish Organic Law 3/2018 (LOPDGDD), we inform you of the following:
+          </p>
+          <ul>
+            <li><strong>Controller:</strong> <%= restaurantName %></li>
+            <li><strong>Purpose:</strong> To manage Gourmet Club membership, send marketing communications related to the restaurant, and run periodic member raffles.</li>
+            <li><strong>Legal basis:</strong> Explicit consent of the data subject (Art. 6.1.a GDPR).</li>
+            <li><strong>Recipients:</strong> Data will not be shared with third parties except where required by law.</li>
+            <li><strong>Retention:</strong> Data will be kept for as long as the user remains an active member or until they request deletion.</li>
+            <li><strong>Rights:</strong> You may exercise your rights of access, rectification, erasure, restriction, portability, and objection by contacting us directly.</li>
+          </ul>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">4. Cookies</h3>
+          <p>
+            This website may use analytical cookies (Google Analytics) solely to understand the number of visitors and general browsing behaviour in an aggregated and anonymous manner. These cookies are only activated if the user gives consent via the notice displayed on first visit.
+          </p>
+          <p>
+            Strictly necessary cookies required for the site to function (such as session cookies) are exempt from consent requirements under applicable law.
+          </p>
+          <p>
+            Users may withdraw consent at any time by clearing cookies in their browser and reloading the page.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">5. Intellectual Property</h3>
+          <p>
+            All content on this website (text, images, design, and code) is the property of <%= restaurantName %> or its suppliers and is protected by intellectual and industrial property law. Reproduction in whole or in part without express authorisation is prohibited.
+          </p>
+        </div>
+
+        <div class="legal-section">
+          <h3 class="legal-section-title">6. Governing Law and Jurisdiction</h3>
+          <p>
+            These terms are governed by Spanish law. Any disputes shall be submitted to the competent courts and tribunals in accordance with applicable law.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="menu-footer">
+      <p class="menu-footer-text"><%= restaurantName %></p>
+      <div class="menu-footer-links">
+        <a href="/menu" class="menu-footer-link">Menú / Menu</a>
+        <a href="/menu/legal" class="menu-footer-link">Aviso Legal / Legal</a>
+      </div>
+    </footer>
+  </div>
+
+  <%- include('./partials/cookie-banner', { mt: function(k){ return k; } }) %>
+</body>
+</html>

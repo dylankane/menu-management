@@ -1,0 +1,24 @@
+<% if (enabledLangs && enabledLangs.length > 1) { %>
+<div class="menu-lang-selector">
+  <% enabledLangs.forEach(function(l, i) { %>
+    <% if (i > 0) { %><span class="menu-lang-selector__divider">|</span><% } %>
+    <button
+      class="menu-lang-selector__btn<%= l === lang ? ' menu-lang-selector__btn--active' : '' %>"
+      data-lang="<%= l %>"
+      type="button"
+    ><%= l.toUpperCase() %></button>
+  <% }); %>
+</div>
+
+<script>
+(function () {
+  document.querySelectorAll('.menu-lang-selector__btn[data-lang]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var params = new URLSearchParams(window.location.search);
+      params.set('lang', this.dataset.lang);
+      window.location.search = params.toString();
+    });
+  });
+}());
+</script>
+<% } %>

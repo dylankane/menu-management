@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Access Denied — <%= restaurantName %></title>
+  <link rel="stylesheet" href="/shared/css/error.css" />
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-code">403</div>
+    <hr class="error-divider" />
+    <p class="error-title-en">Access Denied</p>
+    <p class="error-title-es">Acceso denegado</p>
+    <p class="error-message-en">You do not have permission to view this page.</p>
+    <p class="error-message-es">No tienes permiso para ver esta página.</p>
+    <a href="<%= returnUrl %>" class="error-btn"><%= returnLabel %></a>
+  </div>
+</body>
+</html>

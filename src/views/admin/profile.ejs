@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Profile', restaurantName }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.profile.title'), restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <div class="main">
   <header class="page-header">
-    <h2 class="page-header__title">Profile Settings</h2>
-    <%- include('../partials/lang-selector') %>
+    <h2 class="page-header__title"><%= t('page.profile.title') %></h2>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body">
@@ -17,24 +17,24 @@
       <!-- Update profile -->
       <div class="card">
         <div class="card__header card__header--accent">
-          <h3 class="card__title">Account Details</h3>
+          <h3 class="card__title"><%= t('page.profile.card_account') %></h3>
         </div>
         <div class="card__body form-stack">
           <form onsubmit="updateProfile(event)" class="form-stack">
             <div class="form-group">
-              <label class="form-label">Name</label>
+              <label class="form-label"><%= t('page.profile.label_name') %></label>
               <input type="text" id="profileName" value="<%= user.name %>" class="form-input" />
             </div>
             <div class="form-group">
-              <label class="form-label">Email</label>
+              <label class="form-label"><%= t('page.profile.label_email') %></label>
               <input type="email" id="profileEmail" value="<%= user.email %>" class="form-input" />
             </div>
             <div class="form-group">
-              <label class="form-label">Role</label>
+              <label class="form-label"><%= t('page.profile.label_role') %></label>
               <input type="text" value="<%= user.role %>" disabled class="form-input" />
             </div>
             <div class="form-footer">
-              <button type="submit" class="btn btn--primary">Save Changes</button>
+              <button type="submit" class="btn btn--primary"><%= t('page.profile.btn_save_changes') %></button>
             </div>
           </form>
         </div>
@@ -43,25 +43,25 @@
       <!-- Change password -->
       <div class="card">
         <div class="card__header card__header--accent">
-          <h3 class="card__title">Change Password</h3>
+          <h3 class="card__title"><%= t('page.profile.card_password') %></h3>
         </div>
         <div class="card__body">
           <form onsubmit="changePassword(event)" class="form-stack">
             <div class="form-group">
-              <label class="form-label">Current Password</label>
+              <label class="form-label"><%= t('page.profile.label_current_password') %></label>
               <input type="password" id="currentPassword" class="form-input" />
             </div>
             <div class="form-group">
-              <label class="form-label">New Password</label>
+              <label class="form-label"><%= t('page.profile.label_new_password') %></label>
               <input type="password" id="newPassword" minlength="8" class="form-input" />
-              <p class="form-hint">Minimum 8 characters</p>
+              <p class="form-hint"><%= t('page.profile.hint_min_chars') %></p>
             </div>
             <div class="form-group">
-              <label class="form-label">Confirm New Password</label>
+              <label class="form-label"><%= t('page.profile.label_confirm_password') %></label>
               <input type="password" id="confirmPassword" class="form-input" />
             </div>
             <div class="form-footer">
-              <button type="submit" class="btn btn--primary">Update Password</button>
+              <button type="submit" class="btn btn--primary"><%= t('page.profile.btn_update_password') %></button>
             </div>
           </form>
         </div>
@@ -69,9 +69,12 @@
 
     </div>
   </main>
+  <footer class="page-legal-footer">
+    <a href="/admin/privacy"><%= t('common.legal_privacy') %> <svg class="icon page-legal-footer__icon"><use href="/admin/icons/sprite.svg#arrow-up-right"></use></svg></a>
+  </footer>
 </div>
 
-<%- include('../partials/scripts') %>
+<%- include('./partials/scripts') %>
 <script>
   async function updateProfile(e) {
     e.preventDefault();
@@ -80,7 +83,7 @@
         name:  document.getElementById('profileName').value,
         email: document.getElementById('profileEmail').value,
       });
-      showToast('Profile updated');
+      showToast(tr('profile_updated'));
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -91,14 +94,14 @@
     const newPw   = document.getElementById('newPassword').value;
     const confirm = document.getElementById('confirmPassword').value;
     if (newPw !== confirm) {
-      return showToast('New passwords do not match', 'error');
+      return showToast(tr('passwords_no_match'), 'error');
     }
     try {
       await api('PUT', '/api/users/me/password', {
         current_password: document.getElementById('currentPassword').value,
         new_password:     newPw,
       });
-      showToast('Password updated');
+      showToast(tr('password_updated'));
       document.getElementById('currentPassword').value = '';
       document.getElementById('newPassword').value     = '';
       document.getElementById('confirmPassword').value = '';

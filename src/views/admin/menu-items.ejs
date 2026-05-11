@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Menu Items', restaurantName }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.menu_items.title'), restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <%
-  const primary = settings.primary_language || 'en';
   const langs   = settings.enabled_languages || ['en', 'es'];
 
   function itemName(item) {
-    const t = (item.translations || []).find(t => t.lang === primary)
+    const t = (item.translations || []).find(t => t.lang === uiLang)
+           || (item.translations || []).find(t => t.lang === 'en')
            || (item.translations || [])[0];
     return t ? (t.name || '—') : '—';
   }
@@ -30,23 +30,23 @@
 
 <div class="main">
   <header class="page-header page-header--minimal">
-    <h2 class="page-header__title">Menu Items</h2>
-    <%- include('../partials/lang-selector') %>
+    <h2 class="page-header__title"><%= t('page.menu_items.title') %></h2>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body page-body--minimal">
     <div class="card table-card">
       <div class="card__header card__header--brand">
-        <h3 class="card__title">Menu Items</h3>
+        <h3 class="card__title"><%= t('page.menu_items.card_title') %></h3>
         <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search & filter">
-          <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/icons/sprite.svg#search"></use></svg>
+          <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/admin/icons/sprite.svg#search"></use></svg>
         </button>
-        <button onclick="openAddDishModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Item</button>
+        <button onclick="openAddDishModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.menu_items.btn_create') %></button>
       </div>
       <div class="filter-bar" id="filterBar">
-        <input type="text" id="searchInput" placeholder="Search by name..." oninput="filterItems()" class="form-input" style="width:15rem;" />
+        <input type="text" id="searchInput" placeholder="<%= t('page.menu_items.filter_search_placeholder') %>" oninput="filterItems()" class="form-input" style="width:15rem;" />
         <select id="categoryFilter" onchange="filterItems()" class="form-select" style="width:auto;">
-          <option value="">All categories</option>
+          <option value=""><%= t('page.menu_items.filter_all_categories') %></option>
           <% categories.filter(c => !c.parent_id).forEach(cat => { %>
             <option value="<%= cat.id %>"><%= catName(cat) %></option>
             <% if (cat.children) cat.children.forEach(child => { %>
@@ -57,15 +57,15 @@
         <div class="filter-radios">
           <label class="form-check">
             <input type="radio" name="availFilter" value="all" onchange="filterItems()" checked />
-            <span class="form-check__label">All</span>
+            <span class="form-check__label"><%= t('page.menu_items.filter_all') %></span>
           </label>
           <label class="form-check">
             <input type="radio" name="availFilter" value="active" onchange="filterItems()" />
-            <span class="form-check__label">Active</span>
+            <span class="form-check__label"><%= t('page.menu_items.filter_active') %></span>
           </label>
           <label class="form-check">
             <input type="radio" name="availFilter" value="inactive" onchange="filterItems()" />
-            <span class="form-check__label">Inactive</span>
+            <span class="form-check__label"><%= t('page.menu_items.filter_inactive') %></span>
           </label>
         </div>
         <span id="itemCount" class="filter-bar__count"></span>
@@ -73,10 +73,10 @@
       <% if (items.length === 0) { %>
         <div class="empty-state">
           <div class="empty-state__icon">
-            <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#menu-items"></use></svg>
+            <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#menu-items"></use></svg>
           </div>
-          <p class="empty-state__text">No dishes yet</p>
-          <button onclick="openAddDishModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Create Item</button>
+          <p class="empty-state__text"><%= t('page.menu_items.empty_no_dishes') %></p>
+          <button onclick="openAddDishModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.menu_items.btn_create') %></button>
         </div>
       <% } else { %>
         <div class="table-scroll-x">
@@ -117,7 +117,7 @@
                     <% }); %>
                     <% if (item.is_special) { %>
                       <% hasContent = true; %>
-                      <div class="breadcrumb-text">Chef's Special</div>
+                      <div class="breadcrumb-text"><%= t('page.menu_items.col_chefs_special') %></div>
                     <% } %>
                     <% if (!hasContent) { %>
                       <span class="cell-empty">—</span>
@@ -138,11 +138,11 @@
                 <td class="col-tags col-align-left">
                   <div class="tag-status">
                     <div class="tag-status__item">
-                      <span class="tag-status__label">Allergens:</span>
+                      <span class="tag-status__label"><%= t('page.menu_items.col_allergens') %></span>
                       <span class="tag-status__dot <%= (item.allergens && item.allergens.length > 0) ? 'tag-status__dot--success' : 'tag-status__dot--danger' %>"></span>
                     </div>
                     <div class="tag-status__item">
-                      <span class="tag-status__label">Dietary:</span>
+                      <span class="tag-status__label"><%= t('page.menu_items.col_dietary') %></span>
                       <span class="tag-status__dot <%= (item.dietary && item.dietary.length > 0) ? 'tag-status__dot--success' : 'tag-status__dot--danger' %>"></span>
                     </div>
                   </div>
@@ -165,14 +165,14 @@
                   <label class="smb-avail-switch" onclick="toggleAvailability(<%= item.id %>, <%= item.is_available %>)">
                     <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
                     <span class="smb-avail-label <%= item.is_available ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
-                      <%= item.is_available ? 'Live' : 'Off' %>
+                      <%= item.is_available ? t('common.live') : t('common.off') %>
                     </span>
                   </label>
                 </td>
                 <td class="col-details col-align-center">
                   <button class="btn-view" onclick="openViewModal(<%= item.id %>)" title="View details">
-                    <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-                    <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                    <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+                    <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                   </button>
                 </td>
                 <td class="col-delete col-align-center">
@@ -194,8 +194,8 @@
   </main>
 </div>
 
-<%- include('../partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
-<%- include('../partials/modals/view/menu-item') %>
+<%- include('./partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
+<%- include('./partials/modals/view/menu-item') %>
 
 <!-- ── Image Lightbox ─────────────────────────────────────────────────────── -->
 <div id="imageLightbox" class="lightbox hidden" onclick="closeLightbox()">
@@ -203,7 +203,7 @@
   <button class="lightbox__close" onclick="closeLightbox()">&times;</button>
 </div>
 
-<%- include('../partials/scripts') %>
+<%- include('./partials/scripts') %>
 
 <script>
   const LANGS          = <%- JSON.stringify(langs) %>;

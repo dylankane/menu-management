@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="<%= uiLang %>">
+<%- include('../../partials/head', { title: t('page.gc.raffles.title'), restaurantName, section: 'admin' }) %>
+<body>
+
+<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+
+<div class="main">
+  <header class="page-header page-header--minimal">
+    <h2 class="page-header__title"><%= t('page.gc.raffles.title') %></h2>
+    <%- include('../partials/lang-selector') %>
+  </header>
+
+  <main class="page-body page-body--minimal">
+  <div class="dash-tab-panel">
+
+    <!-- ── Create raffle form ─────────────────────────────────────────────────── -->
+    <div class="card raffle-form-card">
+      <div class="card__header card__header--accent">
+        <h3 class="card__title"><%= t('page.gc.raffles.card_create') %></h3>
+      </div>
+      <div class="card__body form-stack">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="rfTitle"><%= t('page.gc.raffles.label_title') %> <span class="form-required">*</span></label>
+            <input type="text" id="rfTitle" class="form-input" placeholder="December Draw" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rfPrize"><%= t('page.gc.raffles.label_prize') %> <span class="form-required">*</span></label>
+            <input type="text" id="rfPrize" class="form-input" placeholder="Dinner for Two" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="rfDescription"><%= t('page.gc.raffles.label_raffle_desc') %> <span class="hint">(optional)</span></label>
+            <textarea id="rfDescription" class="form-textarea" rows="2" placeholder="Tell members what this raffle is about..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rfPrizeDescription"><%= t('page.gc.raffles.label_prize_desc') %> <span class="hint">(optional)</span></label>
+            <textarea id="rfPrizeDescription" class="form-textarea" rows="2" placeholder="Describe the prize in more detail..."></textarea>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="rfStart"><%= t('page.gc.raffles.label_start_date') %> <span class="form-required">*</span></label>
+            <input type="date" id="rfStart" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rfEnd"><%= t('page.gc.raffles.label_end_date') %> <span class="form-required">*</span></label>
+            <input type="date" id="rfEnd" class="form-input" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="rfEligibility"><%= t('page.gc.raffles.label_eligible_members') %> <span class="form-required">*</span></label>
+            <select id="rfEligibility" class="form-select">
+              <option value="all"><%= t('page.gc.raffles.eligibility_all') %></option>
+              <option value="new"><%= t('page.gc.raffles.eligibility_new_form') %></option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rfDraw"><%= t('page.gc.raffles.label_draw_date') %> <span class="hint">(optional)</span></label>
+            <input type="date" id="rfDraw" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rfNotes"><%= t('common.notes') %> <span class="hint">(internal)</span></label>
+          <input type="text" id="rfNotes" class="form-input" placeholder="Internal note..." />
+        </div>
+        <div class="image-upload-row">
+          <div class="image-upload-input">
+            <label class="form-label"><%= t('page.gc.raffles.label_raffle_image') %> <span class="hint">(optional — for banners &amp; promotions)</span></label>
+            <input type="file" id="rfImage" accept="image/*" class="form-file" />
+          </div>
+          <div id="rfImagePreview" class="image-preview hidden">
+            <img id="rfImageThumb" src="" alt="" class="table-thumb" />
+            <span id="rfImageLabel" class="image-preview__label">New image selected</span>
+            <button type="button" class="image-preview__clear" onclick="clearImagePreview('rfImage','rfImagePreview')" aria-label="Remove">&times;</button>
+          </div>
+        </div>
+      </div>
+      <div class="card__footer form-footer">
+        <button type="button" class="btn btn--primary" onclick="createRaffle()"><%= t('page.gc.raffles.btn_create_raffle') %></button>
+      </div>
+    </div>
+
+    <!-- ── Raffle cards ───────────────────────────────────────────────────────── -->
+    <% if (raffles.length === 0) { %>
+      <div class="card">
+        <div class="card__body">
+          <div class="empty-state">
+            <div class="empty-state__icon">
+              <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#star"></use></svg>
+            </div>
+            <p class="empty-state__text"><%= t('page.gc.raffles.empty_no_raffles') %></p>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+    <div class="<%= raffles.length === 1 ? 'raffle-single' : 'raffle-grid' %>">
+      <% raffles.forEach(function(r) { %>
+        <div class="card raffle-card <%= r.status === 'drawn' ? 'raffle-card--drawn' : '' %>">
+          <div class="raffle-card__image-wrap">
+            <% if (r.image_url) { %>
+              <img src="<%= r.image_url %>" alt="<%= r.title %>" class="raffle-card__img-clickable" onclick="openRaffleLightbox('<%= r.image_url %>')" />
+            <% } else { %>
+              <div class="raffle-card__image-placeholder">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              </div>
+            <% } %>
+          </div>
+          <div class="raffle-card__body">
+            <div class="raffle-card__head">
+              <span class="raffle-status-badge raffle-status-badge--<%= r.status %>">
+                <%= r.status === 'active' ? t('page.gc.raffles.status_active') : r.status === 'drawn' ? t('page.gc.raffles.status_drawn') : t('common.off') %>
+              </span>
+            </div>
+            <h3 class="raffle-card__title"><%= r.title %></h3>
+            <% if (r.description) { %>
+            <p class="raffle-card__description"><%= r.description %></p>
+            <% } %>
+            <p class="raffle-card__prize"><%= r.prize %></p>
+            <% if (r.prize_description) { %>
+            <p class="raffle-card__prize-description"><%= r.prize_description %></p>
+            <% } %>
+            <div class="raffle-card__meta">
+              <span class="raffle-card__meta-row">
+                <%= new Date(r.start_date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                &ndash;
+                <%= new Date(r.end_date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+              </span>
+              <span class="raffle-card__meta-row">
+                <%= r.eligibility === 'new' ? t('page.gc.raffles.eligibility_new') : t('page.gc.raffles.eligibility_all') %>
+              </span>
+              <% if (r.draw_date) { %>
+              <span class="raffle-card__meta-row">
+                Draw: <%= new Date(r.draw_date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+              </span>
+              <% } %>
+            </div>
+            <% if (r.status === 'drawn' && r.winner) { %>
+            <div class="raffle-card__winner">
+              <span class="raffle-winner-label"><%= t('page.gc.raffles.winner_label') %></span>
+              <span class="raffle-winner-name"><%= r.winner.name %></span>
+              <% if (r.winner.email) { %>
+              <span class="raffle-winner-email"><%= r.winner.email %></span>
+              <% } %>
+            </div>
+            <% } %>
+          </div>
+          <div class="raffle-card__footer">
+            <% if (r.status !== 'drawn') { %>
+              <label class="smb-avail-switch" onclick="event.preventDefault(); toggleRaffleStatus(<%= r.id %>, '<%= r.status %>')">
+                <input type="checkbox" <%= r.status === 'active' ? 'checked' : '' %> tabindex="-1" />
+                <span class="smb-avail-label"><%= r.status === 'active' ? t('page.gc.raffles.status_active') : t('common.off') %></span>
+              </label>
+              <div class="raffle-card__footer-btns">
+                <button class="btn btn--secondary" onclick="openEditRaffleModal(<%= r.id %>)"><%= t('common.edit') %></button>
+                <% if (r.status === 'active') { %>
+                  <button class="btn btn--primary" onclick="drawRaffle(<%= r.id %>)"><%= t('page.gc.raffles.btn_draw') %></button>
+                <% } %>
+                <button class="btn-delete" onclick="deleteRaffle(<%= r.id %>)" title="Delete raffle">
+                  <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                </button>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+    <% } %>
+
+  </div><!-- /.dash-tab-panel -->
+  </main>
+</div>
+
+<!-- ── Image Lightbox ────────────────────────────────────────────────────── -->
+<div id="raffleLightbox" class="lightbox hidden" onclick="closeRaffleLightbox()">
+  <img id="raffleLightboxImg" src="" alt="" class="lightbox__img" onclick="event.stopPropagation()" />
+  <button class="lightbox__close" onclick="closeRaffleLightbox()">&times;</button>
+</div>
+
+<!-- ── Edit Raffle Modal ──────────────────────────────────────────────────── -->
+<div id="editRaffleModal" class="modal-overlay hidden">
+  <div class="modal modal--lg" onclick="event.stopPropagation()">
+    <div class="modal__header">
+      <h3 class="modal__title"><%= t('page.gc.raffles.modal_edit_title') %></h3>
+      <button onclick="closeModal('editRaffleModal')" class="modal__close">&times;</button>
+    </div>
+    <div class="modal__body">
+      <input type="hidden" id="editRfId" />
+      <div class="form-stack">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="editRfTitle"><%= t('page.gc.raffles.label_title') %> <span class="form-required">*</span></label>
+            <input type="text" id="editRfTitle" class="form-input" placeholder="December Draw" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editRfPrize"><%= t('page.gc.raffles.label_prize') %> <span class="form-required">*</span></label>
+            <input type="text" id="editRfPrize" class="form-input" placeholder="Dinner for Two" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="editRfDescription"><%= t('page.gc.raffles.label_raffle_desc') %> <span class="hint">(optional)</span></label>
+            <textarea id="editRfDescription" class="form-textarea" rows="2" placeholder="Tell members what this raffle is about..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editRfPrizeDescription"><%= t('page.gc.raffles.label_prize_desc') %> <span class="hint">(optional)</span></label>
+            <textarea id="editRfPrizeDescription" class="form-textarea" rows="2" placeholder="Describe the prize in more detail..."></textarea>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="editRfStart"><%= t('page.gc.raffles.label_start_date') %> <span class="form-required">*</span></label>
+            <input type="date" id="editRfStart" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editRfEnd"><%= t('page.gc.raffles.label_end_date') %> <span class="form-required">*</span></label>
+            <input type="date" id="editRfEnd" class="form-input" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="editRfEligibility"><%= t('page.gc.raffles.label_eligible_members') %> <span class="form-required">*</span></label>
+            <select id="editRfEligibility" class="form-select">
+              <option value="all"><%= t('page.gc.raffles.eligibility_all') %></option>
+              <option value="new"><%= t('page.gc.raffles.eligibility_new_form') %></option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editRfDraw"><%= t('page.gc.raffles.label_draw_date') %> <span class="hint">(optional)</span></label>
+            <input type="date" id="editRfDraw" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editRfNotes"><%= t('common.notes') %> <span class="hint">(internal)</span></label>
+          <input type="text" id="editRfNotes" class="form-input" placeholder="Internal note..." />
+        </div>
+        <div class="image-upload-row">
+          <div class="image-upload-input">
+            <label class="form-label"><%= t('page.gc.raffles.label_raffle_image') %> <span class="hint">(leave blank to keep existing)</span></label>
+            <input type="file" id="editRfImage" accept="image/*" class="form-file" />
+          </div>
+          <div id="editRfCurrentImageWrap" class="image-preview hidden">
+            <img id="editRfCurrentImg" src="" alt="" class="table-thumb" />
+            <span class="image-preview__label">Current image</span>
+            <button type="button" class="image-preview__clear" onclick="clearImagePreview('editRfImage','editRfCurrentImageWrap')" aria-label="Remove">&times;</button>
+          </div>
+          <div id="editRfImagePreview" class="image-preview hidden">
+            <img id="editRfImageThumb" src="" alt="" class="table-thumb" />
+            <span id="editRfImageLabel" class="image-preview__label">New image selected</span>
+            <button type="button" class="image-preview__clear" onclick="clearImagePreview('editRfImage','editRfImagePreview')" aria-label="Remove">&times;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button type="button" onclick="closeModal('editRaffleModal')" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+      <button type="button" onclick="submitEditRaffle()" class="btn btn--primary"><%= t('modal.btn_save_changes') %></button>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/scripts') %>
+<script>
+  const RAFFLES = <%- JSON.stringify(raffles) %>;
+
+  function openRaffleLightbox(src) {
+    document.getElementById('raffleLightboxImg').src = src;
+    document.getElementById('raffleLightbox').classList.remove('hidden');
+  }
+
+  function closeRaffleLightbox() {
+    document.getElementById('raffleLightbox').classList.add('hidden');
+    document.getElementById('raffleLightboxImg').src = '';
+  }
+
+  document.getElementById('rfImage').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    document.getElementById('rfImageThumb').src = URL.createObjectURL(file);
+    document.getElementById('rfImageLabel').textContent = file.name;
+    document.getElementById('rfImagePreview').classList.remove('hidden');
+  });
+
+  document.getElementById('editRfImage').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    document.getElementById('editRfImageThumb').src = URL.createObjectURL(file);
+    document.getElementById('editRfImageLabel').textContent = file.name;
+    document.getElementById('editRfImagePreview').classList.remove('hidden');
+  });
+
+  async function createRaffle() {
+    const title             = document.getElementById('rfTitle').value.trim();
+    const description       = document.getElementById('rfDescription').value.trim()      || null;
+    const prize             = document.getElementById('rfPrize').value.trim();
+    const prize_description = document.getElementById('rfPrizeDescription').value.trim() || null;
+    const eligibility       = document.getElementById('rfEligibility').value;
+    const start_date        = document.getElementById('rfStart').value;
+    const end_date          = document.getElementById('rfEnd').value;
+    const draw_date         = document.getElementById('rfDraw').value  || null;
+    const notes             = document.getElementById('rfNotes').value.trim() || null;
+    const imageFile         = document.getElementById('rfImage').files[0] || null;
+
+    if (!title)      { showToast('Title is required', 'error');      return; }
+    if (!prize)      { showToast('Prize is required', 'error');      return; }
+    if (!start_date) { showToast('Start date is required', 'error'); return; }
+    if (!end_date)   { showToast('End date is required', 'error');   return; }
+
+    const fd = new FormData();
+    fd.append('title', title);
+    if (description)       fd.append('description', description);
+    fd.append('prize', prize);
+    if (prize_description) fd.append('prize_description', prize_description);
+    fd.append('eligibility', eligibility);
+    fd.append('start_date', start_date);
+    fd.append('end_date', end_date);
+    if (draw_date) fd.append('draw_date', draw_date);
+    if (notes)     fd.append('notes', notes);
+    if (imageFile) fd.append('image', imageFile);
+
+    try {
+      const result = await api('POST', '/api/gourmet-club/raffles', fd);
+      const isInactive = result.data?.raffle?.status === 'inactive';
+      showToast(isInactive ? 'Raffle created and set to Off — another raffle is already live' : 'Raffle created and set to live');
+      reloadAfter(isInactive ? 1400 : 600);
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function toggleRaffleStatus(id, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    if (newStatus === 'active') {
+      const hasOtherActive = RAFFLES.some(function(r) { return r.id !== id && r.status === 'active'; });
+      if (hasOtherActive && !confirm('Setting this raffle as live will deactivate the currently live raffle. Continue?')) return;
+    }
+    try {
+      await api('PUT', `/api/gourmet-club/raffles/${id}`, { status: newStatus });
+      showToast(newStatus === 'active' ? 'Raffle is now live' : 'Raffle set to off');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  function openEditRaffleModal(id) {
+    const r = RAFFLES.find(function(x) { return x.id === id; });
+    if (!r) return;
+
+    document.getElementById('editRfId').value               = r.id;
+    document.getElementById('editRfTitle').value            = r.title || '';
+    document.getElementById('editRfPrize').value            = r.prize || '';
+    document.getElementById('editRfDescription').value      = r.description || '';
+    document.getElementById('editRfPrizeDescription').value = r.prize_description || '';
+    document.getElementById('editRfEligibility').value      = r.eligibility || 'all';
+    document.getElementById('editRfStart').value            = r.start_date ? r.start_date.substring(0, 10) : '';
+    document.getElementById('editRfEnd').value              = r.end_date   ? r.end_date.substring(0, 10)   : '';
+    document.getElementById('editRfDraw').value             = r.draw_date  ? r.draw_date.substring(0, 10)  : '';
+    document.getElementById('editRfNotes').value            = r.notes || '';
+
+    document.getElementById('editRfImage').value = '';
+    document.getElementById('editRfImagePreview').classList.add('hidden');
+
+    const currentWrap = document.getElementById('editRfCurrentImageWrap');
+    const currentImg  = document.getElementById('editRfCurrentImg');
+    if (r.image_url) {
+      currentImg.src = r.image_url;
+      currentWrap.classList.remove('hidden');
+    } else {
+      currentWrap.classList.add('hidden');
+    }
+
+    openModal('editRaffleModal');
+  }
+
+  async function submitEditRaffle() {
+    const id            = document.getElementById('editRfId').value;
+    const title         = document.getElementById('editRfTitle').value.trim();
+    const description   = document.getElementById('editRfDescription').value.trim()      || null;
+    const prize         = document.getElementById('editRfPrize').value.trim();
+    const prizeDesc     = document.getElementById('editRfPrizeDescription').value.trim() || null;
+    const eligibility   = document.getElementById('editRfEligibility').value;
+    const start_date    = document.getElementById('editRfStart').value;
+    const end_date      = document.getElementById('editRfEnd').value;
+    const draw_date     = document.getElementById('editRfDraw').value  || null;
+    const notes         = document.getElementById('editRfNotes').value.trim() || null;
+    const imageFile     = document.getElementById('editRfImage').files[0] || null;
+
+    if (!title)      { showToast('Title is required', 'error');      return; }
+    if (!prize)      { showToast('Prize is required', 'error');      return; }
+    if (!start_date) { showToast('Start date is required', 'error'); return; }
+    if (!end_date)   { showToast('End date is required', 'error');   return; }
+
+    const fd = new FormData();
+    fd.append('title', title);
+    if (description) fd.append('description', description);
+    fd.append('prize', prize);
+    if (prizeDesc)   fd.append('prize_description', prizeDesc);
+    fd.append('eligibility', eligibility);
+    fd.append('start_date', start_date);
+    fd.append('end_date', end_date);
+    if (draw_date) fd.append('draw_date', draw_date);
+    if (notes)     fd.append('notes', notes);
+    if (imageFile) fd.append('image', imageFile);
+
+    try {
+      await api('PUT', `/api/gourmet-club/raffles/${id}`, fd);
+      showToast('Raffle updated');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function drawRaffle(id) {
+    const r = RAFFLES.find(function(x) { return x.id === id; });
+    const title = r ? r.title : 'this raffle';
+    if (!confirm(`Draw a winner for "${title}"? This cannot be undone.`)) return;
+    try {
+      const res    = await api('POST', `/api/gourmet-club/raffles/${id}/draw`);
+      const winner = res.data.raffle.winner;
+      showToast(`Winner: ${winner.name}`);
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function deleteRaffle(id) {
+    const r = RAFFLES.find(function(x) { return x.id === id; });
+    const title = r ? r.title : 'this raffle';
+    if (!confirm(`Delete raffle "${title}"? This cannot be undone.`)) return;
+    try {
+      await api('DELETE', `/api/gourmet-club/raffles/${id}`);
+      showToast('Raffle deleted');
+      reloadAfter();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+</script>
+
+</body>
+</html>

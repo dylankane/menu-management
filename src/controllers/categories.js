@@ -55,17 +55,14 @@ async function create(req, res, next) {
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? (settings.enabled_languages) : ['en', 'es'];
-    const primary  = settings ? settings.primary_language : 'en';
 
     const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
 
-    console.log('DEBUG - Request body:', req.body);
-    console.log('DEBUG - Extracted translations:', translations);
-    console.log('DEBUG - Primary language:', primary);
-
-    // Derive slug: use supplied slug, or auto-generate from primary language name
-    const primaryTranslation = translations.find(t => t.lang === primary);
-    const primaryName = primaryTranslation?.name || '';
+    // Derive slug: use supplied slug, or auto-generate from en → es → first translation name
+    const slugTranslation = translations.find(t => t.lang === 'en')
+                         || translations.find(t => t.lang === 'es')
+                         || translations[0];
+    const primaryName = slugTranslation?.name || '';
     const slug = rawSlug ? slugify(rawSlug) : slugify(primaryName);
     if (!slug) throw new AppError('A name or slug is required to create a category', 400);
 

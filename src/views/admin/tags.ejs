@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Allergens & Dietary', restaurantName }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.tags.title'), restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <%
-  const primary = settings.primary_language || 'en';
   const langs   = settings.enabled_languages || ['en', 'es'];
 
   function tagName(translations) {
     if (!translations || !translations.length) return '—';
-    const t = translations.find(t => t.lang === primary) || translations[0];
+    const t = translations.find(t => t.lang === uiLang)
+           || translations.find(t => t.lang === 'en')
+           || translations[0];
     return t ? (t.name || '—') : '—';
   }
 %>
@@ -19,9 +20,9 @@
 <div class="main">
   <header class="page-header page-header--minimal">
     <div>
-      <h2 class="page-header__title">Allergens &amp; Dietary Tags</h2>
+      <h2 class="page-header__title"><%= t('page.tags.title') %></h2>
     </div>
-    <%- include('../partials/lang-selector') %>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body page-body--minimal">
@@ -31,16 +32,16 @@
       <div>
         <div class="card table-card">
           <div class="card__header card__header--brand">
-            <h3 class="card__title">Allergen Tags</h3>
-            <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Tag</button>
+            <h3 class="card__title"><%= t('page.tags.allergen_card') %></h3>
+            <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.tags.btn_create_allergen') %></button>
           </div>
           <% if (allergens.length === 0) { %>
             <div class="empty-state">
               <div class="empty-state__icon">
-                <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#tags"></use></svg>
+                <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#tags"></use></svg>
               </div>
-              <p class="empty-state__text">No allergens yet.</p>
-              <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Allergen</button>
+              <p class="empty-state__text"><%= t('page.tags.empty_no_allergens') %></p>
+              <button onclick="openAddAllergenModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.tags.empty_add_allergen') %></button>
             </div>
           <% } else { %>
             <table class="data-table">
@@ -61,8 +62,8 @@
                     </td>
                     <td class="col-details col-align-center">
                       <button class="btn-view" onclick='openEditAllergenModal(<%- JSON.stringify(a) %>)' title="View details">
-                        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-                        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                        <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+                        <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                       </button>
                     </td>
                     <td class="col-delete col-align-center">
@@ -86,16 +87,16 @@
       <div>
         <div class="card table-card">
           <div class="card__header card__header--brand">
-            <h3 class="card__title">Dietary Tags</h3>
-            <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">+ Create Tag</button>
+            <h3 class="card__title"><%= t('page.tags.dietary_card') %></h3>
+            <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.tags.btn_create_dietary') %></button>
           </div>
           <% if (dietaryTags.length === 0) { %>
             <div class="empty-state">
               <div class="empty-state__icon">
-                <svg class="icon icon--empty-state"><use href="/icons/sprite.svg#tags"></use></svg>
+                <svg class="icon icon--empty-state"><use href="/admin/icons/sprite.svg#tags"></use></svg>
               </div>
-              <p class="empty-state__text">No dietary tags yet.</p>
-              <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-brand btn--sm">+ Add Dietary Tag</button>
+              <p class="empty-state__text"><%= t('page.tags.empty_no_dietary') %></p>
+              <button onclick="openAddDietaryModal()" class="btn btn--pill btn--outline-brand btn--sm"><%= t('page.tags.empty_add_dietary') %></button>
             </div>
           <% } else { %>
             <table class="data-table">
@@ -116,8 +117,8 @@
                     </td>
                     <td class="col-details col-align-center">
                       <button class="btn-view" onclick='openEditDietaryModal(<%- JSON.stringify(d) %>)' title="View details">
-                        <svg class="icon icon-closed"><use href="/icons/sprite.svg#eye-closed"></use></svg>
-                        <svg class="icon icon-open"><use href="/icons/sprite.svg#eye-open"></use></svg>
+                        <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
+                        <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                       </button>
                     </td>
                     <td class="col-delete col-align-center">
@@ -140,10 +141,10 @@
   </main>
 </div>
 
-<%- include('../partials/modals/create-edit/allergen', { langs, primary }) %>
-<%- include('../partials/modals/create-edit/dietary', { langs, primary }) %>
+<%- include('./partials/modals/create-edit/allergen', { langs, primary }) %>
+<%- include('./partials/modals/create-edit/dietary', { langs, primary }) %>
 
-<%- include('../partials/scripts') %>
+<%- include('./partials/scripts') %>
 <script>
   const LANGS   = <%- JSON.stringify(langs) %>;
   const PRIMARY = '<%= primary %>';

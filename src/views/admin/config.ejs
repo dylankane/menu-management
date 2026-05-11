@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<%- include('../partials/head', { title: 'Config', restaurantName }) %>
+<%- include('../partials/head', { title: 'Config', restaurantName, section: 'admin' }) %>
 <body>
 
-<%- include('../partials/sidebar', { current, user, restaurantName }) %>
+<%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <div class="main">
   <header class="page-header">
@@ -79,7 +79,7 @@
   </main>
 </div>
 
-<%- include('../partials/scripts') %>
+<%- include('./partials/scripts') %>
 <script>
   function updateLabel(labelId, checked) {
     const lbl = document.getElementById(labelId);

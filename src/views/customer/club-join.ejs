@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= mt('club_join.page_title') %> - <%= restaurantName %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Lato:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/customer/css/menu.css">
+</head>
+<body>
+  <%- include('./partials/topbar', { lang, enabledLangs }) %>
+  <div class="menu-container">
+    <header class="menu-header">
+      <h1 class="restaurant-name"><%= restaurantName %></h1>
+      <p class="menu-subtitle"><%= mt('club_join.subtitle') %></p>
+      <div class="menu-divider"></div>
+    </header>
+
+    <main class="club-join-content">
+      <div class="club-join-hero">
+        <h2 class="club-join-title"><%= mt('club_join.title') %></h2>
+        <p class="club-join-description"><%= mt('club_join.desc') %></p>
+      </div>
+
+      <div class="club-join-benefits">
+        <div class="club-benefit">
+          <h3 class="club-benefit-title"><%= mt('club_join.benefit1_title') %></h3>
+          <p class="club-benefit-text"><%= mt('club_join.benefit1_text') %></p>
+        </div>
+        <div class="club-benefit">
+          <h3 class="club-benefit-title"><%= mt('club_join.benefit2_title') %></h3>
+          <p class="club-benefit-text"><%= mt('club_join.benefit2_text') %></p>
+        </div>
+        <div class="club-benefit">
+          <h3 class="club-benefit-title"><%= mt('club_join.benefit3_title') %></h3>
+          <p class="club-benefit-text"><%= mt('club_join.benefit3_text') %></p>
+        </div>
+      </div>
+
+      <form id="clubJoinForm" class="club-join-form">
+        <h3 class="club-join-form-title"><%= mt('club_join.form_title') %></h3>
+
+        <div class="form-group">
+          <label class="form-label" for="memberName"><%= mt('club_join.label_name') %> <span class="form-required">*</span></label>
+          <input type="text" id="memberName" name="name" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="memberEmail"><%= mt('club_join.label_email') %> <span class="form-required">*</span></label>
+          <input type="email" id="memberEmail" name="email" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="memberPhone"><%= mt('club_join.label_phone') %> <span class="form-optional"><%= mt('club_join.optional') %></span></label>
+          <input type="tel" id="memberPhone" name="phone" class="form-input">
+        </div>
+
+        <div class="form-consent">
+          <p class="form-consent-text"><%= mt('club_join.consent_text') %></p>
+        </div>
+
+        <button type="submit" class="btn-submit"><%= mt('club_join.btn_submit') %></button>
+      </form>
+
+      <div class="club-join-footer">
+        <a href="/menu?lang=<%= lang %>" class="club-back-link"><%= mt('club_join.btn_back') %></a>
+      </div>
+    </main>
+
+    <footer class="menu-footer">
+      <div class="menu-footer-links">
+        <a href="/menu/legal" class="menu-footer-link"><%= mt('footer.legal') %></a>
+      </div>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <%- include('./partials/cookie-banner', { mt }) %>
+
+  <script>
+    var MT_CLUB = {
+      toast_success:       <%- JSON.stringify(mt('club_join.toast_success')) %>,
+      toast_name_required: <%- JSON.stringify(mt('club_join.toast_name_required')) %>,
+      toast_email_required: <%- JSON.stringify(mt('club_join.toast_email_required')) %>,
+      toast_error:         <%- JSON.stringify(mt('club_join.toast_error')) %>
+    };
+
+    function showToast(message, type) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast toast--' + (type || 'success');
+      setTimeout(function () { toast.classList.add('hidden'); }, 3000);
+    }
+
+    document.getElementById('clubJoinForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      var formData = {
+        name:               document.getElementById('memberName').value.trim(),
+        email:              document.getElementById('memberEmail').value.trim(),
+        phone:              document.getElementById('memberPhone').value.trim() || null,
+        marketing_consent:  true,
+        source:             'qr_menu'
+      };
+
+      if (!formData.name) {
+        showToast(MT_CLUB.toast_name_required, 'error');
+        return;
+      }
+      if (!formData.email) {
+        showToast(MT_CLUB.toast_email_required, 'error');
+        return;
+      }
+
+      try {
+        var response = await fetch('/api/gourmet-club/join', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify(formData)
+        });
+        var data = await response.json();
+        if (!response.ok) throw new Error(data.message || MT_CLUB.toast_error);
+
+        showToast(MT_CLUB.toast_success, 'success');
+        document.getElementById('clubJoinForm').reset();
+        setTimeout(function () { window.location.href = '/menu'; }, 2000);
+      } catch (error) {
+        showToast(error.message || MT_CLUB.toast_error, 'error');
+      }
+    });
+  </script>
+</body>
+</html>
