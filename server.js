@@ -110,6 +110,10 @@ app.use((req, res) => {
 // Maps Prisma client error codes to human-readable messages.
 // Raw Prisma messages must never reach the client.
 function sanitiseError(err) {
+  if (err.name === 'MulterError' && err.code === 'LIMIT_FILE_SIZE') {
+    const mb = Math.round(parseInt(process.env.MAX_UPLOAD_SIZE || '5242880', 10) / 1024 / 1024);
+    return `File is too large — maximum size is ${mb}MB`;
+  }
   const code = err.code; // Prisma errors carry a .code property
   if (code) {
     switch (code) {
@@ -132,7 +136,7 @@ function sanitiseError(err) {
 // ── Global error handler ─────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  const status  = err.status || 500;
+  const status  = (err.name === 'MulterError' && err.code === 'LIMIT_FILE_SIZE') ? 413 : (err.status || 500);
   const message = sanitiseError(err);
 
   if (status >= 500) {

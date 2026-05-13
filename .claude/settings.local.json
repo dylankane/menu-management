@@ -54,7 +54,10 @@
       "PowerShell(New-Item *)",
       "Bash(grep -E \"^\\(server\\\\.js|src/routes/adminPages\\\\.js\\)$\")",
       "Bash(Get-ChildItem C:\\\\Users\\\\dylan\\\\menu-management\\\\public\\\\admin\\\\icons *)",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "Bash(dir C:\\\\Users\\\\dylan\\\\menu-management\\\\*.js /b)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\dylan\\\\menu-management\" -MaxDepth 1 -Filter \"*.js\")",
+      "Bash(Select-Object Name)"
     ]
   }
 }
