@@ -223,8 +223,21 @@
   }
 
   async function submitAddCategory() {
-    const fd       = new FormData();
     const parentId = document.getElementById('addCatParentId').value;
+
+    // Capture direct items/set-menus on the parent BEFORE creating the sub.
+    // If this is the first sub, they'll be auto-migrated into it.
+    let directItems    = [];
+    let directSetMenus = [];
+    if (parentId && typeof findCategory === 'function') {
+      const parentCat = findCategory(parseInt(parentId));
+      if (parentCat && (!parentCat.children || parentCat.children.length === 0)) {
+        directItems    = parentCat.menu_item_categories || [];
+        directSetMenus = parentCat.set_menu_categories  || [];
+      }
+    }
+
+    const fd = new FormData();
     if (parentId) fd.append('parent_id', parentId);
     const notes = document.getElementById('addCatNotes')?.value.trim();
     if (notes) fd.append('notes', notes);
@@ -238,9 +251,33 @@
       if (d)  fd.append(`description_${lang}`, d);
       if (pn) fd.append(`public_notes_${lang}`, pn);
     });
+
     try {
-      await api('POST', '/api/categories', fd);
-      showToast('Category created');
+      const { data } = await api('POST', '/api/categories', fd);
+      const newSubId  = data.category.id;
+      const total     = directItems.length + directSetMenus.length;
+
+      if (total > 0) {
+        // Migrate all parent-level items into the first sub
+        await Promise.all([
+          ...directItems.map(mic =>
+            api('PATCH', `/api/menu-items/${mic.menu_item.id}/move`, {
+              from_category_id: parseInt(parentId),
+              to_category_id:   newSubId,
+            })
+          ),
+          ...directSetMenus.map(smc =>
+            api('PATCH', `/api/set-menus/${smc.set_menu.id}/move-category`, {
+              from_category_id: parseInt(parentId),
+              to_category_id:   newSubId,
+            })
+          ),
+        ]);
+        showToast(`Sub created — ${total} item${total !== 1 ? 's' : ''} moved into it`);
+      } else {
+        showToast('Category created');
+      }
+
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }

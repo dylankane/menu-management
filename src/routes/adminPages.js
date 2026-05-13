@@ -227,7 +227,7 @@ router.get('/builder', async (req, res, next) => {
       orderBy: { display_order: 'asc' },
     };
 
-    const [categories, allergens, dietaryTags, allItems] = await Promise.all([
+    const [categories, allergens, dietaryTags, allItems, allSetMenus] = await Promise.all([
       prisma.category.findMany({
         where: { parent_id: null },
         include: {
@@ -253,6 +253,10 @@ router.get('/builder', async (req, res, next) => {
         include: { translations: { orderBy: { lang: 'asc' } } },
         orderBy: { created_at: 'desc' },
       }),
+      prisma.setMenu.findMany({
+        include: { translations: { orderBy: { lang: 'asc' } } },
+        orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
+      }),
     ]);
 
     res.render('admin/builder', {
@@ -261,6 +265,7 @@ router.get('/builder', async (req, res, next) => {
       allergens,
       dietaryTags,
       allItems,
+      allSetMenus,
       current: 'builder',
       restaurantName: restaurantName(res),
       settings: res.locals.settings,

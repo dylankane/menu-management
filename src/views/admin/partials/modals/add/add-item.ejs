@@ -1,6 +1,8 @@
-<!-- ── Add Item Modal (generic selector) ────────────────────────────────────── -->
-<!-- Requires in scope: langs, primary, dishes                                  -->
-<!-- Caller must call openAddItemModal(config) — see script block below        -->
+<!-- ── Add Item Modal ─────────────────────────────────────────────────────────── -->
+<!-- Requires in scope: langs, primary                                           -->
+<!-- Caller must call openAddItemModal(config) — see script block below          -->
+<!-- config: { title, items[{id,name,meta,type}], sections[{id,name}],           -->
+<!--           sectionId, showNotes, canCreate, onSubmit(itemId,type,{sectionId,notes}) } -->
 <div id="addItemModal" class="modal-overlay hidden">
   <div class="modal modal--lg" onclick="event.stopPropagation()">
     <div class="modal__header">
@@ -8,29 +10,26 @@
       <button onclick="closeModal('addItemModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
-      <input type="hidden" id="addItemSmcId" />
-      <div id="addItemCourseWrap" class="form-group hidden">
-        <label class="form-label">Add to Course <span class="required">*</span></label>
-        <select id="addItemCourseSelect" class="form-select"></select>
+
+      <!-- Section / course dropdown — shown when config.sections is set -->
+      <div id="addItemSectionWrap" class="form-group hidden">
+        <label class="form-label">Add to <span class="required">*</span></label>
+        <select id="addItemSectionSelect" class="form-select"></select>
       </div>
+
       <div class="form-group">
-        <input type="text" id="addItemSearch" placeholder="Search items…" oninput="filterItemSearch()" class="form-input" />
+        <input type="text" id="addItemSearch" placeholder="Search items…"
+               oninput="filterItemSearch()" class="form-input" />
       </div>
-      <div id="addItemList" class="add-to-cat-list">
-        <% dishes.forEach(d => {
-          const dT = d.translations.find(t => t.lang === primary) || d.translations[0];
-          const dName = dT ? (dT.name || '—') : '—';
-        %>
-          <div class="add-to-cat-item" data-dish-id="<%= d.id %>"
-               data-name="<%= dName.toLowerCase() %>"
-               onclick="selectItem(this)">
-            <%= dName %><span class="add-to-cat-item__meta"> — €<%= Number(d.price).toFixed(2) %></span>
-          </div>
-        <% }) %>
-      </div>
-      <div class="modal-create-action">
+
+      <!-- Item list — JS-rendered via renderItemList() -->
+      <div id="addItemList" class="add-to-cat-list"></div>
+
+      <div class="modal-create-action" id="addItemCreateAction">
         <button type="button" class="btn btn--pill link--slide" onclick="swapToItemModal()">+ Create Item</button>
       </div>
+
+      <!-- Per-language notes — shown after an item is selected when showNotes is true -->
       <div id="addItemNoteWrap" class="modal-note-wrap hidden">
         <h4 class="modal-section-title">Add A Note</h4>
         <div data-lang-container>
@@ -46,7 +45,7 @@
             <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
               <div class="form-group">
                 <label class="form-label form-label--xs">
-                  Note for this item (<%= lang.toUpperCase() %>) <span class="hint">— optional</span>
+                  Note (<%= lang.toUpperCase() %>) <span class="hint">— optional</span>
                 </label>
                 <input type="text" id="addItemNote_<%= lang %>" class="form-input form-input--sm"
                   placeholder="e.g. Contains nuts, Ask server for info…" />
@@ -55,6 +54,7 @@
           <% }) %>
         </div>
       </div>
+
     </div>
     <div class="modal__footer">
       <button onclick="closeModal('addItemModal')" class="btn btn--secondary">Cancel</button>
@@ -64,40 +64,39 @@
 </div>
 
 <script>
-  let _selectedDishId  = null;
-  let _swapReturnId    = null;
-  let _addItemConfig   = null;
+  let _selectedItemId   = null;
+  let _selectedItemType = null;
+  let _swapReturnId     = null;
+  let _addItemConfig    = null;
 
   function openAddItemModal(config) {
-    _addItemConfig  = config || {};
-    _selectedDishId = null;
+    _addItemConfig    = config || {};
+    _selectedItemId   = null;
+    _selectedItemType = null;
 
     document.getElementById('addItemModalTitle').textContent = _addItemConfig.title || 'Add Item';
 
-    const courseWrap = document.getElementById('addItemCourseWrap');
-    const smcIdInput = document.getElementById('addItemSmcId');
-
-    if (_addItemConfig.smcId !== undefined && _addItemConfig.smcId !== null) {
-      smcIdInput.value = _addItemConfig.smcId;
-      courseWrap.classList.add('hidden');
-    } else if (_addItemConfig.courses && _addItemConfig.courses.length) {
-      smcIdInput.value = '';
-      const sel = document.getElementById('addItemCourseSelect');
-      sel.innerHTML = _addItemConfig.courses
-        .map(smc => `<option value="${smc.id}">${esc(getName(smc.course.translations))}</option>`)
+    // Section / course dropdown
+    const sectionWrap   = document.getElementById('addItemSectionWrap');
+    const sectionSelect = document.getElementById('addItemSectionSelect');
+    if (_addItemConfig.sections && _addItemConfig.sections.length) {
+      sectionSelect.innerHTML = _addItemConfig.sections
+        .map(s => `<option value="${s.id}">${esc(s.name)}</option>`)
         .join('');
-      courseWrap.classList.remove('hidden');
+      sectionWrap.classList.remove('hidden');
     } else {
-      smcIdInput.value = '';
-      courseWrap.classList.add('hidden');
+      sectionWrap.classList.add('hidden');
     }
 
-    document.getElementById('addItemSearch').value = '';
-    document.querySelectorAll('#addItemList .add-to-cat-item').forEach(el => {
-      el.classList.remove('add-to-cat-item--selected');
-      el.style.display = '';
-    });
+    // Item list
+    renderItemList(_addItemConfig.items || []);
+
+    // Create Item button — hidden when canCreate is explicitly false
+    document.getElementById('addItemCreateAction').classList.toggle('hidden', _addItemConfig.canCreate === false);
+
+    // Notes + search reset
     document.getElementById('addItemNoteWrap').classList.add('hidden');
+    document.getElementById('addItemSearch').value = '';
     LANGS.forEach(lang => {
       const el = document.getElementById(`addItemNote_${lang}`);
       if (el) el.value = '';
@@ -106,11 +105,23 @@
     openModal('addItemModal');
   }
 
+  function renderItemList(items) {
+    document.getElementById('addItemList').innerHTML = items.map(item => `
+      <div class="add-to-cat-item"
+           data-item-id="${item.id}"
+           data-item-type="${esc(item.type || 'dish')}"
+           data-name="${esc(String(item.name || '').toLowerCase())}"
+           onclick="selectItem(this)">
+        ${esc(item.name || '—')}<span class="add-to-cat-item__meta"> — ${esc(item.meta || '')}</span>${item.label ? `<span class="add-to-cat-item__type"> ${esc(item.label)}</span>` : ''}
+      </div>`).join('');
+  }
+
   function selectItem(el) {
     document.querySelectorAll('#addItemList .add-to-cat-item')
       .forEach(i => i.classList.remove('add-to-cat-item--selected'));
     el.classList.add('add-to-cat-item--selected');
-    _selectedDishId = parseInt(el.dataset.dishId);
+    _selectedItemId   = parseInt(el.dataset.itemId);
+    _selectedItemType = el.dataset.itemType || 'dish';
     if (_addItemConfig?.showNotes) {
       document.getElementById('addItemNoteWrap').classList.remove('hidden');
     }
@@ -124,17 +135,19 @@
   }
 
   async function submitAddItem() {
-    if (!_selectedDishId) return showToast('Select an item first', 'error');
+    if (!_selectedItemId) return showToast('Select an item first', 'error');
     if (!_addItemConfig?.onSubmit) return;
 
-    const courseWrap  = document.getElementById('addItemCourseWrap');
-    const useSelector = !courseWrap.classList.contains('hidden');
-    const smcIdVal    = useSelector
-      ? document.getElementById('addItemCourseSelect').value
-      : document.getElementById('addItemSmcId').value;
-    if (useSelector && !smcIdVal) return showToast('Please select a course', 'error');
+    const sectionWrap = document.getElementById('addItemSectionWrap');
+    const useSelector = !sectionWrap.classList.contains('hidden');
+    let sectionId;
+    if (useSelector) {
+      sectionId = parseInt(document.getElementById('addItemSectionSelect').value);
+      if (!sectionId) return showToast('Please select a section', 'error');
+    } else {
+      sectionId = _addItemConfig.sectionId ?? null;
+    }
 
-    const smcId = smcIdVal ? parseInt(smcIdVal) : undefined;
     const notes = {};
     if (_addItemConfig.showNotes) {
       LANGS.forEach(lang => {
@@ -144,9 +157,28 @@
     }
 
     try {
-      await _addItemConfig.onSubmit(_selectedDishId, { smcId, notes });
+      await _addItemConfig.onSubmit(_selectedItemId, _selectedItemType, { sectionId, notes });
       closeModal('addItemModal');
     } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Swap to item creation modal ───────────────────────────────────────────────
+  function swapToItemModal() {
+    document.getElementById('addItemModal').classList.add('hidden');
+    _swapReturnId = 'addItemModal';
+    window._onItemSaved = function(item) {
+      window._onItemSaved = null;
+      returnFromSwap(item);
+    };
+    window._onItemModalClose = function() {
+      returnFromSwap(null);
+    };
+    const sectionWrap = document.getElementById('addItemSectionWrap');
+    const useSelector = !sectionWrap.classList.contains('hidden');
+    const presetCatId = useSelector
+      ? (parseInt(document.getElementById('addItemSectionSelect').value) || null)
+      : (_addItemConfig?.sectionId ?? null);
+    openAddDishModal(presetCatId);
   }
 
   function returnFromSwap(newItem) {
@@ -158,28 +190,17 @@
     if (newItem) injectAndSelectItem(newItem);
   }
 
-  function swapToItemModal() {
-    document.getElementById('addItemModal').classList.add('hidden');
-    _swapReturnId = 'addItemModal';
-    window._onItemSaved = function(item) {
-      window._onItemSaved = null;
-      returnFromSwap(item);
-    };
-    window._onItemModalClose = function() {
-      returnFromSwap(null);
-    };
-    openAddDishModal();
-  }
-
   function injectAndSelectItem(item) {
     const t    = (item.translations || []).find(t => t.lang === PRIMARY) || (item.translations || [])[0];
     const name = t?.name || '—';
+    const meta = `€${Number(item.price).toFixed(2)}`;
     const el   = document.createElement('div');
-    el.className      = 'add-to-cat-item';
-    el.dataset.dishId = item.id;
-    el.dataset.name   = name.toLowerCase();
-    el.onclick        = function() { selectItem(this); };
-    el.innerHTML = `${esc(name)}<span class="add-to-cat-item__meta"> — €${Number(item.price).toFixed(2)}</span>`;
+    el.className           = 'add-to-cat-item';
+    el.dataset.itemId      = item.id;
+    el.dataset.itemType    = 'dish';
+    el.dataset.name        = name.toLowerCase();
+    el.onclick             = function() { selectItem(this); };
+    el.innerHTML           = `${esc(name)}<span class="add-to-cat-item__meta"> — ${esc(meta)}</span>`;
     const list = document.getElementById('addItemList');
     list.insertBefore(el, list.firstChild);
     document.getElementById('addItemSearch').value = '';

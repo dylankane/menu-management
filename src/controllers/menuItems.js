@@ -296,27 +296,33 @@ async function addToCategory(req, res, next) {
 
     const [item, category] = await Promise.all([
       prisma.menuItem.findUnique({ where: { id } }),
-      prisma.category.findUnique({ where: { id: category_id } }),
+      prisma.category.findUnique({
+        where:   { id: category_id },
+        include: { children: { orderBy: { display_order: 'asc' }, select: { id: true } } },
+      }),
     ]);
     if (!item)     throw new AppError('Menu item not found', 404);
     if (!category) throw new AppError('Category not found', 404);
 
+    // If the category has subs, place in the first sub instead
+    const targetId = category.children.length > 0 ? category.children[0].id : category_id;
+
     const maxOrder = await prisma.menuItemCategory.aggregate({
-      where: { category_id },
+      where: { category_id: targetId },
       _max:  { display_order: true },
     });
 
     await prisma.menuItemCategory.upsert({
-      where:  { menu_item_id_category_id: { menu_item_id: id, category_id } },
+      where:  { menu_item_id_category_id: { menu_item_id: id, category_id: targetId } },
       update: {},
       create: {
         menu_item_id:  id,
-        category_id,
+        category_id:   targetId,
         display_order: (maxOrder._max.display_order ?? -1) + 1,
       },
     });
 
-    res.json({ data: { message: 'Dish added to category' } });
+    res.json({ data: { message: 'Dish added to category', category_id: targetId } });
   } catch (err) { next(err); }
 }
 

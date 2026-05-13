@@ -27,6 +27,17 @@
     const t = translations.find(t => t.lang === primary) || translations[0];
     return t ? (t.notes || '') : '';
   }
+  function isSmEjsUnreachable(sm) {
+    if (!sm.is_available) return false;
+    for (const c of (sm.categories || [])) {
+      const cat = c.category;
+      if (!cat || !cat.is_active) continue;
+      if (!cat.parent_id) return false;
+      const parent = categories.find(p => p.id === cat.parent_id);
+      if (parent && parent.is_active) return false;
+    }
+    return true;
+  }
 %>
 
 <div class="main">
@@ -38,7 +49,6 @@
   <main class="page-body page-body--minimal">
   <div class="card table-card smb-card">
 
-    <!-- Card title row — same pattern as all other pages -->
     <div class="card__header card__header--brand">
       <h3 class="card__title"><%= t('page.set_menus.card_title') %></h3>
       <button onclick="openCreateModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.set_menus.btn_create') %></button>
@@ -62,13 +72,18 @@
           <div class="smb-panel__empty"><%= t('page.set_menus.panel_empty') %></div>
         <% } %>
         <% setMenus.forEach(sm => { %>
-          <div class="smb-item" data-sm-id="<%= sm.id %>" onclick="selectSetMenu(<%= sm.id %>)">
-            <span class="smb-item__handle">&#8801;</span>
-            <span class="smb-avail smb-avail--<%= sm.is_available ? 'on' : 'off' %>"></span>
-            <div class="smb-item__info">
+          <div class="smb-item<%= !sm.is_available ? ' smb-item--inactive' : '' %>" data-sm-id="<%= sm.id %>">
+            <div class="smb-item__info" onclick="selectSetMenu(<%= sm.id %>)">
               <span class="smb-item__name"><%= tName(sm.translations) %></span>
               <span class="smb-item__price">€<%= Number(sm.price).toFixed(2) %></span>
+              <span class="smb-dish__badge<%= isSmEjsUnreachable(sm) ? '' : ' hidden' %>">Unassigned</span>
             </div>
+            <label class="smb-avail-switch" title="Toggle availability">
+              <input type="checkbox" <%= sm.is_available ? 'checked' : '' %>
+                     onchange="toggleSmAvail(<%= sm.id %>, this.checked)">
+              <span class="smb-avail-label smb-avail-label--<%= sm.is_available ? 'on' : 'off' %>"
+                    id="smb-avail-label-<%= sm.id %>"><%= sm.is_available ? 'Live' : 'Off' %></span>
+            </label>
           </div>
         <% }) %>
       </div>
@@ -158,12 +173,8 @@
 
         <!-- Scrollable body -->
         <div class="smb-body" id="smb-body">
-          <!-- Course sections rendered by JS -->
           <div id="smb-courses"></div>
-
-          <!-- Uncategorised dishes section -->
           <div id="smb-uncat"></div>
-
         </div>
 
       </div>
@@ -180,11 +191,12 @@
 <%- include('./partials/modals/create-edit/set-menu', { langs, primary, categories }) %>
 <%- include('./partials/modals/create-edit/note', { langs }) %>
 <%- include('./partials/modals/add/add-course', { langs }) %>
-<%- include('./partials/modals/add/add-item', { langs, primary, dishes }) %>
+<%- include('./partials/modals/add/add-item', { langs, primary }) %>
 <%- include('./partials/modals/create-edit/menu-item', { langs, primary, categories, allergens, dietaryTags, catName, tagName }) %>
 
 <%- include('./partials/scripts') %>
 <script src="/admin/js/sortable.min.js"></script>
+<script src="/admin/js/builder-sortable.js"></script>
 <script>
 // ── Data ─────────────────────────────────────────────────────────────────────
 let SM_DATA    = <%- JSON.stringify(setMenus) %>;
@@ -198,6 +210,18 @@ let activeSmId = null;
 let _sortables = [];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+function isSmUnreachable(sm) {
+  if (!sm.is_available) return false;
+  for (const c of (sm.categories || [])) {
+    const cat = c.category;
+    if (!cat || !cat.is_active) continue;
+    if (!cat.parent_id) return false;
+    const parent = ALL_CATS.find(p => p.id === cat.parent_id);
+    if (parent && parent.is_active) return false;
+  }
+  return true;
+}
+
 function getName(translations) {
   if (!translations || !translations.length) return '—';
   const t = translations.find(t => t.lang === PRIMARY) || translations[0];
@@ -208,6 +232,13 @@ function getNote(translations) {
   const t = translations.find(t => t.lang === PRIMARY) || translations[0];
   return t ? (t.notes || '') : '';
 }
+
+function esc(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 // ── Mobile tab switching ──────────────────────────────────────────────────────
 function showListTab() {
   document.getElementById('smb-split').classList.remove('smb-split--detail');
@@ -236,9 +267,9 @@ function selectSetMenu(id) {
 // ── Refresh from API ──────────────────────────────────────────────────────────
 async function refreshAndRender(smId) {
   try {
-    const res  = await fetch(`/api/set-menus/${smId}`);
+    const res      = await fetch(`/api/set-menus/${smId}`);
     const { data } = await res.json();
-    const idx = SM_DATA.findIndex(s => s.id === smId);
+    const idx      = SM_DATA.findIndex(s => s.id === smId);
     if (idx !== -1) SM_DATA[idx] = data.setMenu;
     else SM_DATA.push(data.setMenu);
     renderBuilder(data.setMenu);
@@ -251,8 +282,14 @@ function updatePanelItem(sm) {
   if (!el) return;
   el.querySelector('.smb-item__name').textContent = getName(sm.translations);
   el.querySelector('.smb-item__price').textContent = `€${Number(sm.price).toFixed(2)}`;
-  const dot = el.querySelector('.smb-avail');
-  dot.className = `smb-avail smb-avail--${sm.is_available ? 'on' : 'off'}`;
+  el.classList.toggle('smb-item--inactive', !sm.is_available);
+  const badge = el.querySelector('.smb-dish__badge');
+  if (badge) badge.classList.toggle('hidden', !isSmUnreachable(sm));
+  const cb  = el.querySelector('input[type="checkbox"]');
+  const lbl = document.getElementById(`smb-avail-label-${sm.id}`);
+  if (cb)  cb.checked      = sm.is_available;
+  if (lbl) lbl.textContent = sm.is_available ? 'Live' : 'Off';
+  if (lbl) lbl.className   = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
 }
 
 // ── Builder render ────────────────────────────────────────────────────────────
@@ -260,16 +297,15 @@ function renderBuilder(sm) {
   document.getElementById('smb-empty').classList.add('hidden');
   document.getElementById('smb-content').classList.remove('hidden');
 
-  // Header
   document.getElementById('smb-name').textContent  = getName(sm.translations);
   document.getElementById('smb-price').textContent = `€${Number(sm.price).toFixed(2)}`;
+
   const chk = document.getElementById('smb-avail-chk');
   chk.checked = sm.is_available;
   const lbl = document.getElementById('smb-avail-label');
-  lbl.textContent  = sm.is_available ? 'Live' : 'Off';
-  lbl.className    = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
+  lbl.textContent = sm.is_available ? 'Live' : 'Off';
+  lbl.className   = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
 
-  // Image
   const smImg         = document.getElementById('smb-img');
   const smPlaceholder = document.getElementById('smb-img-placeholder');
   if (sm.image_url) {
@@ -282,7 +318,6 @@ function renderBuilder(sm) {
     smPlaceholder.classList.remove('hidden');
   }
 
-  // Category breadcrumbs
   const catsEl = document.getElementById('smb-cats');
   catsEl.innerHTML = (sm.categories || []).map(c => {
     const cat    = c.category;
@@ -293,16 +328,13 @@ function renderBuilder(sm) {
     return `<div class="breadcrumb-text">${esc(getName(cat.translations))}</div>`;
   }).join('');
 
-  // Course sections
-  const coursesEl = document.getElementById('smb-courses');
-  coursesEl.innerHTML = (sm.courses || []).map(smc => renderCourseSection(smc, sm.id)).join('');
+  document.getElementById('smb-courses').innerHTML =
+    (sm.courses || []).map(smc => renderCourseSection(smc, sm.id)).join('');
 
-  // Uncategorised dishes — only shown when there are no courses
-  const uncatEl = document.getElementById('smb-uncat');
   const hasCourses = (sm.courses || []).length > 0;
-  uncatEl.innerHTML = hasCourses ? '' : renderUncatSection(sm.dishes || [], sm.id);
+  document.getElementById('smb-uncat').innerHTML =
+    hasCourses ? '' : renderUncatSection(sm.dishes || [], sm.id);
 
-  // Init sortables
   initSortables(sm.id);
 }
 
@@ -311,7 +343,6 @@ function renderCourseSection(smc, smId) {
   const noteBtn = note
     ? `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('course', ${smc.id}, null)">Edit Note</button>`
     : `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('course', ${smc.id}, null)">+ Note</button>`;
-
   const dishes = (smc.dishes || []).map(d => renderDishRow(d, smId)).join('');
 
   return `
@@ -324,13 +355,9 @@ function renderCourseSection(smc, smId) {
         <div class="smb-course__actions">
           <button onclick="openSmAddItemModal(${smc.id})" class="btn btn--pill link--slide btn--sm">+ Item</button>
           ${noteBtn}
-          <button class="btn-view" title="View details">
-            <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
-            <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
-          </button>
-          <button class="btn-delete" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="Remove">
+          <button class="btn-remove" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="Remove from set menu">
             <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+              <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
             </svg>
           </button>
         </div>
@@ -342,7 +369,6 @@ function renderCourseSection(smc, smId) {
 }
 
 function renderUncatSection(dishArr, smId) {
-  // No section header — uncategorised dishes appear as plain rows
   const dishes = dishArr.map(d => renderDishRow(d, smId)).join('');
   return `<div class="smb-dish-list" data-sm-id="${smId}" data-smc-id="none" id="dish-list-none">${dishes}</div>`;
 }
@@ -360,90 +386,40 @@ function renderDishRow(smd, smId) {
         <span class="smb-dish__name">${esc(getName(smd.dish.translations))}</span>
       </div>
       ${noteBtn}
-      <button class="btn-view" title="View details">
-        <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
-        <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
-      </button>
-      <button class="btn-delete" onclick="removeDish(${smId}, ${smd.id})" title="Remove">
+      <button class="btn-remove" onclick="removeDish(${smId}, ${smd.id})" title="Remove from set menu">
         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
         </svg>
       </button>
     </div>`;
 }
 
 // ── Sortable ──────────────────────────────────────────────────────────────────
-const SCROLL_OPTS = { scroll: true, scrollSensitivity: 60, scrollSpeed: 10 };
-
-Sortable.create(document.getElementById('smb-list'), {
-  ...SCROLL_OPTS,
-  handle:     '.smb-item__handle',
-  animation:  180,
-  ghostClass: 'bl-ghost',
-  dragClass:  'bl-dragging',
-  onEnd() {
-    const items = [...document.querySelectorAll('#smb-list > .smb-item')].map((el, i) => ({
-      id:            parseInt(el.dataset.smId),
-      display_order: i,
-    }));
-    api('PATCH', '/api/set-menus/reorder', { items })
-      .catch(err => showToast(err.message, 'error'));
-  },
-});
-
 function initSortables(smId) {
   _sortables.forEach(s => { try { s.destroy(); } catch(e) {} });
-  _sortables = [];
+  _sortables = initBuilderSortables({
+    sectionContainer: document.getElementById('smb-courses'),
+    sectionDataAttr:  'smcId',
+    itemGroupName:    `dishes-${smId}`,
+    scrollEl:         document.getElementById('smb-body'),
+    onSectionReorder(items) {
+      api('PATCH', `/api/set-menus/${smId}/courses/reorder`, { items })
+        .catch(err => showToast(err.message, 'error'));
+    },
+    onItemEnd(evt) {
+      const fromId  = evt.from.dataset.smcId;
+      const toId    = evt.to.dataset.smcId;
+      const entryId = parseInt(evt.item.dataset.entryId);
 
-  const coursesEl = document.getElementById('smb-courses');
-  if (coursesEl) {
-    _sortables.push(Sortable.create(coursesEl, {
-      ...SCROLL_OPTS,
-      draggable:  '.smb-course',
-      handle:     '.bl-handle--sm',
-      animation:  180,
-      ghostClass: 'bl-ghost',
-      dragClass:  'bl-dragging',
-      onMove(evt) {
-        // Prevent dropping inside another course's dish list
-        return evt.to === coursesEl;
-      },
-      onEnd() {
-        const items = [...coursesEl.querySelectorAll(':scope > .smb-course')].map((el, i) => ({
-          id:            parseInt(el.dataset.smcId),
-          display_order: i,
-        }));
-        api('PATCH', `/api/set-menus/${smId}/courses/reorder`, { items })
-          .catch(err => showToast(err.message, 'error'));
-      },
-    }));
-  }
-
-  document.querySelectorAll('.smb-dish-list').forEach(listEl => {
-    _sortables.push(Sortable.create(listEl, {
-      ...SCROLL_OPTS,
-      group:      { name: `dishes-${smId}`, pull: true, put: true },
-      handle:     '.bl-handle--dish',
-      animation:  180,
-      ghostClass: 'bl-ghost',
-      dragClass:  'bl-dragging',
-      onEnd(evt) {
-        const fromId  = evt.from.dataset.smcId;
-        const toId    = evt.to.dataset.smcId;
-        const entryId = parseInt(evt.item.dataset.entryId);
-
-        if (fromId !== toId) {
-          const newSmcId = (toId === 'none') ? null : parseInt(toId);
-          api('PUT', `/api/set-menus/${smId}/dishes/${entryId}`, {
-            set_menu_course_id: newSmcId,
-          })
+      if (fromId !== toId) {
+        const newSmcId = (toId === 'none') ? null : parseInt(toId);
+        api('PUT', `/api/set-menus/${smId}/dishes/${entryId}`, { set_menu_course_id: newSmcId })
           .then(() => reorderDishList(evt.to, smId))
           .catch(err => { showToast(err.message, 'error'); refreshAndRender(smId); });
-        } else {
-          reorderDishList(evt.to, smId);
-        }
-      },
-    }));
+      } else {
+        reorderDishList(evt.to, smId);
+      }
+    },
   });
 }
 
@@ -457,22 +433,46 @@ function reorderDishList(listEl, smId) {
     .catch(err => showToast(err.message, 'error'));
 }
 
-// ── Availability toggle ───────────────────────────────────────────────────────
+// ── Availability toggles ──────────────────────────────────────────────────────
+// Sidebar toggle — works for any set menu regardless of which is active
+async function toggleSmAvail(smId, checked) {
+  try {
+    await api('PUT', `/api/set-menus/${smId}`, { is_available: checked });
+    const lbl = document.getElementById(`smb-avail-label-${smId}`);
+    if (lbl) {
+      lbl.textContent = checked ? 'Live' : 'Off';
+      lbl.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
+    }
+    const sm = SM_DATA.find(s => s.id === smId);
+    if (sm) {
+      sm.is_available = checked;
+      const itemEl = document.querySelector(`.smb-item[data-sm-id="${smId}"]`);
+      if (itemEl) {
+        itemEl.classList.toggle('smb-item--inactive', !checked);
+        const badge = itemEl.querySelector('.smb-dish__badge');
+        if (badge) badge.classList.toggle('hidden', !isSmUnreachable(sm));
+      }
+      // Keep builder header in sync if this is the currently selected set menu
+      if (smId === activeSmId) {
+        document.getElementById('smb-avail-chk').checked = checked;
+        const headerLbl = document.getElementById('smb-avail-label');
+        headerLbl.textContent = checked ? 'Live' : 'Off';
+        headerLbl.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
+      }
+    }
+    showToast(checked ? 'Set menu is now live' : 'Set menu hidden');
+  } catch (err) {
+    const cb = document.querySelector(`.smb-item[data-sm-id="${smId}"] input[type="checkbox"]`);
+    if (cb) cb.checked = !checked;
+    showToast(err.message, 'error');
+  }
+}
+
+// Builder header toggle — delegates to the sidebar function
 async function toggleAvailability() {
   if (!activeSmId) return;
   const chk = document.getElementById('smb-avail-chk');
-  try {
-    await api('PUT', `/api/set-menus/${activeSmId}`, { is_available: chk.checked });
-    const lbl = document.getElementById('smb-avail-label');
-    lbl.textContent = chk.checked ? 'Live' : 'Off';
-    lbl.className   = `smb-avail-label smb-avail-label--${chk.checked ? 'on' : 'off'}`;
-    const sm = SM_DATA.find(s => s.id === activeSmId);
-    if (sm) { sm.is_available = chk.checked; updatePanelItem(sm); }
-    showToast(chk.checked ? 'Set menu is now live' : 'Set menu hidden');
-  } catch (err) {
-    chk.checked = !chk.checked; // revert
-    showToast(err.message, 'error');
-  }
+  await toggleSmAvail(activeSmId, chk.checked);
 }
 
 // ── Add item ──────────────────────────────────────────────────────────────────
@@ -480,12 +480,27 @@ function openSmAddItemModal(smcId) {
   if (!activeSmId) return;
   const sm        = SM_DATA.find(s => s.id === activeSmId);
   const hasCourses = (sm?.courses || []).length > 0;
+
+  const items = ALL_DISHES.map(d => ({
+    id:   d.id,
+    name: getName(d.translations),
+    meta: `€${Number(d.price).toFixed(2)}`,
+    type: 'dish',
+  }));
+
+  // Determine section config based on call context
+  const sections  = (smcId === null && hasCourses)
+    ? sm.courses.map(smc => ({ id: smc.id, name: getName(smc.course.translations) }))
+    : null;
+  const sectionId = smcId !== null ? smcId : undefined;
+
   openAddItemModal({
     showNotes: true,
-    smcId:     (smcId !== null && smcId !== undefined) ? smcId : undefined,
-    courses:   (!smcId && hasCourses) ? sm.courses : null,
-    onSubmit:  async (dishId, { smcId, notes }) => {
-      const body = { dish_id: dishId, set_menu_course_id: smcId, ...notes };
+    items,
+    sections,
+    sectionId,
+    onSubmit: async (itemId, itemType, { sectionId: courseId, notes }) => {
+      const body = { dish_id: itemId, set_menu_course_id: courseId, ...notes };
       await api('POST', `/api/set-menus/${activeSmId}/dishes`, body);
       showToast('Item added');
       await refreshAndRender(activeSmId);
@@ -505,18 +520,17 @@ async function removeDish(smId, entryId) {
 async function addCourseToSm(courseId, notes) {
   if (!activeSmId) return;
   try {
-    const sm = SM_DATA.find(s => s.id === activeSmId);
+    const sm            = SM_DATA.find(s => s.id === activeSmId);
     const isFirstCourse = (sm?.courses || []).length === 0;
     const uncatItems    = sm?.dishes || [];
 
     const { data } = await api('POST', `/api/set-menus/${activeSmId}/courses`, { course_id: courseId });
-    const newSmcId = data.setMenuCourse.id;
+    const newSmcId  = data.setMenuCourse.id;
 
     if (notes && Object.keys(notes).length) {
       await api('PATCH', `/api/set-menus/${activeSmId}/courses/${newSmcId}`, notes);
     }
 
-    // Auto-migrate uncategorised items into the first course added
     if (isFirstCourse && uncatItems.length > 0) {
       await Promise.all(uncatItems.map(d =>
         api('PUT', `/api/set-menus/${activeSmId}/dishes/${d.id}`, { set_menu_course_id: newSmcId })
@@ -542,8 +556,8 @@ async function removeCourse(smId, smcId, name) {
 
 // ── Course library management ─────────────────────────────────────────────────
 function toggleLibrary() {
-  const lib  = document.getElementById('smb-library');
   const body = document.getElementById('smb-library-body');
+  const lib  = document.getElementById('smb-library');
   const open = !body.classList.contains('hidden');
   body.classList.toggle('hidden', open);
   lib.classList.toggle('smb-library--open', !open);

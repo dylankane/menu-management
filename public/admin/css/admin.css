@@ -990,6 +990,24 @@ a.sidebar__section-title {
   transform: none;
 }
 
+.btn-remove {
+  color: var(--danger);
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s;
+}
+
+.btn-remove svg.icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.btn-remove:hover {
+  transform: scale(1.2);
+}
+
 /* ── Pill buttons ───────────────────────────────────────────────────────────── */
 
 /* Base shape — all pill variants build on this */
@@ -1338,6 +1356,10 @@ a.sidebar__section-title {
 
 .data-table tbody tr:last-child {
   border-bottom: none;
+}
+
+.item-row--inactive > td {
+  background: rgb(255 237 223 / 50%);
 }
 
 .data-table td {
@@ -2844,6 +2866,10 @@ svg.icon--empty-state {
 .add-to-cat-item__meta {
   color: var(--text-muted);
 }
+.add-to-cat-item__type {
+  color: var(--accent);
+  margin-left: 0.25rem;
+}
 
 /* Tags */
 .two-col {
@@ -3067,12 +3093,16 @@ svg.icon--empty-state {
 .smb-item:hover {
   background: var(--bg-base); 
 }
-.smb-item--active { 
+.smb-item--active {
   background: var(--bg-surface);
 }
 
 .smb-item--active .smb-item__name {
-  font-weight: var(--font-weight-semibold); 
+  font-weight: var(--font-weight-semibold);
+}
+
+.smb-item--inactive {
+  background: rgb(255 237 223 / 60%);
 }
 
 .smb-item__info {
@@ -3502,6 +3532,10 @@ svg.icon--empty-state {
 
 /* Course section — structural wrapper only, no card chrome */
 
+.smb-course--inactive {
+  background: rgb(255 237 223 / 60%);
+  border-radius: 0.5rem;
+}
 
 .smb-course__head:hover,
 .smb-dish:hover {
@@ -3545,7 +3579,8 @@ svg.icon--empty-state {
 }
 .smb-course__note:hover { color: var(--text-secondary); }
 
-.smb-course__actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
+.smb-course__actions,
+.smb-dish__actions { display: flex; gap: 0.25rem; flex-shrink: 0; }
 
 .smb-note-add {
   font-size: var(--font-size-xs);
@@ -3585,6 +3620,48 @@ svg.icon--empty-state {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.smb-dish__meta {
+  font-size: var(--font-size-xs);
+  color: var(--accent);
+  display: block;
+  margin-top: 0.0625rem;
+}
+
+.smb-dish--inactive {
+  background: rgb(255 237 223 / 60%);
+  border-radius: 0.375rem;
+}
+.smb-dish__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-size-xs);
+  color: #b45309;
+  white-space: nowrap;
+  margin-left: 1rem;
+}
+.smb-dish__badge::before {
+  content: '';
+  display: block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: #d97706;
+  flex-shrink: 0;
+}
+.smb-dish__badge--off {
+  color: var(--text-muted);
+}
+.smb-dish__badge--off::before {
+  background: var(--text-muted);
+}
+.col-toggle__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .smb-dish__note {

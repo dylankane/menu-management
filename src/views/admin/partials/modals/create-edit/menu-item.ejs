@@ -108,18 +108,22 @@
         <div class="form-group">
           <label class="form-label">Categories</label>
           <div class="check-list check-list--single">
-            <% categories.filter(c => !c.parent_id && !c.is_protected).forEach(cat => { %>
+            <% categories.filter(c => !c.parent_id && c.slug !== 'set-menus').forEach(cat => { %>
+              <% const visibleChildren = (cat.children || []).filter(c => c.slug !== 'set-menus'); %>
               <div class="cat-group">
                 <label class="form-check cat-group__parent">
-                  <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="item-category-cb" />
+                  <% if (visibleChildren.length > 0) { %>
+                    <input type="checkbox" class="item-category-cb item-cat-parent-cb" data-cat-id="<%= cat.id %>" />
+                  <% } else { %>
+                    <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="item-category-cb item-cat-leaf-cb" />
+                  <% } %>
                   <span class="form-check__label"><%= catName(cat) %></span>
                 </label>
-                <% const visibleChildren = (cat.children || []).filter(c => !c.is_protected); %>
                 <% if (visibleChildren.length > 0) { %>
                   <div class="cat-group__children">
                     <% visibleChildren.forEach(child => { %>
                       <label class="form-check">
-                        <input type="checkbox" name="category_ids" value="<%= child.id %>" class="item-category-cb" />
+                        <input type="checkbox" name="category_ids" value="<%= child.id %>" class="item-category-cb item-cat-child-cb" data-parent-id="<%= cat.id %>" />
                         <span class="form-check__label"><%= catName(child) %></span>
                       </label>
                     <% }) %>
@@ -216,9 +220,21 @@
     updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off');
     updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
     if (presetCategoryId) {
-      document.querySelectorAll('.item-category-cb').forEach(cb => {
-        cb.checked = String(cb.value) === String(presetCategoryId);
-      });
+      const presetId = String(presetCategoryId);
+      const childCb  = document.querySelector(`.item-cat-child-cb[value="${presetId}"]`);
+      if (childCb) {
+        childCb.checked = true;
+        const parentCb = document.querySelector(`.item-cat-parent-cb[data-cat-id="${childCb.dataset.parentId}"]`);
+        if (parentCb) parentCb.checked = true;
+      } else {
+        const leafCb = document.querySelector(`.item-cat-leaf-cb[value="${presetId}"]`);
+        if (leafCb) {
+          leafCb.checked = true;
+        } else {
+          const parentCb = document.querySelector(`.item-cat-parent-cb[data-cat-id="${presetId}"]`);
+          if (parentCb) { parentCb.checked = true; parentCb.dispatchEvent(new Event('change')); }
+        }
+      }
     }
     const container = document.querySelector('#itemModal [data-lang-container]');
     resetLangTabs(container, PRIMARY);
@@ -261,7 +277,10 @@
     const allergenIds = item.allergens.map(a => String(a.allergen_id));
     const dietaryIds  = item.dietary.map(d => String(d.dietary_id));
 
-    document.querySelectorAll('.item-category-cb').forEach(cb => { cb.checked = catIds.includes(cb.value); });
+    document.querySelectorAll('.item-cat-leaf-cb, .item-cat-child-cb').forEach(cb => { cb.checked = catIds.includes(cb.value); });
+    document.querySelectorAll('.item-cat-parent-cb[data-cat-id]').forEach(parentCb => {
+      parentCb.checked = [...document.querySelectorAll(`.item-cat-child-cb[data-parent-id="${parentCb.dataset.catId}"]`)].some(c => c.checked);
+    });
     document.querySelectorAll('.item-allergen-cb').forEach(cb => { cb.checked = allergenIds.includes(cb.value); });
     document.querySelectorAll('.item-dietary-cb').forEach(cb => { cb.checked = dietaryIds.includes(cb.value); });
 
@@ -319,4 +338,23 @@
       reloadAfter(100);
     } catch (err) { showToast(err.message, 'error'); }
   }
+
+  (function initCategoryCheckboxes() {
+    document.querySelectorAll('.item-cat-parent-cb[data-cat-id]').forEach(parentCb => {
+      const children = [...document.querySelectorAll(`.item-cat-child-cb[data-parent-id="${parentCb.dataset.catId}"]`)];
+      if (!children.length) return;
+      parentCb.addEventListener('change', function() {
+        if (this.checked) {
+          if (!children.some(c => c.checked)) children[0].checked = true;
+        } else {
+          children.forEach(c => { c.checked = false; });
+        }
+      });
+      children.forEach(child => {
+        child.addEventListener('change', function() {
+          parentCb.checked = children.some(c => c.checked);
+        });
+      });
+    });
+  })();
 </script>

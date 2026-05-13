@@ -57,6 +57,7 @@ router.patch('/:id/dishes/reorder',          controller.reorderDishes);
 router.patch('/:id/move-category',           controller.moveCategory);
 router.put('/:id/dishes/:entryId',           controller.updateDish);
 router.delete('/:id/dishes/:entryId',        controller.removeDish);
+router.post('/:id/add-to-category',          controller.addToCategory);
 router.delete('/:id/categories/:catId',      controller.removeFromCategory);
 
 module.exports = router;

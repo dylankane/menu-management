@@ -27,6 +27,18 @@
     if (!cat.parent_id) return null;
     return categories.find(c => c.id === cat.parent_id) || null;
   }
+  // True when item is live but every category path to a customer is inactive
+  function isEjsUnreachable(item) {
+    if (!item.is_available) return false;
+    for (const c of (item.categories || [])) {
+      const cat = c.category;
+      if (!cat || !cat.is_active) continue;
+      if (!cat.parent_id) return false;
+      const parent = categories.find(p => p.id === cat.parent_id);
+      if (parent && parent.is_active) return false;
+    }
+    return true;
+  }
 %>
 
 <div class="main">
@@ -84,7 +96,7 @@
         <table class="data-table" id="itemsTable">
           <tbody id="itemsBody">
             <% items.forEach(item => { %>
-              <tr class="item-row"
+              <tr class="item-row<%= !item.is_available ? ' item-row--inactive' : '' %>"
                   data-id="<%= item.id %>"
                   data-name="<%= itemName(item).toLowerCase() %>"
                   data-categories="<%= item.categories.map(c => c.category_id).join(',') %>"
@@ -163,12 +175,15 @@
                   <% } %>
                 </td>
                 <td class="col-toggle col-align-center">
-                  <label class="smb-avail-switch" onclick="toggleAvailability(<%= item.id %>, <%= item.is_available %>)">
-                    <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
-                    <span class="smb-avail-label <%= item.is_available ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
-                      <%= item.is_available ? t('common.live') : t('common.off') %>
-                    </span>
-                  </label>
+                  <div class="col-toggle__stack">
+                    <label class="smb-avail-switch" onclick="toggleAvailability(<%= item.id %>, <%= item.is_available %>)">
+                      <input type="checkbox" <%= item.is_available ? 'checked' : '' %> readonly tabindex="-1" />
+                      <span class="smb-avail-label <%= item.is_available ? 'smb-avail-label--on' : 'smb-avail-label--off' %>">
+                        <%= item.is_available ? t('common.live') : t('common.off') %>
+                      </span>
+                    </label>
+                    <% if (isEjsUnreachable(item)) { %><span class="smb-dish__badge">Unassigned</span><% } %>
+                  </div>
                 </td>
                 <td class="col-details col-align-center">
                   <button class="btn-view" onclick="openViewModal(<%= item.id %>)" title="View details">
@@ -259,6 +274,19 @@
     if (e.key === 'Escape') closeLightbox();
   });
 
+  function isRowUnreachable(item) {
+    if (!item.is_available) return false;
+    const catData = typeof CATEGORIES_DATA !== 'undefined' ? CATEGORIES_DATA : [];
+    for (const c of (item.categories || [])) {
+      const cat = c.category;
+      if (!cat || !cat.is_active) continue;
+      if (!cat.parent_id) return false;
+      const parent = catData.find(p => p.id === cat.parent_id);
+      if (parent && parent.is_active) return false;
+    }
+    return true;
+  }
+
   function updateTableRow(item) {
     const row = document.querySelector(`.item-row[data-id="${item.id}"]`);
     if (!row) return;
@@ -270,6 +298,7 @@
     row.dataset.name       = name.toLowerCase();
     row.dataset.categories = (item.categories || []).map(c => c.category_id).join(',');
     row.dataset.available  = item.is_available;
+    row.classList.toggle('item-row--inactive', !item.is_available);
 
     // Thumbnail
     const thumbCell = row.querySelector('.col-thumb');
@@ -356,16 +385,20 @@
       priceCell.innerHTML = html;
     }
 
-    // Availability toggle
+    // Availability toggle + Unassigned badge
     const toggleCell = row.querySelector('.col-toggle');
     if (toggleCell) {
+      const unreachable = isRowUnreachable(item);
       toggleCell.innerHTML =
-        `<label class="smb-avail-switch" onclick="toggleAvailability(${item.id}, ${item.is_available})">` +
-          `<input type="checkbox" ${item.is_available ? 'checked' : ''} readonly tabindex="-1" />` +
-          `<span class="smb-avail-label smb-avail-label--${item.is_available ? 'on' : 'off'}">` +
-            `${item.is_available ? 'Live' : 'Off'}` +
-          `</span>` +
-        `</label>`;
+        `<div class="col-toggle__stack">` +
+          `<label class="smb-avail-switch" onclick="toggleAvailability(${item.id}, ${item.is_available})">` +
+            `<input type="checkbox" ${item.is_available ? 'checked' : ''} readonly tabindex="-1" />` +
+            `<span class="smb-avail-label smb-avail-label--${item.is_available ? 'on' : 'off'}">` +
+              `${item.is_available ? 'Live' : 'Off'}` +
+            `</span>` +
+          `</label>` +
+          (unreachable ? `<span class="smb-dish__badge">Unassigned</span>` : '') +
+        `</div>`;
     }
 
     filterItems();

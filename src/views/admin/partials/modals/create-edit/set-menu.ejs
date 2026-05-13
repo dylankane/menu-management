@@ -109,7 +109,7 @@
           <label class="form-label">Categories</label>
           <div class="check-list check-list--single">
             <% if (smLockedCat) { %>
-              <input type="hidden" name="category_ids" value="<%= smLockedCat.id %>" />
+              <% const smLockedSubs = (smLockedCat.children || []).slice().sort((a,b) => (a.display_order||0) - (b.display_order||0)); %>
               <div class="cat-group">
                 <label class="form-check cat-group__parent" style="cursor:default;">
                   <input type="checkbox" checked disabled style="pointer-events:none;" />
@@ -118,20 +118,38 @@
                     <span class="badge badge--gray" style="margin-left:0.3rem;font-size:0.6rem;color:var(--text-secondary);">always</span>
                   </span>
                 </label>
+                <% if (smLockedSubs.length > 0) { %>
+                  <div class="cat-group__children">
+                    <% smLockedSubs.forEach((sub, i) => { %>
+                      <label class="form-check">
+                        <input type="checkbox" name="category_ids" value="<%= sub.id %>"
+                               class="sm-locked-sub-cb" <%= i === 0 ? 'checked' : '' %> />
+                        <span class="form-check__label"><%= smCatName(sub) %></span>
+                      </label>
+                    <% }) %>
+                  </div>
+                <% } else { %>
+                  <input type="hidden" name="category_ids" value="<%= smLockedCat.id %>" />
+                <% } %>
               </div>
             <% } %>
-            <% categories.filter(c => !c.parent_id && !c.is_protected).forEach(cat => { %>
+            <% categories.filter(c => !c.parent_id && c.slug !== 'set-menus').forEach(cat => { %>
+              <% const visibleSmChildren = (cat.children || []).filter(c => c.slug !== 'set-menus'); %>
               <div class="cat-group">
                 <label class="form-check cat-group__parent">
-                  <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="sm-cat-cb" />
+                  <% if (visibleSmChildren.length > 0) { %>
+                    <input type="checkbox" class="sm-cat-cb sm-cat-parent-cb" data-cat-id="<%= cat.id %>" />
+                  <% } else { %>
+                    <input type="checkbox" name="category_ids" value="<%= cat.id %>" class="sm-cat-cb sm-cat-leaf-cb" />
+                  <% } %>
                   <span class="form-check__label"><%= smCatName(cat) %></span>
                 </label>
-                <% const visibleChildren = (cat.children || []).filter(c => !c.is_protected); %>
-                <% if (visibleChildren.length > 0) { %>
+                <% if (visibleSmChildren.length > 0) { %>
                   <div class="cat-group__children">
-                    <% visibleChildren.forEach(child => { %>
+                    <% visibleSmChildren.forEach(child => { %>
                       <label class="form-check">
-                        <input type="checkbox" name="category_ids" value="<%= child.id %>" class="sm-cat-cb" />
+                        <input type="checkbox" name="category_ids" value="<%= child.id %>"
+                               class="sm-cat-cb sm-cat-child-cb" data-parent-id="<%= cat.id %>" />
                         <span class="form-check__label"><%= smCatName(child) %></span>
                       </label>
                     <% }) %>
@@ -191,7 +209,9 @@
     const lbl = document.getElementById('smDiscountLabel');
     lbl.textContent = 'Off';
     lbl.className   = 'smb-avail-label smb-avail-label--off';
-    document.querySelectorAll('.sm-cat-cb').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.sm-cat-leaf-cb, .sm-cat-child-cb').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.sm-cat-parent-cb').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.sm-locked-sub-cb').forEach((cb, i) => { cb.checked = i === 0; });
     resetLangTabs(document.querySelector('#setMenuModal [data-lang-container]'), PRIMARY);
     openModal('setMenuModal');
   }
@@ -233,8 +253,11 @@
     }
 
     const catIds = new Set((sm.categories || []).map(c => String(c.category_id)));
-    document.querySelectorAll('.sm-cat-cb').forEach(cb => {
+    document.querySelectorAll('.sm-cat-leaf-cb, .sm-cat-child-cb, .sm-locked-sub-cb').forEach(cb => {
       cb.checked = catIds.has(cb.value);
+    });
+    document.querySelectorAll('.sm-cat-parent-cb[data-cat-id]').forEach(parentCb => {
+      parentCb.checked = [...document.querySelectorAll(`.sm-cat-child-cb[data-parent-id="${parentCb.dataset.catId}"]`)].some(c => c.checked);
     });
 
     resetLangTabs(document.querySelector('#setMenuModal [data-lang-container]'), PRIMARY);
@@ -263,6 +286,25 @@
       }
     } catch (err) { showToast(err.message, 'error'); }
   }
+
+  (function initSmCategoryCheckboxes() {
+    document.querySelectorAll('.sm-cat-parent-cb[data-cat-id]').forEach(parentCb => {
+      const children = [...document.querySelectorAll(`.sm-cat-child-cb[data-parent-id="${parentCb.dataset.catId}"]`)];
+      if (!children.length) return;
+      parentCb.addEventListener('change', function() {
+        if (this.checked) {
+          if (!children.some(c => c.checked)) children[0].checked = true;
+        } else {
+          children.forEach(c => { c.checked = false; });
+        }
+      });
+      children.forEach(child => {
+        child.addEventListener('change', function() {
+          parentCb.checked = children.some(c => c.checked);
+        });
+      });
+    });
+  })();
 
   async function confirmDeleteSm() {
     if (!activeSmId) return;

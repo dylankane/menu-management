@@ -282,6 +282,12 @@ async function addDish(req, res, next) {
 
     const courseId = set_menu_course_id ? parseInt(set_menu_course_id) : null;
 
+    // Guard: if set menu has courses, a course must be specified
+    const courseCount = await prisma.setMenuCourse.count({ where: { set_menu_id } });
+    if (courseCount > 0 && !courseId) {
+      throw new AppError('This set menu has courses — please assign the item to a course', 400);
+    }
+
     let order = display_order !== undefined ? parseInt(display_order) : 0;
     if (display_order === undefined) {
       const last = await prisma.setMenuDish.findFirst({
@@ -447,6 +453,50 @@ async function moveCategory(req, res, next) {
   }
 }
 
+// POST /api/set-menus/:id/add-to-category
+// Appends a set menu to a category without replacing its existing categories.
+async function addToCategory(req, res, next) {
+  try {
+    const id          = parseInt(req.params.id);
+    const category_id = parseInt(req.body.category_id);
+
+    if (!category_id) throw new AppError('category_id is required', 400);
+
+    const [sm, category] = await Promise.all([
+      prisma.setMenu.findUnique({ where: { id } }),
+      prisma.category.findUnique({
+        where:   { id: category_id },
+        include: { children: { orderBy: { display_order: 'asc' }, select: { id: true } } },
+      }),
+    ]);
+    if (!sm)       throw new AppError('Set menu not found', 404);
+    if (!category) throw new AppError('Category not found', 404);
+
+    // If the category has subs, place in the first sub instead
+    const targetId = category.children.length > 0 ? category.children[0].id : category_id;
+
+    const maxOrder = await prisma.setMenuCategory.aggregate({
+      where: { category_id: targetId },
+      _max:  { display_order: true },
+    });
+
+    await prisma.setMenuCategory.upsert({
+      where:  { set_menu_id_category_id: { set_menu_id: id, category_id: targetId } },
+      update: {},
+      create: {
+        set_menu_id:   id,
+        category_id:   targetId,
+        display_order: (maxOrder._max.display_order ?? -1) + 1,
+      },
+    });
+
+    res.json({ data: { message: 'Set menu added to category', category_id: targetId } });
+  } catch (err) {
+    if (err.code === 'P2002') return next(new AppError('That set menu is already in this category', 409));
+    next(err);
+  }
+}
+
 // PATCH /api/set-menus/reorder
 async function reorder(req, res, next) {
   try {
@@ -486,5 +536,5 @@ module.exports = {
   list, getOne, create, update, remove,
   addCourse, updateCourse, removeCourse, reorderCourses,
   addDish, updateDish, removeDish,
-  reorder, reorderDishes, reorderInCategory, moveCategory, removeFromCategory,
+  reorder, reorderDishes, reorderInCategory, moveCategory, removeFromCategory, addToCategory,
 };
