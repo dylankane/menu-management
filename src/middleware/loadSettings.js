@@ -2,8 +2,17 @@
 // Fetches the singleton RestaurantSettings row and attaches it to res.locals.
 // Also attaches UI language helpers (t, uiStrings, uiLang) for admin page translation.
 
-const prisma                      = require('../config/database');
-const { createT, getLocale, resolveUiLang } = require('../helpers/i18n');
+const prisma                                    = require('../config/database');
+const { createT, getLocale, resolveUiLang, SUPPORTED } = require('../helpers/i18n');
+
+function detectBrowserLang(req) {
+  const header = req.headers['accept-language'] || '';
+  const codes  = header.split(',').map(s => s.split(';')[0].trim().toLowerCase().substring(0, 2));
+  for (const code of codes) {
+    if (SUPPORTED.includes(code)) return code;
+  }
+  return null;
+}
 
 const DEFAULTS = {
   id:                1,
@@ -28,7 +37,7 @@ module.exports = async function loadSettings(req, res, next) {
       gourmetClub:   account?.has_gourmet_club    ?? false,
     };
 
-    const uiLang = resolveUiLang(req.cookies?.ui_lang);
+    const uiLang = resolveUiLang(req.cookies?.ui_lang || detectBrowserLang(req));
     res.locals.uiLang    = uiLang;
     res.locals.t         = createT(uiLang);
     res.locals.uiStrings = getLocale(uiLang);

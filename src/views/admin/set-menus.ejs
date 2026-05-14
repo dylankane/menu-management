@@ -7,7 +7,7 @@
 
 <%
   const langs   = settings.enabled_languages || ['en', 'es'];
-  const primary = settings.primary_language  || uiLang || 'en';
+  const primary = uiLang;
 
   function tagName(translations) {
     const t = (translations || []).find(t => t.lang === uiLang)

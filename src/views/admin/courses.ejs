@@ -7,6 +7,7 @@
 
 <%
   const langs   = settings.enabled_languages || ['en', 'es'];
+  const primary = uiLang;
 
   function courseName(course) {
     const tr_ = (course.translations || []).find(t_ => t_.lang === uiLang)
