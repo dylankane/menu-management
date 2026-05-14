@@ -2695,6 +2695,7 @@ svg.icon--empty-state {
 /* Drag handles */
 .bl-handle {
   cursor: grab;
+  touch-action: none;
   color: var(--text-muted);
   font-size: var(--font-size-xl);
   line-height: 1;

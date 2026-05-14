@@ -30,6 +30,7 @@
   // True when item is live but every category path to a customer is inactive
   function isEjsUnreachable(item) {
     if (!item.is_available) return false;
+    if ((item.set_menu_dishes || []).length > 0) return false;
     for (const c of (item.categories || [])) {
       const cat = c.category;
       if (!cat || !cat.is_active) continue;
@@ -276,6 +277,7 @@
 
   function isRowUnreachable(item) {
     if (!item.is_available) return false;
+    if ((item.set_menu_dishes || []).length > 0) return false;
     const catData = typeof CATEGORIES_DATA !== 'undefined' ? CATEGORIES_DATA : [];
     for (const c of (item.categories || [])) {
       const cat = c.category;

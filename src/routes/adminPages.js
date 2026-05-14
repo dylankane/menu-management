@@ -281,9 +281,10 @@ router.get('/menu-items', async (req, res, next) => {
       prisma.menuItem.findMany({
         include: {
           translations: true,
-          categories: { include: { category: { include: { translations: true } } } },
-          allergens:   { include: { allergen: { include: { translations: true } } } },
-          dietary:     { include: { dietary_tag: { include: { translations: true } } } },
+          categories:      { include: { category: { include: { translations: true } } } },
+          allergens:       { include: { allergen: { include: { translations: true } } } },
+          dietary:         { include: { dietary_tag: { include: { translations: true } } } },
+          set_menu_dishes: { select: { id: true } },
         },
         orderBy: { created_at: 'desc' },
       }),
