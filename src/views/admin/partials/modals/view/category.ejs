@@ -30,15 +30,15 @@
         <!-- Info column -->
         <div class="view-hero__meta">
           <div class="view-info-row">
-            <span class="form-label">Status</span>
+            <span class="form-label"><%= t('modal.label_status') %></span>
             <div id="catViewStatus" class="view-hero__badges"></div>
           </div>
           <div class="view-info-row">
-            <span class="form-label">Type</span>
+            <span class="form-label"><%= t('modal.label_type') %></span>
             <span id="catViewType" class="view-section__value"></span>
           </div>
           <div id="catViewParentRow" class="view-info-row hidden">
-            <span class="form-label">Parent</span>
+            <span class="form-label"><%= t('modal.label_parent') %></span>
             <span id="catViewParent" class="view-section__value"></span>
           </div>
         </div>
@@ -46,13 +46,13 @@
 
       <!-- Subcategories — top-level only -->
       <div id="catViewChildrenSection" class="view-section hidden">
-        <span class="form-label">Subcategories</span>
+        <span class="form-label"><%= t('modal.label_subcategories') %></span>
         <div id="catViewChildren"></div>
       </div>
 
       <!-- Internal notes -->
       <div class="view-info-row">
-        <span class="form-label">Notes <span class="hint">(internal only)</span></span>
+        <span class="form-label"><%= t('modal.label_internal_notes') %> <span class="hint"><%= t('modal.hint_internal_only') %></span></span>
         <p id="catViewNotes" class="view-section__value view-section__value--muted"></p>
       </div>
 

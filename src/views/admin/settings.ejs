@@ -29,27 +29,27 @@
   const MODULES = [
     {
       key:      'menu',
-      name:     'Menu Management',
-      desc:     'Build and manage your full menu — dishes, set menus, categories, allergens and dietary tags.',
+      name:     t('page.settings.module_menu_name'),
+      desc:     t('page.settings.module_menu_desc'),
       included: true,
     },
     {
       key:      'languages',
-      name:     `Languages — up to ${maxLanguages}`,
-      desc:     `You currently have a max of ${maxLanguages} languages. If you need more, contact us to see about an increase.`,
+      name:     t('page.settings.module_languages_name').replace('{max}', maxLanguages),
+      desc:     t('page.settings.module_languages_desc').replace('{max}', maxLanguages),
       included: true,
       enquire:  true,
     },
     {
       key:      'restaurantHub',
-      name:     'Restaurant Hub',
-      desc:     'Manage your wider web presence — opening hours, contact info, announcements and restaurant identity.',
+      name:     t('page.settings.module_hub_name'),
+      desc:     t('page.settings.module_hub_desc'),
       included: features.restaurantHub,
     },
     {
       key:      'gourmetClub',
-      name:     'Gourmet Club',
-      desc:     'A loyalty and membership platform for your most valued guests — members, offers and exclusive content.',
+      name:     t('page.settings.module_gc_name'),
+      desc:     t('page.settings.module_gc_desc'),
       included: features.gourmetClub,
     },
   ];
@@ -195,7 +195,7 @@
     <div class="modal__body">
       <p id="removeLangBody1"></p>
       <p class="text-danger">
-        <strong><%= uiLang === 'es' ? 'Advertencia' : 'Warning' %>:</strong>
+        <strong><%= t('common.warning') %>:</strong>
         <%= t('page.settings.modal_remove_lang_warning') %>
       </p>
       <p><%= t('page.settings.modal_remove_lang_confirm') %></p>

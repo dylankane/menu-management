@@ -31,7 +31,7 @@
         <div class="view-hero__meta">
 
           <div class="view-info-row">
-            <span class="form-label">Price</span>
+            <span class="form-label"><%= t('common.price') %></span>
             <div class="view-hero__price-row">
               <span id="itemViewPrice" class="item-price"></span>
               <span id="itemViewDiscount" class="item-discount hidden"></span>
@@ -40,12 +40,12 @@
           </div>
 
           <div class="view-info-row">
-            <span class="form-label">Status</span>
+            <span class="form-label"><%= t('modal.label_status') %></span>
             <div id="itemViewBadges" class="view-hero__badges"></div>
           </div>
 
           <div class="view-info-row">
-            <span class="form-label">Notes <span class="hint">(internal only)</span></span>
+            <span class="form-label"><%= t('modal.label_internal_notes') %> <span class="hint"><%= t('modal.hint_internal_only') %></span></span>
             <p id="itemViewNotes" class="view-section__value view-section__value--muted"></p>
           </div>
 
@@ -54,18 +54,18 @@
 
       <!-- Categories -->
       <div class="view-section">
-        <span class="form-label">Categories</span>
+        <span class="form-label"><%= t('modal.label_categories') %></span>
         <div id="itemViewCategories" class="category-breadcrumbs"></div>
       </div>
 
       <!-- Allergens & Dietary — two columns -->
       <div class="form-grid-2">
         <div class="view-section">
-          <span class="form-label">Allergens</span>
+          <span class="form-label"><%= t('modal.label_allergens') %></span>
           <div id="itemViewAllergens"></div>
         </div>
         <div class="view-section">
-          <span class="form-label">Dietary</span>
+          <span class="form-label"><%= t('modal.label_dietary') %></span>
           <div id="itemViewDietary"></div>
         </div>
       </div>
@@ -154,7 +154,7 @@
     badgesEl.innerHTML =
       `<span class="smb-avail smb-avail--${item.is_available ? 'on' : 'off'}"></span>` +
       `<span class="smb-avail-label">${item.is_available ? tUI('common.live') : tUI('common.off')}</span>` +
-      (item.is_special ? `&nbsp;&nbsp;<span class="tag">Chef's Special</span>` : '');
+      (item.is_special ? `&nbsp;&nbsp;<span class="tag">${tUI('modal.label_special')}</span>` : '');
 
     // Notes — always visible, dash when empty
     document.getElementById('itemViewNotes').textContent = item.notes || '—';

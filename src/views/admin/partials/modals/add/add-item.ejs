@@ -13,7 +13,7 @@
 
       <!-- Section / course dropdown — shown when config.sections is set -->
       <div id="addItemSectionWrap" class="form-group hidden">
-        <label class="form-label">Add to <span class="required">*</span></label>
+        <label class="form-label"><%= t('modal.label_add_to') %> <span class="required">*</span></label>
         <select id="addItemSectionSelect" class="form-select"></select>
       </div>
 
@@ -31,7 +31,7 @@
 
       <!-- Per-language notes — shown after an item is selected when showNotes is true -->
       <div id="addItemNoteWrap" class="modal-note-wrap hidden">
-        <h4 class="modal-section-title">Add A Note</h4>
+        <h4 class="modal-section-title"><%= t('modal.section_add_note') %></h4>
         <div data-lang-container>
           <div class="lang-tabs" id="addItemNoteTabs">
             <% langs.forEach((lang, i) => { %>
@@ -45,10 +45,10 @@
             <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
               <div class="form-group">
                 <label class="form-label form-label--xs">
-                  Note (<%= lang.toUpperCase() %>) <span class="hint">— optional</span>
+                  <%= t('modal.label_note_lang').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_optional') %></span>
                 </label>
                 <input type="text" id="addItemNote_<%= lang %>" class="form-input form-input--sm"
-                  placeholder="e.g. Contains nuts, Ask server for info…" />
+                  placeholder="<%= t('modal.placeholder_note_item') %>" />
               </div>
             </div>
           <% }) %>

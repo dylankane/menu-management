@@ -29,15 +29,15 @@
           <% langs.forEach((lang, i) => { %>
             <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
               <div class="form-group">
-                <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+                <label class="form-label"><%= t('modal.label_name').replace('{lang}', lang.toUpperCase()) %></label>
                 <input type="text" name="name_<%= lang %>" id="smName_<%= lang %>" class="form-input" data-capitalize="title" />
               </div>
               <div class="form-group">
-                <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
+                <label class="form-label"><%= t('modal.label_description').replace('{lang}', lang.toUpperCase()) %></label>
                 <textarea name="description_<%= lang %>" id="smDesc_<%= lang %>" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
               </div>
               <div class="form-group">
-                <label class="form-label">Public Notes (<%= lang.toUpperCase() %>) <span class="hint">(shown to customers)</span></label>
+                <label class="form-label"><%= t('modal.label_public_notes').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_shown_to_customers') %></span></label>
                 <textarea name="public_notes_<%= lang %>" id="smPublicNotes_<%= lang %>" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
               </div>
             </div>
@@ -46,11 +46,11 @@
 
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label">Price (€) <span class="required">*</span></label>
+            <label class="form-label"><%= t('modal.label_price') %> <span class="required">*</span></label>
             <input type="number" id="smPrice" name="price" required step="0.01" min="0" class="form-input" />
           </div>
           <div class="form-group">
-            <label class="form-label">Discount</label>
+            <label class="form-label"><%= t('modal.label_discount') %></label>
             <div class="discount-group">
               <label class="smb-avail-switch smb-avail-switch--brand">
                 <input type="checkbox" id="smHasDiscount" name="has_discount" onchange="toggleSmDiscount()">
@@ -58,14 +58,14 @@
               </label>
               <div id="smDiscountFields" class="discount-fields hidden">
                 <div class="form-group">
-                  <label class="form-label">Type</label>
+                  <label class="form-label"><%= t('modal.label_type') %></label>
                   <select id="smDiscountType" name="discount_type" class="form-select">
-                    <option value="percent">Percentage (%)</option>
-                    <option value="flat">Flat amount (€)</option>
+                    <option value="percent"><%= t('modal.label_discount_percent') %></option>
+                    <option value="flat"><%= t('modal.label_discount_flat') %></option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label">Value</label>
+                  <label class="form-label"><%= t('modal.label_value') %></label>
                   <input type="number" id="smDiscountValue" name="discount_value" step="0.01" min="0" class="form-input" />
                 </div>
               </div>
@@ -75,7 +75,7 @@
 
         <div class="image-upload-row">
           <div class="image-upload-input">
-            <label class="form-label">Image</label>
+            <label class="form-label"><%= t('modal.label_image') %></label>
             <input type="file" id="smImage" name="image" accept="image/*" class="form-file" />
           </div>
           <div id="smCurrentImageWrap" class="image-preview hidden">
@@ -88,7 +88,7 @@
 
         <div class="modal-toggles">
           <div class="modal-toggle-item">
-            <span class="modal-toggle-label">Availability</span>
+            <span class="modal-toggle-label"><%= t('modal.label_availability') %></span>
             <label class="smb-avail-switch">
               <input type="checkbox" id="smIsAvailable" name="is_available" checked
                      onchange="updateModalToggle('smIsAvailable', 'smAvailLabel', tUI('common.live'), tUI('common.off'))">
@@ -96,7 +96,7 @@
             </label>
           </div>
           <div class="modal-toggle-item">
-            <span class="modal-toggle-label">Chef's Special</span>
+            <span class="modal-toggle-label"><%= t('modal.label_special') %></span>
             <label class="smb-avail-switch smb-avail-switch--brand">
               <input type="checkbox" id="smIsSpecial" name="is_special"
                      onchange="updateModalToggle('smIsSpecial', 'smSpecialLabel', tUI('common.special'), tUI('common.off'))">
@@ -106,7 +106,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Categories</label>
+          <label class="form-label"><%= t('modal.label_categories') %></label>
           <div class="check-list check-list--single">
             <% if (smLockedCat) { %>
               <% const smLockedSubs = (smLockedCat.children || []).slice().sort((a,b) => (a.display_order||0) - (b.display_order||0)); %>
@@ -115,7 +115,7 @@
                   <input type="checkbox" checked disabled style="pointer-events:none;" />
                   <span class="form-check__label" style="color:var(--text-muted);">
                     <%= smCatName(smLockedCat) %>
-                    <span class="badge badge--gray" style="margin-left:0.3rem;font-size:0.6rem;color:var(--text-secondary);">always</span>
+                    <span class="badge badge--gray" style="margin-left:0.3rem;font-size:0.6rem;color:var(--text-secondary);"><%= t('modal.label_always_badge') %></span>
                   </span>
                 </label>
                 <% if (smLockedSubs.length > 0) { %>

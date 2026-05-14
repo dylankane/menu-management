@@ -16,7 +16,7 @@
         <button type="button" class="btn btn--pill link--slide" onclick="swapToCourseModal()"><%= t('modal.btn_create_course') %></button>
       </div>
       <div id="addCourseNoteWrap" class="modal-note-wrap hidden">
-        <h4 class="modal-section-title">Add A Note</h4>
+        <h4 class="modal-section-title"><%= t('modal.section_add_note') %></h4>
         <div data-lang-container>
           <div class="lang-tabs" id="addCourseNoteTabs">
             <% langs.forEach((lang, i) => { %>
@@ -30,7 +30,7 @@
             <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
               <div class="form-group">
                 <label class="form-label form-label--xs">
-                  Note for this course (<%= lang.toUpperCase() %>) <span class="hint">— optional</span>
+                  <%= t('modal.label_note_course_lang').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_optional') %></span>
                 </label>
                 <input type="text" id="addCourseNote_<%= lang %>" class="form-input form-input--sm"
                   placeholder="<%= t('modal.placeholder_note') %>" />

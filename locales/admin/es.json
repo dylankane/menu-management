@@ -83,7 +83,9 @@
     "consented": "Con consentimiento",
     "close": "Cerrar",
     "loading": "Cargando...",
-    "optional": "Opcional"
+    "optional": "Opcional",
+    "price": "Precio",
+    "warning": "Advertencia"
   },
   "toast": {
     "account_saved": "Cuenta guardada",
@@ -281,7 +283,8 @@
       "empty_no_dishes": "Sin platos aún",
       "col_allergens": "Alérgenos:",
       "col_dietary": "Dieta:",
-      "col_chefs_special": "Especial del Chef"
+      "col_chefs_special": "Especial del Chef",
+      "filter_count": "{count} platos"
     },
     "set_menus": {
       "title": "Menús Degustación",
@@ -408,7 +411,15 @@
       "manage_static_translations": "Gestionar traducciones de texto estático",
       "feature_included": "Incluido",
       "feature_addon": "Complemento",
-      "get_in_touch": "Contáctanos si estás interesado en esta función."
+      "get_in_touch": "Contáctanos si estás interesado en esta función.",
+      "module_menu_name": "Gestión del Menú",
+      "module_menu_desc": "Crea y gestiona tu menú completo — platos, menús degustación, categorías, alérgenos y etiquetas dietéticas.",
+      "module_languages_name": "Idiomas — hasta {max}",
+      "module_languages_desc": "Tienes un máximo de {max} idiomas. Si necesitas más, contáctanos.",
+      "module_hub_name": "Hub del Restaurante",
+      "module_hub_desc": "Gestiona tu presencia web — horarios, información de contacto, anuncios e identidad del restaurante.",
+      "module_gc_name": "Club Gourmet",
+      "module_gc_desc": "Plataforma de fidelización y membresía para tus clientes más habituales — miembros, ofertas y contenido exclusivo."
     },
     "profile": {
       "title": "Perfiles",
@@ -502,6 +513,9 @@
         "paper_title": "Formulario Físico de Registro",
         "paper_desc": "Sube el anverso y/o reverso de tu formulario físico de registro para que los gestores puedan descargar e imprimir copias.",
         "paper_none": "Sin formulario subido aún",
+        "label_front": "Anverso",
+        "label_back": "Reverso",
+        "toast_form_uploaded": "Formulario {side} subido",
         "btn_upload_front": "Subir Anverso",
         "btn_upload_back": "Subir Reverso",
         "btn_download_front": "Descargar Anverso",
@@ -589,6 +603,7 @@
     "label_internal_notes": "Notas Internas",
     "confirm_delete": "¿Estás seguro de que quieres eliminar esto?",
     "confirm_delete_named": "¿Eliminar \"{name}\"?",
+    "confirm_remove_date_override": "¿Eliminar esta anulación de fecha?",
     "confirm_remove_item": "¿Quitar este plato de la categoría?",
     "confirm_remove_set_menu": "¿Quitar este menú de la categoría?",
     "confirm_remove_course": "¿Quitar \"{name}\" del menú degustación? Los platos de este servicio quedarán sin categoría.",
@@ -637,6 +652,28 @@
     "btn_save_item": "Guardar plato",
     "all_courses_added": "Todos los servicios ya están en este menú",
     "failed_load_visits": "Error al cargar las visitas.",
-    "placeholder_note": "p. ej. Elige un plato…"
+    "placeholder_note": "p. ej. Elige un plato…",
+    "hint_shown_to_customers": "(visible para clientes)",
+    "hint_admin_only": "(solo admins — no visible para clientes)",
+    "hint_internal_only": "(solo interno)",
+    "hint_optional": "— opcional",
+    "label_type": "Tipo",
+    "label_value": "Valor",
+    "label_availability": "Disponibilidad",
+    "label_discount_percent": "Porcentaje (%)",
+    "label_discount_flat": "Importe fijo (€)",
+    "label_parent_category": "Categoría principal",
+    "label_active": "Activo (visible en el menú)",
+    "label_status": "Estado",
+    "label_parent": "Principal",
+    "label_subcategories": "Subcategorías",
+    "label_add_to": "Añadir a",
+    "label_note_lang": "Nota ({lang})",
+    "label_note_course_lang": "Nota para este servicio ({lang})",
+    "section_add_note": "Añadir nota",
+    "label_always_badge": "siempre",
+    "placeholder_note_item": "p. ej. Contiene frutos secos, Pregunta al camarero…",
+    "label_dietary_tags": "Etiquetas dietéticas",
+    "option_none_top_level": "— Ninguna (nivel superior) —"
   }
 }

@@ -255,7 +255,7 @@
       if (show) visible++;
     });
 
-    document.getElementById('itemCount').textContent = `${visible} dish${visible !== 1 ? 'es' : ''}`;
+    document.getElementById('itemCount').textContent = tUI('page.menu_items.filter_count').replace('{count}', visible);
   }
 
   filterItems();
@@ -337,7 +337,7 @@
           inner += `<div class="breadcrumb-text">${esc(catName)}</div>`;
         }
       });
-      if (item.is_special) { hasContent = true; inner += `<div class="breadcrumb-text">Chef's Special</div>`; }
+      if (item.is_special) { hasContent = true; inner += `<div class="breadcrumb-text">${tUI('modal.label_special')}</div>`; }
       if (!hasContent) inner = `<span class="cell-empty">—</span>`;
       catCell.innerHTML = `<div class="category-breadcrumbs">${inner}</div>`;
     }
@@ -360,9 +360,9 @@
       const hasDietary   = item.dietary   && item.dietary.length   > 0;
       tagsCell.innerHTML =
         `<div class="tag-status">` +
-          `<div class="tag-status__item"><span class="tag-status__label">Allergens:</span>` +
+          `<div class="tag-status__item"><span class="tag-status__label">${tUI('modal.label_allergens')}:</span>` +
             `<span class="tag-status__dot tag-status__dot--${hasAllergens ? 'success' : 'danger'}"></span></div>` +
-          `<div class="tag-status__item"><span class="tag-status__label">Dietary:</span>` +
+          `<div class="tag-status__item"><span class="tag-status__label">${tUI('modal.label_dietary')}:</span>` +
             `<span class="tag-status__dot tag-status__dot--${hasDietary ? 'success' : 'danger'}"></span></div>` +
         `</div>`;
     }

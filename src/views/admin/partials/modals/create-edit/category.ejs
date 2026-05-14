@@ -22,15 +22,15 @@
         <% langs.forEach((lang, i) => { %>
           <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
             <div class="form-group">
-              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+              <label class="form-label"><%= t('modal.label_name').replace('{lang}', lang.toUpperCase()) %></label>
               <input type="text" id="addCatName_<%= lang %>" class="form-input" data-capitalize="title" />
             </div>
             <div class="form-group">
-              <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
+              <label class="form-label"><%= t('modal.label_description').replace('{lang}', lang.toUpperCase()) %></label>
               <input type="text" id="addCatDesc_<%= lang %>" class="form-input" placeholder="<%= t('common.optional') %>" data-capitalize="sentence" />
             </div>
             <div class="form-group">
-              <label class="form-label">Public Notes (<%= lang.toUpperCase() %>) <span class="hint">(shown to customers)</span></label>
+              <label class="form-label"><%= t('modal.label_public_notes').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_shown_to_customers') %></span></label>
               <textarea id="addCatPublicNotes_<%= lang %>" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
             </div>
           </div>
@@ -38,7 +38,7 @@
       </div>
       <div class="image-upload-row">
         <div class="image-upload-input">
-          <label class="form-label">Image</label>
+          <label class="form-label"><%= t('modal.label_image') %></label>
           <input type="file" id="addCatImage" accept="image/*" class="form-file" />
         </div>
         <div id="addCatImagePreview" class="image-preview hidden">
@@ -49,7 +49,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Internal Notes <span class="hint">(admin only — not shown to customers)</span></label>
+        <label class="form-label"><%= t('modal.label_internal_notes') %> <span class="hint"><%= t('modal.hint_admin_only') %></span></label>
         <textarea id="addCatNotes" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
       </div>
     </div>
@@ -81,15 +81,15 @@
         <% langs.forEach((lang, i) => { %>
           <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
             <div class="form-group">
-              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+              <label class="form-label"><%= t('modal.label_name').replace('{lang}', lang.toUpperCase()) %></label>
               <input type="text" id="editCatName_<%= lang %>" class="form-input" data-capitalize="title" />
             </div>
             <div class="form-group">
-              <label class="form-label">Description (<%= lang.toUpperCase() %>)</label>
+              <label class="form-label"><%= t('modal.label_description').replace('{lang}', lang.toUpperCase()) %></label>
               <input type="text" id="editCatDesc_<%= lang %>" class="form-input" data-capitalize="sentence" />
             </div>
             <div class="form-group">
-              <label class="form-label">Public Notes (<%= lang.toUpperCase() %>) <span class="hint">(shown to customers)</span></label>
+              <label class="form-label"><%= t('modal.label_public_notes').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_shown_to_customers') %></span></label>
               <textarea id="editCatPublicNotes_<%= lang %>" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
             </div>
           </div>
@@ -97,7 +97,7 @@
       </div>
       <div class="image-upload-row">
         <div class="image-upload-input">
-          <label class="form-label">Image</label>
+          <label class="form-label"><%= t('modal.label_image') %></label>
           <input type="file" id="editCatImage" accept="image/*" class="form-file" />
         </div>
         <div id="editCatImagePreview" class="image-preview hidden">
@@ -108,13 +108,13 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Internal Notes <span class="hint">(admin only — not shown to customers)</span></label>
+        <label class="form-label"><%= t('modal.label_internal_notes') %> <span class="hint"><%= t('modal.hint_admin_only') %></span></label>
         <textarea id="editCatNotes" rows="2" class="form-textarea" data-capitalize="sentence"></textarea>
       </div>
       <div class="form-group">
-        <label class="form-label">Parent Category</label>
+        <label class="form-label"><%= t('modal.label_parent_category') %></label>
         <select id="editCatParentId" class="form-select">
-          <option value="">— None (top-level) —</option>
+          <option value=""><%= t('modal.option_none_top_level') %></option>
           <% categories.filter(c => !c.parent_id).forEach(c => { %>
             <option value="<%= c.id %>"><%= (c.translations || []).find(t => t.lang === primary)?.name || c.slug %></option>
           <% }) %>
@@ -122,7 +122,7 @@
       </div>
       <label class="form-check">
         <input type="checkbox" id="editCatIsActive" />
-        <span class="form-check__label">Active (visible on menu)</span>
+        <span class="form-check__label"><%= t('modal.label_active') %></span>
       </label>
     </div>
     <div class="modal__footer">

@@ -248,7 +248,7 @@
   }
 
   async function deleteUser(id, name) {
-    confirmDelete('Delete user "' + name + '"?', async function () {
+    confirmDelete(tUI('modal.confirm_delete_named', { name }), async function () {
       try {
         await api('DELETE', '/api/users/' + id);
         showToast(tr('user_deleted'));

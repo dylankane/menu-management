@@ -29,7 +29,7 @@
         <div class="view-hero__meta">
 
           <div class="view-info-row">
-            <span class="form-label">Price</span>
+            <span class="form-label"><%= t('common.price') %></span>
             <div class="view-hero__price-row">
               <span id="smViewPrice" class="item-price"></span>
               <span id="smViewDiscount" class="item-discount hidden"></span>
@@ -38,12 +38,12 @@
           </div>
 
           <div class="view-info-row">
-            <span class="form-label">Status</span>
+            <span class="form-label"><%= t('modal.label_status') %></span>
             <div id="smViewBadges" class="view-hero__badges"></div>
           </div>
 
           <div class="view-info-row">
-            <span class="form-label">Notes <span class="hint">(internal only)</span></span>
+            <span class="form-label"><%= t('modal.label_internal_notes') %> <span class="hint"><%= t('modal.hint_internal_only') %></span></span>
             <p id="smViewNotes" class="view-section__value view-section__value--muted"></p>
           </div>
 
@@ -52,7 +52,7 @@
 
       <!-- Categories -->
       <div class="view-section">
-        <span class="form-label">Categories</span>
+        <span class="form-label"><%= t('modal.label_categories') %></span>
         <div id="smViewCategories" class="category-breadcrumbs"></div>
       </div>
 
@@ -154,7 +154,7 @@
     document.getElementById('smViewBadges').innerHTML =
       `<span class="smb-avail smb-avail--${sm.is_available ? 'on' : 'off'}"></span>` +
       `<span class="smb-avail-label">${sm.is_available ? tUI('common.live') : tUI('common.off')}</span>` +
-      (sm.is_special ? `&nbsp;&nbsp;<span class="tag">Chef's Special</span>` : '');
+      (sm.is_special ? `&nbsp;&nbsp;<span class="tag">${tUI('modal.label_special')}</span>` : '');
 
     // Internal notes
     document.getElementById('smViewNotes').textContent = sm.notes || '—';

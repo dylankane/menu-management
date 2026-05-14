@@ -673,7 +673,7 @@
   }
 
   async function deleteOverride(id) {
-    confirmDelete('Remove this date override?', async () => {
+    confirmDelete(tUI('modal.confirm_remove_date_override'), async () => {
       try {
         await api('DELETE', `/api/restaurant/opening-hours/overrides/${id}`);
         showToast(tr('override_deleted'));

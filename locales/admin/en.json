@@ -83,7 +83,9 @@
     "consented": "Consented",
     "close": "Close",
     "loading": "Loading...",
-    "optional": "Optional"
+    "optional": "Optional",
+    "price": "Price",
+    "warning": "Warning"
   },
   "toast": {
     "account_saved": "Account saved",
@@ -281,7 +283,8 @@
       "empty_no_dishes": "No dishes yet",
       "col_allergens": "Allergens:",
       "col_dietary": "Dietary:",
-      "col_chefs_special": "Chef's Special"
+      "col_chefs_special": "Chef's Special",
+      "filter_count": "{count} dishes"
     },
     "set_menus": {
       "title": "Set Menus",
@@ -408,7 +411,15 @@
       "manage_static_translations": "Manage static text translations",
       "feature_included": "Included",
       "feature_addon": "Add-on",
-      "get_in_touch": "Get in touch if you are interested in this feature."
+      "get_in_touch": "Get in touch if you are interested in this feature.",
+      "module_menu_name": "Menu Management",
+      "module_menu_desc": "Build and manage your full menu — dishes, set menus, categories, allergens and dietary tags.",
+      "module_languages_name": "Languages — up to {max}",
+      "module_languages_desc": "You currently have a max of {max} languages. If you need more, contact us to see about an increase.",
+      "module_hub_name": "Restaurant Hub",
+      "module_hub_desc": "Manage your wider web presence — opening hours, contact info, announcements and restaurant identity.",
+      "module_gc_name": "Gourmet Club",
+      "module_gc_desc": "A loyalty and membership platform for your most valued guests — members, offers and exclusive content."
     },
     "profile": {
       "title": "Profiles",
@@ -502,6 +513,9 @@
         "paper_title": "Paper Sign-up Form",
         "paper_desc": "Upload the front and/or back of your physical sign-up form so managers can download and reprint copies.",
         "paper_none": "No form uploaded yet",
+        "label_front": "Front",
+        "label_back": "Back",
+        "toast_form_uploaded": "Form {side} uploaded",
         "btn_upload_front": "Upload Front",
         "btn_upload_back": "Upload Back",
         "btn_download_front": "Download Front",
@@ -589,6 +603,7 @@
     "label_internal_notes": "Internal Notes",
     "confirm_delete": "Are you sure you want to delete this?",
     "confirm_delete_named": "Delete \"{name}\"?",
+    "confirm_remove_date_override": "Remove this date override?",
     "confirm_remove_item": "Remove this item from the category?",
     "confirm_remove_set_menu": "Remove this set menu from the category?",
     "confirm_remove_course": "Remove \"{name}\" from this set menu? Items in this course will become uncategorised.",
@@ -637,6 +652,28 @@
     "btn_save_item": "Save Item",
     "all_courses_added": "All courses already added to this set menu",
     "failed_load_visits": "Failed to load visits.",
-    "placeholder_note": "e.g. Please choose one dish…"
+    "placeholder_note": "e.g. Please choose one dish…",
+    "hint_shown_to_customers": "(shown to customers)",
+    "hint_admin_only": "(admin only — not shown to customers)",
+    "hint_internal_only": "(internal only)",
+    "hint_optional": "— optional",
+    "label_type": "Type",
+    "label_value": "Value",
+    "label_availability": "Availability",
+    "label_discount_percent": "Percentage (%)",
+    "label_discount_flat": "Flat amount (€)",
+    "label_parent_category": "Parent Category",
+    "label_active": "Active (visible on menu)",
+    "label_status": "Status",
+    "label_parent": "Parent",
+    "label_subcategories": "Subcategories",
+    "label_add_to": "Add to",
+    "label_note_lang": "Note ({lang})",
+    "label_note_course_lang": "Note for this course ({lang})",
+    "section_add_note": "Add A Note",
+    "label_always_badge": "always",
+    "placeholder_note_item": "e.g. Contains nuts, Ask server for info…",
+    "label_dietary_tags": "Dietary Tags",
+    "option_none_top_level": "— None (top-level) —"
   }
 }

@@ -50,18 +50,11 @@
               <div class="gc-birthday">
                 <select id="gcBirthdayMonth" class="form-select">
                   <option value=""><%= t('page.gc.members.label_month') %></option>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
+                  <% for (let _m = 1; _m <= 12; _m++) {
+                     const _mn = new Intl.DateTimeFormat(uiLang, { month: 'long' }).format(new Date(2000, _m - 1, 1));
+                     const _mnCap = _mn.charAt(0).toUpperCase() + _mn.slice(1); %>
+                    <option value="<%= _m %>"><%= _mnCap %></option>
+                  <% } %>
                 </select>
                 <select id="gcBirthdayDay" class="form-select">
                   <option value=""><%= t('page.gc.members.label_day') %></option>
@@ -105,13 +98,13 @@
           <% if (hasFront) { %>
             <div class="gc-form-thumb">
               <img src="<%= gcPaperFormFrontUrl %>" alt="Front of sign-up form" class="gc-form-thumb__img" onclick="openPaperLightbox('<%= gcPaperFormFrontUrl %>')" />
-              <span class="gc-form-thumb__label">Front</span>
+              <span class="gc-form-thumb__label"><%= t('page.gc.members.label_front') %></span>
             </div>
           <% } %>
           <% if (hasBack) { %>
             <div class="gc-form-thumb">
               <img src="<%= gcPaperFormBackUrl %>" alt="Back of sign-up form" class="gc-form-thumb__img" onclick="openPaperLightbox('<%= gcPaperFormBackUrl %>')" />
-              <span class="gc-form-thumb__label">Back</span>
+              <span class="gc-form-thumb__label"><%= t('page.gc.members.label_back') %></span>
             </div>
           <% } %>
         </div>
@@ -380,18 +373,11 @@
         <div class="gc-birthday">
           <select id="gcEditBirthdayMonth" class="form-select">
             <option value=""><%= t('page.gc.members.label_month') %></option>
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
+            <% for (let _m = 1; _m <= 12; _m++) {
+               const _mn = new Intl.DateTimeFormat(uiLang, { month: 'long' }).format(new Date(2000, _m - 1, 1));
+               const _mnCap = _mn.charAt(0).toUpperCase() + _mn.slice(1); %>
+              <option value="<%= _m %>"><%= _mnCap %></option>
+            <% } %>
           </select>
           <select id="gcEditBirthdayDay" class="form-select">
             <option value=""><%= t('page.gc.members.label_day') %></option>
@@ -722,7 +708,7 @@
     try {
       const res = await fetch(`/api/gourmet-club/paper-form/${side}`, { method: 'POST', body: fd });
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Upload failed'); }
-      showToast(`Form ${side} uploaded`);
+      showToast(tUI('page.gc.members.toast_form_uploaded').replace('{side}', tUI('page.gc.members.label_' + side)));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }

@@ -20,7 +20,7 @@
         <% langs.forEach((lang, i) => { %>
           <div class="lang-panel <%= i === 0 ? 'lang-panel--active' : '' %>" data-lang="<%= lang %>">
             <div class="form-group">
-              <label class="form-label">Name (<%= lang.toUpperCase() %>)</label>
+              <label class="form-label"><%= t('modal.label_name').replace('{lang}', lang.toUpperCase()) %></label>
               <input type="text" id="courseName_<%= lang %>" class="form-input" />
             </div>
           </div>
