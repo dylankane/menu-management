@@ -9,12 +9,12 @@ const path   = require('path');
 const prisma = require('../config/database');
 
 const TEMPLATES_DIR  = path.join(__dirname, '../views/customer');
-const DEFAULTS_FILE  = path.join(__dirname, '../../locales/customer/en.json');
 const MT_PATTERN     = /\bmt\(\s*['"]([^'"]+)['"]\s*[,)]/g;
 
-function loadDefaults() {
+function loadDefaults(lang) {
+  const file = path.join(__dirname, `../../locales/customer/${lang}.json`);
   try {
-    return JSON.parse(fs.readFileSync(DEFAULTS_FILE, 'utf8'));
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
     return {};
   }
@@ -52,8 +52,6 @@ async function syncStaticTranslations() {
   const discoveredKeys = [...walkDir(TEMPLATES_DIR)];
   if (discoveredKeys.length === 0) return;
 
-  const defaults = loadDefaults();
-
   let enabledLangs;
   try {
     const settings = await prisma.restaurantSettings.findFirst({
@@ -64,6 +62,9 @@ async function syncStaticTranslations() {
   } catch {
     enabledLangs = ['en', 'es'];
   }
+
+  const defaults = {};
+  for (const lang of enabledLangs) defaults[lang] = loadDefaults(lang);
 
   // Fetch all existing rows
   const existing = await prisma.staticTranslation.findMany({
@@ -77,7 +78,7 @@ async function syncStaticTranslations() {
   for (const key of discoveredKeys) {
     for (const lang of enabledLangs) {
       const compositeKey  = `${key}::${lang}`;
-      const defaultVal    = lang === 'en' ? (defaults[key] || '') : '';
+      const defaultVal    = (defaults[lang] || {})[key] || '';
       const existingValue = existingMap.get(compositeKey);
 
       if (existingValue === undefined) {
