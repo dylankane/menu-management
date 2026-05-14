@@ -130,16 +130,16 @@
             <h3 class="smb-header__name" id="builder-name">—</h3>
             <span class="smb-header__count" id="builder-count"></span>
             <div id="builder-langs" class="tag-list smb-header__langs"></div>
-            <label class="smb-avail-switch" title="Toggle availability">
+            <label class="smb-avail-switch" title="<%= t('common.tooltip_toggle_avail') %>">
               <input type="checkbox" id="builder-avail-chk" onchange="toggleAvailability()">
-              <span class="smb-avail-label" id="builder-avail-label">Live</span>
+              <span class="smb-avail-label" id="builder-avail-label"><%= t('common.live') %></span>
             </label>
             <div class="smb-header__actions">
-              <button class="btn-view" onclick="openCatViewModal(activeCatId)" title="View details">
+              <button class="btn-view" onclick="openCatViewModal(activeCatId)" title="<%= t('common.tooltip_view') %>">
                 <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
                 <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
               </button>
-              <button class="btn-delete" id="builder-delete-btn" onclick="confirmDeleteCat()" title="Delete">
+              <button class="btn-delete" id="builder-delete-btn" onclick="confirmDeleteCat()" title="<%= t('common.tooltip_delete') %>">
                 <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="15" y1="9" x2="9" y2="15"/>
@@ -157,7 +157,7 @@
             <div class="category-breadcrumbs smb-header__cats" id="builder-breadcrumb"></div>
             <button class="btn btn--pill link--slide" onclick="openAddSubModal(activeCatId, activeCatName)" id="builder-add-sub-btn"><%= t('page.builder.btn_add_sub') %></button>
             <button class="btn btn--pill link--slide" id="builder-add-item-btn" onclick="openAddToCatModal(activeCatId, activeCatName)"><%= t('page.builder.btn_add_item') %></button>
-            <a href="/admin/set-menus" class="btn btn--pill link--slide hidden" id="builder-manage-sm-btn">Manage Set Menus</a>
+            <a href="/admin/set-menus" class="btn btn--pill link--slide hidden" id="builder-manage-sm-btn"><%= t('page.builder.btn_manage_set_menus') %></a>
           </div>
         </div>
 
@@ -301,7 +301,8 @@ function renderBuilder(cat) {
 
   const parent           = cat.parent_id ? CATS_DATA.find(c => c.id === cat.parent_id) : null;
   const isSetMenuContext = cat.slug === 'set-menus' || parent?.slug === 'set-menus';
-  const itemLabel        = isSetMenuContext ? 'set menu' : 'item';
+  const itemLabel        = isSetMenuContext ? tUI('page.builder.set_menu_singular') : tUI('page.builder.item_singular');
+  const itemsLabel       = isSetMenuContext ? tUI('page.builder.set_menu_label') : tUI('page.builder.items_label');
   const totalItems = (() => {
     const countFor = c => isSetMenuContext
       ? (c._count?.set_menu_categories  || 0)
@@ -317,17 +318,17 @@ function renderBuilder(cat) {
   if (!cat.parent_id && cat.children && cat.children.length > 0) {
     const subsCount = cat.children.length;
     document.getElementById('builder-count').textContent =
-      `${subsCount} sub${subsCount !== 1 ? 's' : ''} · ${totalItems} ${itemLabel}${totalItems !== 1 ? 's' : ''}`;
+      `${subsCount} ${tUI('page.builder.subs_label')} · ${totalItems} ${totalItems !== 1 ? itemsLabel : itemLabel}`;
   } else {
     document.getElementById('builder-count').textContent =
-      `${totalItems} ${itemLabel}${totalItems !== 1 ? 's' : ''}`;
+      `${totalItems} ${totalItems !== 1 ? itemsLabel : itemLabel}`;
   }
 
   // Availability toggle
   const chk = document.getElementById('builder-avail-chk');
   chk.checked = cat.is_active;
   const lbl = document.getElementById('builder-avail-label');
-  lbl.textContent = cat.is_active ? 'Live' : 'Off';
+  lbl.textContent = cat.is_active ? tUI('common.live') : tUI('common.off');
   lbl.className   = `smb-avail-label smb-avail-label--${cat.is_active ? 'on' : 'off'}`;
 
   // Breadcrumb
@@ -386,11 +387,11 @@ function renderBuilder(cat) {
     const isSub = !!cat.parent_id;
     bodyEl.innerHTML = `
       <div class="smb-body-empty">
-        <p class="smb-body-empty__text">${isSub ? 'No items in this subcategory yet.' : 'No items in this category yet.'}</p>
+        <p class="smb-body-empty__text">${isSub ? tUI('page.builder.empty_no_items_sub') : tUI('page.builder.empty_no_items_cat')}</p>
         <div class="smb-body-empty__actions">
-          <button onclick="openAddToCatModal(activeCatId, activeCatName)" class="btn btn--pill btn--outline-brand btn--sm">+ Add Item</button>
-          ${isSetMenuContext ? `<a href="/admin/set-menus" class="btn btn--pill btn--outline-brand btn--sm">Manage Set Menus</a>` : ''}
-          ${!isSub ? `<button onclick="openAddSubModal(activeCatId, activeCatName)" class="btn btn--pill btn--outline-brand btn--sm">+ Add Subcategory</button>` : ''}
+          <button onclick="openAddToCatModal(activeCatId, activeCatName)" class="btn btn--pill btn--outline-brand btn--sm">${tUI('page.builder.btn_add_to_sub')}</button>
+          ${isSetMenuContext ? `<a href="/admin/set-menus" class="btn btn--pill btn--outline-brand btn--sm">${tUI('page.builder.btn_manage_set_menus')}</a>` : ''}
+          ${!isSub ? `<button onclick="openAddSubModal(activeCatId, activeCatName)" class="btn btn--pill btn--outline-brand btn--sm">${tUI('page.builder.btn_add_sub')}</button>` : ''}
         </div>
       </div>`;
   }
@@ -404,30 +405,31 @@ function renderSubcatSection(sub) {
   const itemCount    = isSetMenuSub
     ? (sub.set_menu_categories?.length || 0)
     : (sub.menu_item_categories?.length || 0) + (sub.set_menu_categories?.length || 0);
-  const subItemLabel = isSetMenuSub ? 'set menu' : 'item';
+  const subItemLabel  = isSetMenuSub ? tUI('page.builder.set_menu_singular') : tUI('page.builder.item_singular');
+  const subItemsLabel = isSetMenuSub ? tUI('page.builder.set_menu_label') : tUI('page.builder.items_label');
   const dishes       = (sub.menu_item_categories || []).map(mic => renderDishRow(mic, sub.id)).join('');
   const setMenus     = (sub.set_menu_categories  || []).map(smc => renderSetMenuRow(smc, sub.id)).join('');
 
   return `
     <div class="smb-course${sub.is_active ? '' : ' smb-course--inactive'}" data-sub-id="${sub.id}">
       <div class="smb-course__head">
-        <span class="bl-handle bl-handle--sm" title="Drag to reorder">&#8801;</span>
+        <span class="bl-handle bl-handle--sm" title="${tUI('common.tooltip_drag_reorder')}">&#8801;</span>
         <div class="smb-course__meta">
           <span class="smb-course__name">${esc(getName(sub.translations))}</span>
-          <span class="smb-course__count">${itemCount} ${subItemLabel}${itemCount !== 1 ? 's' : ''}</span>
+          <span class="smb-course__count">${itemCount} ${itemCount !== 1 ? subItemsLabel : subItemLabel}</span>
         </div>
         <div class="smb-course__actions">
-          <button onclick="openAddToCatModal(${sub.id}, '${esc(getName(sub.translations))}')" class="btn btn--pill link--slide btn--sm">+ Item</button>
-          ${isSetMenuSub ? `<a href="/admin/set-menus" class="btn btn--pill link--slide btn--sm">Manage Set Menus</a>` : ''}
-          <label class="smb-avail-switch" title="Toggle visibility">
+          <button onclick="openAddToCatModal(${sub.id}, '${esc(getName(sub.translations))}')" class="btn btn--pill link--slide btn--sm">${tUI('page.builder.btn_add_to_sub')}</button>
+          ${isSetMenuSub ? `<a href="/admin/set-menus" class="btn btn--pill link--slide btn--sm">${tUI('page.builder.btn_manage_set_menus')}</a>` : ''}
+          <label class="smb-avail-switch" title="${tUI('common.tooltip_toggle_vis')}">
             <input type="checkbox" ${sub.is_active ? 'checked' : ''} onchange="toggleSubAvailability(${sub.id}, this.checked)">
-            <span class="smb-avail-label smb-avail-label--${sub.is_active ? 'on' : 'off'}">${sub.is_active ? 'Live' : 'Off'}</span>
+            <span class="smb-avail-label smb-avail-label--${sub.is_active ? 'on' : 'off'}">${sub.is_active ? tUI('common.live') : tUI('common.off')}</span>
           </label>
-          <button class="btn-view" onclick="openCatViewModal(${sub.id})" title="View details">
+          <button class="btn-view" onclick="openCatViewModal(${sub.id})" title="${tUI('common.tooltip_view')}">
             <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
             <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
           </button>
-          <button class="btn-delete" onclick="deleteCategory(${sub.id}, '${esc(getName(sub.translations))}')" title="Delete">
+          <button class="btn-delete" onclick="deleteCategory(${sub.id}, '${esc(getName(sub.translations))}')" title="${tUI('common.tooltip_delete')}">
             <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
@@ -453,17 +455,17 @@ function renderDishRow(mic, catId) {
   const isOff       = itemData && !itemData.is_available;
   return `
     <div class="smb-dish${isOff ? ' smb-dish--inactive' : ''}" data-item-id="${mic.menu_item.id}">
-      <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+      <span class="bl-handle bl-handle--dish" title="${tUI('common.tooltip_drag_move')}">&#8801;</span>
       <div class="smb-dish__info">
         <span class="smb-dish__name">${esc(getName(mic.menu_item.translations))}</span>
-        ${isOff ? '<span class="smb-dish__badge smb-dish__badge--off">Off</span>' : ''}
+        ${isOff ? `<span class="smb-dish__badge smb-dish__badge--off">${tUI('common.off')}</span>` : ''}
       </div>
       <div class="smb-dish__actions">
-        <button class="btn-view" onclick="openBuilderItemView(${mic.menu_item.id})" title="View details">
+        <button class="btn-view" onclick="openBuilderItemView(${mic.menu_item.id})" title="${tUI('common.tooltip_view')}">
           <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
           <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
         </button>
-        <button class="btn-remove" onclick="removeItemFromCat(${mic.menu_item.id}, ${catId})" title="Remove from category">
+        <button class="btn-remove" onclick="removeItemFromCat(${mic.menu_item.id}, ${catId})" title="${tUI('common.tooltip_remove_from_cat')}">
           <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
@@ -477,18 +479,18 @@ function renderSetMenuRow(smc, catId) {
   const isOff       = smData && !smData.is_available;
   return `
     <div class="smb-dish${isOff ? ' smb-dish--inactive' : ''}" data-set-menu-id="${smc.set_menu.id}">
-      <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+      <span class="bl-handle bl-handle--dish" title="${tUI('common.tooltip_drag_move')}">&#8801;</span>
       <div class="smb-dish__info">
         <span class="smb-dish__name">${esc(getName(smc.set_menu.translations))}</span>
-        <span class="smb-dish__meta">set menu</span>
-        ${isOff ? '<span class="smb-dish__badge smb-dish__badge--off">Off</span>' : ''}
+        <span class="smb-dish__meta">${tUI('page.builder.set_menu_singular')}</span>
+        ${isOff ? `<span class="smb-dish__badge smb-dish__badge--off">${tUI('common.off')}</span>` : ''}
       </div>
       <div class="smb-dish__actions">
-        <button class="btn-view" onclick="openBuilderSmView(${smc.set_menu.id})" title="View details">
+        <button class="btn-view" onclick="openBuilderSmView(${smc.set_menu.id})" title="${tUI('common.tooltip_view')}">
           <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
           <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
         </button>
-        <button class="btn-remove" onclick="removeSetMenuFromCat(${smc.set_menu.id}, ${catId})" title="Remove from category">
+        <button class="btn-remove" onclick="removeSetMenuFromCat(${smc.set_menu.id}, ${catId})" title="${tUI('common.tooltip_remove_from_cat')}">
           <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
@@ -613,8 +615,7 @@ function adjustSubCount(catId, delta, isSetMenu) {
       const m = el.textContent.match(/^(\d+)\s+(.+)$/);
       if (m) {
         const n  = Math.max(0, parseInt(m[1]) + delta);
-        const sm = m[2].includes('set menu');
-        el.textContent = `${n} ${sm ? 'set menu' : 'item'}${n !== 1 ? 's' : ''}`;
+        el.textContent = `${n} ${n !== 1 ? tUI(isSetMenu ? 'page.builder.set_menu_label' : 'page.builder.items_label') : tUI(isSetMenu ? 'page.builder.set_menu_singular' : 'page.builder.item_singular')}`;
       }
     }
   }
@@ -623,8 +624,7 @@ function adjustSubCount(catId, delta, isSetMenu) {
     const m = sidebarEl.textContent.match(/^(\d+)\s+(.+)$/);
     if (m) {
       const n  = Math.max(0, parseInt(m[1]) + delta);
-      const sm = m[2].includes('set menu');
-      sidebarEl.textContent = `${n} ${sm ? 'set menu' : 'item'}${n !== 1 ? 's' : ''}`;
+      sidebarEl.textContent = `${n} ${n !== 1 ? tUI(isSetMenu ? 'page.builder.set_menu_label' : 'page.builder.items_label') : tUI(isSetMenu ? 'page.builder.set_menu_singular' : 'page.builder.item_singular')}`;
     }
   }
   const cat = findCategory(catId);
@@ -641,7 +641,7 @@ async function toggleAvailability() {
   try {
     await api('PUT', `/api/categories/${activeCatId}`, { is_active: chk.checked });
     const lbl = document.getElementById('builder-avail-label');
-    lbl.textContent = chk.checked ? 'Live' : 'Off';
+    lbl.textContent = chk.checked ? tUI('common.live') : tUI('common.off');
     lbl.className   = `smb-avail-label smb-avail-label--${chk.checked ? 'on' : 'off'}`;
     const cat = findCategory(activeCatId);
     if (cat) {
@@ -650,7 +650,7 @@ async function toggleAvailability() {
         (cat.children || []).forEach(sub => { sub.is_active = chk.checked; });
       }
     }
-    showToast(chk.checked ? 'Category is now live' : 'Category hidden');
+    showToast(tr(chk.checked ? 'category_live' : 'category_hidden'));
     refreshSidebar();
     refreshBuilderBody();
   } catch (err) {
@@ -694,7 +694,7 @@ function openAddToCatModal(catId, catNameStr) {
       ];
 
   openAddItemModal({
-    title:     catNameStr ? `Add to "${catNameStr}"` : 'Add to Category',
+    title:     catNameStr ? tUI('modal.add_dish_to', { name: catNameStr }) : tUI('modal.add_dish_generic'),
     items,
     sections:  subs.length > 0 ? subs.map(s => ({ id: s.id, name: s.is_active ? getName(s.translations) : `${getName(s.translations)} (off)` })) : null,
     sectionId: subs.length === 0 ? catId : undefined,
@@ -705,10 +705,10 @@ function openAddToCatModal(catId, catNameStr) {
       try {
         if (itemType === 'set-menu') {
           await api('POST', `/api/set-menus/${itemId}/add-to-category`, { category_id: targetCatId });
-          showToast('Set menu added to category');
+          showToast(tr('set_menu_added_to_category'));
         } else {
           await api('POST', `/api/menu-items/${itemId}/add-to-category`, { category_id: targetCatId });
-          showToast('Item added to category');
+          showToast(tr('item_added_to_category'));
         }
         reloadAfter();
       } catch (err) {
@@ -719,20 +719,20 @@ function openAddToCatModal(catId, catNameStr) {
 }
 
 function removeItemFromCat(itemId, catId) {
-  confirmDelete('Remove this item from the category?', async () => {
+  confirmDelete(tUI('modal.confirm_remove_item'), async () => {
     try {
       await api('DELETE', `/api/menu-items/${itemId}/categories/${catId}`);
-      showToast('Item removed from category');
+      showToast(tr('item_removed_from_category'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   });
 }
 
 function removeSetMenuFromCat(setMenuId, catId) {
-  confirmDelete('Remove this set menu from the category?', async () => {
+  confirmDelete(tUI('modal.confirm_remove_set_menu'), async () => {
     try {
       await api('DELETE', `/api/set-menus/${setMenuId}/categories/${catId}`);
-      showToast('Set menu removed from category');
+      showToast(tr('set_menu_removed_from_category'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   });
@@ -749,7 +749,7 @@ async function toggleCategoryStatus(id, checked) {
         (cat.children || []).forEach(sub => { sub.is_active = checked; });
       }
     }
-    showToast(checked ? 'Category is now live' : 'Category hidden');
+    showToast(tr(checked ? 'category_live' : 'category_hidden'));
     refreshSidebar();
     refreshBuilderBody();
   } catch (err) { showToast(err.message, 'error'); }
@@ -764,11 +764,11 @@ async function toggleSubAvailability(subId, checked) {
     if (courseEl) {
       const lbl = courseEl.querySelector('.smb-avail-label');
       if (lbl) {
-        lbl.textContent = checked ? 'Live' : 'Off';
+        lbl.textContent = checked ? tUI('common.live') : tUI('common.off');
         lbl.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
       }
     }
-    showToast(checked ? 'Subcategory is now live' : 'Subcategory hidden');
+    showToast(tr(checked ? 'subcategory_live' : 'subcategory_hidden'));
     refreshSidebar();
     refreshBuilderBody();
   } catch (err) {
@@ -811,7 +811,7 @@ function confirmDeleteCat() {
   const cat = findCategory(activeCatId);
   if (!cat) return;
   if (cat.is_protected) {
-    showToast('This category is protected and cannot be deleted', 'error');
+    showToast(tr('category_protected'), 'error');
     return;
   }
   deleteCategory(activeCatId, getName(cat.translations));
@@ -853,7 +853,7 @@ function renderInactiveList() {
   let html = '';
 
   if (inactiveParents.length > 0) {
-    html += '<div class="inactive-section"><h4 class="inactive-section__title">Categories</h4>';
+    html += `<div class="inactive-section"><h4 class="inactive-section__title">${tUI('page.builder.inactive_section_categories')}</h4>`;
     inactiveParents.forEach(cat => {
       html += `
         <div class="inactive-item" data-cat-id="${cat.id}">
@@ -862,7 +862,7 @@ function renderInactiveList() {
           </div>
           <label class="smb-avail-switch">
             <input type="checkbox" onchange="toggleCategoryStatus(${cat.id}, this.checked)" />
-            <span class="smb-avail-label smb-avail-label--off">Activate</span>
+            <span class="smb-avail-label smb-avail-label--off">${tUI('page.builder.btn_activate')}</span>
           </label>
         </div>`;
     });
@@ -870,7 +870,7 @@ function renderInactiveList() {
   }
 
   if (inactiveSubs.length > 0) {
-    html += '<div class="inactive-section"><h4 class="inactive-section__title">Subcategories</h4>';
+    html += `<div class="inactive-section"><h4 class="inactive-section__title">${tUI('page.builder.inactive_section_subcategories')}</h4>`;
     inactiveSubs.forEach(sub => {
       const parent     = CATS_DATA.find(p => p.id === sub.parent_id);
       const parentName = parent ? getName(parent.translations) : '';
@@ -882,7 +882,7 @@ function renderInactiveList() {
           </div>
           <label class="smb-avail-switch">
             <input type="checkbox" onchange="toggleCategoryStatus(${sub.id}, this.checked)" />
-            <span class="smb-avail-label smb-avail-label--off">Activate</span>
+            <span class="smb-avail-label smb-avail-label--off">${tUI('page.builder.btn_activate')}</span>
           </label>
         </div>`;
     });
@@ -890,7 +890,7 @@ function renderInactiveList() {
   }
 
   if (!inactiveParents.length && !inactiveSubs.length) {
-    html = '<div class="smb-panel__empty">No inactive categories</div>';
+    html = `<div class="smb-panel__empty">${tUI('page.builder.empty_no_inactive')}</div>`;
   }
 
   inactiveCatsEl.innerHTML = html;
@@ -912,8 +912,8 @@ function renderSidebarActiveList() {
       : `<span class="builder-chevron-spacer"></span>`;
 
     const countHtml = hasSubs
-      ? `<span class="smb-item__price">${activeSubs.length} subs</span>`
-      : `<span class="smb-item__price">${cat._count ? (cat._count.menu_item_categories + cat._count.set_menu_categories) : 0} items</span>`;
+      ? `<span class="smb-item__price">${activeSubs.length} ${tUI('page.builder.subs_label')}</span>`
+      : `<span class="smb-item__price">${cat._count ? (cat._count.menu_item_categories + cat._count.set_menu_categories) : 0} ${tUI('page.builder.items_label')}</span>`;
 
     const subsHtml = hasSubs ? `
       <div class="builder-subs hidden" id="builder-subs-${cat.id}" data-parent-id="${cat.id}">
@@ -921,7 +921,7 @@ function renderSidebarActiveList() {
           <div class="smb-item smb-item--sub" data-cat-id="${sub.id}" onclick="selectCategory(${sub.id})">
             <div class="smb-item__info">
               <span class="smb-item__name">${esc(getName(sub.translations))}</span>
-              <span class="smb-item__price">${sub._count ? (cat.slug === 'set-menus' ? sub._count.set_menu_categories : (sub._count.menu_item_categories + sub._count.set_menu_categories)) : 0} ${cat.slug === 'set-menus' ? 'set menus' : 'items'}</span>
+              <span class="smb-item__price">${sub._count ? (cat.slug === 'set-menus' ? sub._count.set_menu_categories : (sub._count.menu_item_categories + sub._count.set_menu_categories)) : 0} ${cat.slug === 'set-menus' ? tUI('page.builder.set_menu_label') : tUI('page.builder.items_label')}</span>
             </div>
           </div>`).join('')}
       </div>` : '';

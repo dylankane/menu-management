@@ -54,7 +54,7 @@
               <label class="smb-avail-switch smb-avail-switch--brand">
                 <input type="checkbox" id="itemHasDiscount" name="has_discount"
                        onchange="toggleDiscount()">
-                <span class="smb-avail-label" id="itemDiscountLabel">Off</span>
+                <span class="smb-avail-label" id="itemDiscountLabel"><%= t('common.off') %></span>
               </label>
               <div id="discountFields" class="discount-fields hidden">
                 <div class="form-group">
@@ -81,7 +81,7 @@
           <div id="currentImagePreview" class="image-preview hidden">
             <img id="currentImage" src="" alt="" class="table-thumb table-thumb--clickable"
                  onclick="openModalLightbox(this.src)" />
-            <span id="imagePreviewLabel" class="image-preview__label">Current image — upload new to replace</span>
+            <span id="imagePreviewLabel" class="image-preview__label"><%= t('modal.image_current') %></span>
             <button type="button" class="image-preview__clear" onclick="clearImagePreview('itemImage','currentImagePreview')" aria-label="Remove">&times;</button>
           </div>
         </div>
@@ -91,16 +91,16 @@
             <span class="modal-toggle-label">Availability</span>
             <label class="smb-avail-switch">
               <input type="checkbox" id="itemIsAvailable" name="is_available" checked
-                     onchange="updateModalToggle('itemIsAvailable', 'itemAvailLabel', 'Live', 'Off')">
-              <span class="smb-avail-label smb-avail-label--on" id="itemAvailLabel">Live</span>
+                     onchange="updateModalToggle('itemIsAvailable', 'itemAvailLabel', tUI('common.live'), tUI('common.off'))">
+              <span class="smb-avail-label smb-avail-label--on" id="itemAvailLabel"><%= t('common.live') %></span>
             </label>
           </div>
           <div class="modal-toggle-item">
             <span class="modal-toggle-label">Chef's Special</span>
             <label class="smb-avail-switch smb-avail-switch--brand">
               <input type="checkbox" id="itemIsSpecial" name="is_special"
-                     onchange="updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off')">
-              <span class="smb-avail-label" id="itemSpecialLabel">Off</span>
+                     onchange="updateModalToggle('itemIsSpecial', 'itemSpecialLabel', tUI('common.special'), tUI('common.off'))">
+              <span class="smb-avail-label" id="itemSpecialLabel"><%= t('common.off') %></span>
             </label>
           </div>
         </div>
@@ -160,8 +160,8 @@
       </div>
 
       <div class="modal__footer">
-        <button type="button" onclick="_handleItemModalClose()" class="btn btn--secondary">Cancel</button>
-        <button type="submit" class="btn btn--primary">Save Item</button>
+        <button type="button" onclick="_handleItemModalClose()" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+        <button type="submit" class="btn btn--primary"><%= t('modal.btn_save_item') %></button>
       </div>
     </form>
   </div>
@@ -177,7 +177,7 @@
   function toggleDiscount() {
     const checked = document.getElementById('itemHasDiscount').checked;
     document.getElementById('discountFields').classList.toggle('hidden', !checked);
-    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
+    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', tUI('common.on'), tUI('common.off'));
   }
 
   function updateModalToggle(checkId, labelId, onText, offText) {
@@ -206,19 +206,19 @@
     if (!file) return;
     const url = URL.createObjectURL(file);
     document.getElementById('currentImage').src = url;
-    document.getElementById('imagePreviewLabel').textContent = 'New image selected — click to preview';
+    document.getElementById('imagePreviewLabel').textContent = tUI('modal.image_new_selected');
     document.getElementById('currentImagePreview').classList.remove('hidden');
   });
 
   function openAddDishModal(presetCategoryId) {
-    document.getElementById('itemModalTitle').textContent = 'Create Item';
+    document.getElementById('itemModalTitle').textContent = tUI('modal.title_create_item');
     document.getElementById('itemId').value = '';
     document.getElementById('itemForm').reset();
     document.getElementById('currentImagePreview').classList.add('hidden');
     document.getElementById('discountFields').classList.add('hidden');
-    updateModalToggle('itemIsAvailable', 'itemAvailLabel', 'Live', 'Off');
-    updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off');
-    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
+    updateModalToggle('itemIsAvailable', 'itemAvailLabel', tUI('common.live'), tUI('common.off'));
+    updateModalToggle('itemIsSpecial', 'itemSpecialLabel', tUI('common.special'), tUI('common.off'));
+    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', tUI('common.on'), tUI('common.off'));
     if (presetCategoryId) {
       const presetId = String(presetCategoryId);
       const childCb  = document.querySelector(`.item-cat-child-cb[value="${presetId}"]`);
@@ -242,7 +242,7 @@
   }
 
   function openEditDishModal(item) {
-    document.getElementById('itemModalTitle').textContent = 'Edit Item';
+    document.getElementById('itemModalTitle').textContent = tUI('modal.title_edit_item');
     document.getElementById('itemId').value              = item.id;
     document.getElementById('itemPrice').value           = Number(item.price).toFixed(2);
     document.getElementById('itemIsAvailable').checked   = item.is_available;
@@ -251,9 +251,9 @@
     document.getElementById('itemDiscountType').value    = item.discount_type || 'percent';
     document.getElementById('itemDiscountValue').value   = item.discount_value ? Number(item.discount_value).toFixed(2) : '';
     document.getElementById('discountFields').classList.toggle('hidden', !item.has_discount);
-    updateModalToggle('itemIsAvailable', 'itemAvailLabel', 'Live', 'Off');
-    updateModalToggle('itemIsSpecial', 'itemSpecialLabel', 'Special', 'Off');
-    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', 'On', 'Off');
+    updateModalToggle('itemIsAvailable', 'itemAvailLabel', tUI('common.live'), tUI('common.off'));
+    updateModalToggle('itemIsSpecial', 'itemSpecialLabel', tUI('common.special'), tUI('common.off'));
+    updateModalToggle('itemHasDiscount', 'itemDiscountLabel', tUI('common.on'), tUI('common.off'));
 
     const byLang = {};
     (item.translations || []).forEach(t => byLang[t.lang] = t);
@@ -267,7 +267,7 @@
 
     if (item.image_url) {
       document.getElementById('currentImage').src = item.image_url;
-      document.getElementById('imagePreviewLabel').textContent = 'Current image — upload new to replace';
+      document.getElementById('imagePreviewLabel').textContent = tUI('modal.image_current');
       document.getElementById('currentImagePreview').classList.remove('hidden');
     } else {
       document.getElementById('currentImagePreview').classList.add('hidden');
@@ -307,7 +307,7 @@
     const method = id ? 'PUT' : 'POST';
     try {
       const { data } = await api(method, url, fd);
-      showToast(id ? 'Item updated' : 'Item created');
+      showToast(tr(id ? 'item_updated' : 'item_created'));
       if (typeof window._onItemSaved === 'function') {
         const cb = window._onItemSaved;
         window._onItemSaved = null;
@@ -323,10 +323,10 @@
   }
 
   async function deleteItem(id, name) {
-    confirmDelete(`Delete "${name}"? This cannot be undone.`, async () => {
+    confirmDelete(tUI('modal.confirm_delete_named', { name }), async () => {
       try {
         await api('DELETE', `/api/menu-items/${id}`);
-        showToast('Item deleted');
+        showToast(tr('item_deleted'));
         reloadAfter();
       } catch (err) { showToast(err.message, 'error'); }
     });

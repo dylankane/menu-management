@@ -57,7 +57,8 @@
       "Bash(npm audit *)",
       "Bash(dir C:\\\\Users\\\\dylan\\\\menu-management\\\\*.js /b)",
       "Bash(Get-ChildItem \"C:\\\\Users\\\\dylan\\\\menu-management\" -MaxDepth 1 -Filter \"*.js\")",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(grep -rn \"confirm\\(\\\\`\\\\|confirm\\('.*'\" src/views/admin --include=\"*.ejs\")"
     ]
   }
 }

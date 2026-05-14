@@ -59,8 +59,8 @@
     </div>
 
     <div class="modal__footer">
-      <button onclick="closeModal('smViewModal')" class="btn btn--secondary">Close</button>
-      <button onclick="_smViewToEdit()" class="btn btn--primary">Edit Set Menu</button>
+      <button onclick="closeModal('smViewModal')" class="btn btn--secondary"><%= t('common.close') %></button>
+      <button onclick="_smViewToEdit()" class="btn btn--primary"><%= t('modal.btn_edit_set_menu') %></button>
     </div>
 
   </div>
@@ -153,7 +153,7 @@
     // Status badges
     document.getElementById('smViewBadges').innerHTML =
       `<span class="smb-avail smb-avail--${sm.is_available ? 'on' : 'off'}"></span>` +
-      `<span class="smb-avail-label">${sm.is_available ? 'Live' : 'Off'}</span>` +
+      `<span class="smb-avail-label">${sm.is_available ? tUI('common.live') : tUI('common.off')}</span>` +
       (sm.is_special ? `&nbsp;&nbsp;<span class="tag">Chef's Special</span>` : '');
 
     // Internal notes

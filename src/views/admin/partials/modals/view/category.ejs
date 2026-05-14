@@ -59,8 +59,8 @@
     </div>
 
     <div class="modal__footer">
-      <button onclick="closeModal('catViewModal')" class="btn btn--secondary">Close</button>
-      <button onclick="_catViewToEdit()" class="btn btn--primary">Edit Category</button>
+      <button onclick="closeModal('catViewModal')" class="btn btn--secondary"><%= t('common.close') %></button>
+      <button onclick="_catViewToEdit()" class="btn btn--primary"><%= t('modal.btn_edit_category') %></button>
     </div>
 
   </div>
@@ -144,7 +144,7 @@
     // Status
     document.getElementById('catViewStatus').innerHTML =
       `<span class="smb-avail smb-avail--${cat.is_active ? 'on' : 'off'}"></span>` +
-      `<span class="smb-avail-label">${cat.is_active ? 'Active' : 'Inactive'}</span>`;
+      `<span class="smb-avail-label">${cat.is_active ? tUI('modal.status_active') : tUI('modal.status_inactive')}</span>`;
 
     // Type + parent
     const data      = typeof CATS_DATA !== 'undefined' ? CATS_DATA : [];
@@ -154,7 +154,7 @@
       ? ((parentCat.translations || []).find(t => t.lang === PRIMARY) || (parentCat.translations || [])[0] || {})
       : {};
 
-    document.getElementById('catViewType').textContent = isSubcat ? 'Subcategory' : 'Top-level';
+    document.getElementById('catViewType').textContent = isSubcat ? tUI('modal.type_subcategory') : tUI('modal.type_top_level');
 
     const parentRow = document.getElementById('catViewParentRow');
     if (isSubcat) {

@@ -76,13 +76,13 @@
             <div class="smb-item__info" onclick="selectSetMenu(<%= sm.id %>)">
               <span class="smb-item__name"><%= tName(sm.translations) %></span>
               <span class="smb-item__price">€<%= Number(sm.price).toFixed(2) %></span>
-              <span class="smb-dish__badge<%= isSmEjsUnreachable(sm) ? '' : ' hidden' %>">Unassigned</span>
+              <span class="smb-dish__badge<%= isSmEjsUnreachable(sm) ? '' : ' hidden' %>"><%= t('common.unassigned') %></span>
             </div>
-            <label class="smb-avail-switch" title="Toggle availability">
+            <label class="smb-avail-switch" title="<%= t('common.tooltip_toggle_avail') %>">
               <input type="checkbox" <%= sm.is_available ? 'checked' : '' %>
                      onchange="toggleSmAvail(<%= sm.id %>, this.checked)">
               <span class="smb-avail-label smb-avail-label--<%= sm.is_available ? 'on' : 'off' %>"
-                    id="smb-avail-label-<%= sm.id %>"><%= sm.is_available ? 'Live' : 'Off' %></span>
+                    id="smb-avail-label-<%= sm.id %>"><%= sm.is_available ? t('common.live') : t('common.off') %></span>
             </label>
           </div>
         <% }) %>
@@ -103,11 +103,11 @@
               <div class="smb-library__item">
                 <span class="smb-library__item-name"><%= tName(c.translations) %></span>
                 <div class="smb-course__actions">
-                  <button class="btn-view" onclick='openEditCourseModal(<%- JSON.stringify(c) %>)' title="Edit">
+                  <button class="btn-view" onclick='openEditCourseModal(<%- JSON.stringify(c) %>)' title="<%= t('common.tooltip_edit') %>">
                     <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
                     <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                   </button>
-                  <button class="btn-delete" onclick="deleteCourse(<%= c.id %>, '<%= tName(c.translations).replace(/'/g, "\\'") %>')" title="Delete">
+                  <button class="btn-delete" onclick="deleteCourse(<%= c.id %>, '<%= tName(c.translations).replace(/'/g, "\\'") %>')" title="<%= t('common.tooltip_delete') %>">
                     <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
                     </svg>
@@ -117,7 +117,7 @@
             <% }) %>
           </div>
           <div class="smb-library__footer">
-            <button onclick="openAddCourseModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm">Create Course</button>
+            <button onclick="openAddCourseModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.courses.btn_add') %></button>
           </div>
         </div>
       </div>
@@ -143,15 +143,15 @@
           <div class="smb-header__row">
             <h3 class="smb-header__name" id="smb-name">—</h3>
             <span class="smb-header__price" id="smb-price"></span>
-            <label class="smb-avail-switch" title="Toggle availability">
+            <label class="smb-avail-switch" title="<%= t('common.tooltip_toggle_avail') %>">
               <input type="checkbox" id="smb-avail-chk" onchange="toggleAvailability()">
-              <span class="smb-avail-label" id="smb-avail-label">Live</span>
+              <span class="smb-avail-label" id="smb-avail-label"><%= t('common.live') %></span>
             </label>
-            <button class="btn-view" onclick="openSmViewModal(activeSmId)" title="View details">
+            <button class="btn-view" onclick="openSmViewModal(activeSmId)" title="<%= t('common.tooltip_view') %>">
               <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
               <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
             </button>
-            <button class="btn-delete" onclick="confirmDeleteSm()" title="Delete">
+            <button class="btn-delete" onclick="confirmDeleteSm()" title="<%= t('common.tooltip_delete') %>">
               <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="15" y1="9" x2="9" y2="15"/>
@@ -166,8 +166,8 @@
               <svg class="icon"><use href="/admin/icons/sprite.svg#set-menus"></use></svg>
             </div>
             <div class="category-breadcrumbs smb-header__cats" id="smb-cats"></div>
-            <button class="btn btn--pill link--slide" onclick="openAddCourseToSmModal()">+ Course</button>
-            <button class="btn btn--pill link--slide" onclick="openSmAddItemModal(null)">+ Item</button>
+            <button class="btn btn--pill link--slide" onclick="openAddCourseToSmModal()"><%= t('page.courses.btn_add') %></button>
+            <button class="btn btn--pill link--slide" onclick="openSmAddItemModal(null)"><%= t('page.builder.btn_add_to_sub') %></button>
           </div>
         </div>
 
@@ -274,7 +274,7 @@ async function refreshAndRender(smId) {
     else SM_DATA.push(data.setMenu);
     renderBuilder(data.setMenu);
     updatePanelItem(data.setMenu);
-  } catch (e) { showToast('Error refreshing', 'error'); }
+  } catch (e) { showToast(UI_MESSAGES.genericError, 'error'); }
 }
 
 function updatePanelItem(sm) {
@@ -288,7 +288,7 @@ function updatePanelItem(sm) {
   const cb  = el.querySelector('input[type="checkbox"]');
   const lbl = document.getElementById(`smb-avail-label-${sm.id}`);
   if (cb)  cb.checked      = sm.is_available;
-  if (lbl) lbl.textContent = sm.is_available ? 'Live' : 'Off';
+  if (lbl) lbl.textContent = sm.is_available ? tUI('common.live') : tUI('common.off');
   if (lbl) lbl.className   = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
 }
 
@@ -303,7 +303,7 @@ function renderBuilder(sm) {
   const chk = document.getElementById('smb-avail-chk');
   chk.checked = sm.is_available;
   const lbl = document.getElementById('smb-avail-label');
-  lbl.textContent = sm.is_available ? 'Live' : 'Off';
+  lbl.textContent = sm.is_available ? tUI('common.live') : tUI('common.off');
   lbl.className   = `smb-avail-label smb-avail-label--${sm.is_available ? 'on' : 'off'}`;
 
   const smImg         = document.getElementById('smb-img');
@@ -341,21 +341,21 @@ function renderBuilder(sm) {
 function renderCourseSection(smc, smId) {
   const note    = getNote(smc.translations);
   const noteBtn = note
-    ? `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('course', ${smc.id}, null)">Edit Note</button>`
-    : `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('course', ${smc.id}, null)">+ Note</button>`;
+    ? `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('course', ${smc.id}, null)">${tUI('common.btn_edit_note')}</button>`
+    : `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('course', ${smc.id}, null)">${tUI('common.btn_add_note')}</button>`;
   const dishes = (smc.dishes || []).map(d => renderDishRow(d, smId)).join('');
 
   return `
     <div class="smb-course" data-smc-id="${smc.id}">
       <div class="smb-course__head">
-        <span class="bl-handle bl-handle--sm" title="Drag to reorder">&#8801;</span>
+        <span class="bl-handle bl-handle--sm" title="${tUI('common.tooltip_drag_reorder')}">&#8801;</span>
         <div class="smb-course__meta">
           <span class="smb-course__name">${esc(getName(smc.course.translations))}</span>
         </div>
         <div class="smb-course__actions">
-          <button onclick="openSmAddItemModal(${smc.id})" class="btn btn--pill link--slide btn--sm">+ Item</button>
+          <button onclick="openSmAddItemModal(${smc.id})" class="btn btn--pill link--slide btn--sm">${tUI('page.builder.btn_add_to_sub')}</button>
           ${noteBtn}
-          <button class="btn-remove" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="Remove from set menu">
+          <button class="btn-remove" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="${tUI('common.tooltip_remove_from_sm')}">
             <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
             </svg>
@@ -376,17 +376,17 @@ function renderUncatSection(dishArr, smId) {
 function renderDishRow(smd, smId) {
   const note    = getNote(smd.translations);
   const noteBtn = note
-    ? `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('dish', ${smd.id}, null)">Edit Note</button>`
-    : `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('dish', ${smd.id}, null)">+ Note</button>`;
+    ? `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('dish', ${smd.id}, null)">${tUI('common.btn_edit_note')}</button>`
+    : `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('dish', ${smd.id}, null)">${tUI('common.btn_add_note')}</button>`;
 
   return `
     <div class="smb-dish" data-entry-id="${smd.id}">
-      <span class="bl-handle bl-handle--dish" title="Drag to move">&#8801;</span>
+      <span class="bl-handle bl-handle--dish" title="${tUI('common.tooltip_drag_move')}">&#8801;</span>
       <div class="smb-dish__info">
         <span class="smb-dish__name">${esc(getName(smd.dish.translations))}</span>
       </div>
       ${noteBtn}
-      <button class="btn-remove" onclick="removeDish(${smId}, ${smd.id})" title="Remove from set menu">
+      <button class="btn-remove" onclick="removeDish(${smId}, ${smd.id})" title="${tUI('common.tooltip_remove_from_sm')}">
         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
         </svg>
@@ -440,7 +440,7 @@ async function toggleSmAvail(smId, checked) {
     await api('PUT', `/api/set-menus/${smId}`, { is_available: checked });
     const lbl = document.getElementById(`smb-avail-label-${smId}`);
     if (lbl) {
-      lbl.textContent = checked ? 'Live' : 'Off';
+      lbl.textContent = checked ? tUI('common.live') : tUI('common.off');
       lbl.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
     }
     const sm = SM_DATA.find(s => s.id === smId);
@@ -456,11 +456,11 @@ async function toggleSmAvail(smId, checked) {
       if (smId === activeSmId) {
         document.getElementById('smb-avail-chk').checked = checked;
         const headerLbl = document.getElementById('smb-avail-label');
-        headerLbl.textContent = checked ? 'Live' : 'Off';
+        headerLbl.textContent = checked ? tUI('common.live') : tUI('common.off');
         headerLbl.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
       }
     }
-    showToast(checked ? 'Set menu is now live' : 'Set menu hidden');
+    showToast(tr(checked ? 'set_menu_live' : 'set_menu_hidden'));
   } catch (err) {
     const cb = document.querySelector(`.smb-item[data-sm-id="${smId}"] input[type="checkbox"]`);
     if (cb) cb.checked = !checked;
@@ -502,7 +502,7 @@ function openSmAddItemModal(smcId) {
     onSubmit: async (itemId, itemType, { sectionId: courseId, notes }) => {
       const body = { dish_id: itemId, set_menu_course_id: courseId, ...notes };
       await api('POST', `/api/set-menus/${activeSmId}/dishes`, body);
-      showToast('Item added');
+      showToast(tr('item_added'));
       await refreshAndRender(activeSmId);
     },
   });
@@ -511,7 +511,7 @@ function openSmAddItemModal(smcId) {
 async function removeDish(smId, entryId) {
   try {
     await api('DELETE', `/api/set-menus/${smId}/dishes/${entryId}`);
-    showToast('Item removed');
+    showToast(tr('item_removed'));
     await refreshAndRender(smId);
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -535,9 +535,9 @@ async function addCourseToSm(courseId, notes) {
       await Promise.all(uncatItems.map(d =>
         api('PUT', `/api/set-menus/${activeSmId}/dishes/${d.id}`, { set_menu_course_id: newSmcId })
       ));
-      showToast(`Course added — ${uncatItems.length} item${uncatItems.length !== 1 ? 's' : ''} moved to this course`);
+      showToast(tr('course_added_items_moved', { count: uncatItems.length }));
     } else {
-      showToast('Course added');
+      showToast(tr('course_added'));
     }
 
     await refreshAndRender(activeSmId);
@@ -545,10 +545,10 @@ async function addCourseToSm(courseId, notes) {
 }
 
 async function removeCourse(smId, smcId, name) {
-  confirmDelete(`Remove "${name}" from this set menu? Items in this course will become uncategorised.`, async () => {
+  confirmDelete(tUI('modal.confirm_remove_course', { name }), async () => {
     try {
       await api('DELETE', `/api/set-menus/${smId}/courses/${smcId}`);
-      showToast('Course removed');
+      showToast(tr('course_removed'));
       await refreshAndRender(smId);
     } catch (err) { showToast(err.message, 'error'); }
   });

@@ -115,7 +115,7 @@
                   </td>
                   <td class="col-delete col-align-center">
                     <% if (u.id !== user.id) { %>
-                      <button class="btn-delete" onclick="deleteUser(<%= u.id %>, '<%= u.name.replace(/'/g, "\\'") %>')" title="Delete">
+                      <button class="btn-delete" onclick="deleteUser(<%= u.id %>, '<%= u.name.replace(/'/g, "\\'") %>')" title="<%= t('common.tooltip_delete') %>">
                         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                           <circle cx="12" cy="12" r="10"/>
                           <line x1="15" y1="9" x2="9" y2="15"/>
@@ -235,7 +235,7 @@
     const role     = roleEl ? roleEl.value : 'admin';
 
     if (!name || !email || !password) {
-      return showToast('Please fill in all fields', 'error');
+      return showToast(tr('fill_in_all_fields'), 'error');
     }
     try {
       await api('POST', '/api/users', { name, email, password, role });

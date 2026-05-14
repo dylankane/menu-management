@@ -28,15 +28,15 @@
       </div>
     </div>
     <div class="modal__footer">
-      <button onclick="_handleCourseModalClose()" class="btn btn--secondary">Cancel</button>
-      <button onclick="submitCourse()" class="btn btn--primary">Save</button>
+      <button onclick="_handleCourseModalClose()" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+      <button onclick="submitCourse()" class="btn btn--primary"><%= t('modal.btn_save') %></button>
     </div>
   </div>
 </div>
 
 <script>
   function openAddCourseModal() {
-    document.getElementById('courseModalTitle').textContent = 'Add Course';
+    document.getElementById('courseModalTitle').textContent = tUI('modal.title_add_course');
     document.getElementById('courseId').value = '';
     LANGS.forEach(lang => {
       const el = document.getElementById(`courseName_${lang}`);
@@ -47,7 +47,7 @@
   }
 
   function openEditCourseModal(course) {
-    document.getElementById('courseModalTitle').textContent = 'Edit Course';
+    document.getElementById('courseModalTitle').textContent = tUI('modal.title_edit_course');
     document.getElementById('courseId').value = course.id;
     const byLang = {};
     (course.translations || []).forEach(t => byLang[t.lang] = t);
@@ -79,7 +79,7 @@
     const method = id ? 'PUT' : 'POST';
     try {
       const { data } = await api(method, url, body);
-      showToast(id ? 'Course updated' : 'Course created');
+      showToast(tr(id ? 'course_updated' : 'course_added'));
       closeModal('courseModal');
       if (!id && typeof window._onCourseSaved === 'function') {
         const cb = window._onCourseSaved;
@@ -92,10 +92,10 @@
   }
 
   async function deleteCourse(id, name) {
-    confirmDelete(`Delete course "${name}" from the library?`, async () => {
+    confirmDelete(tUI('modal.confirm_delete_named', { name }), async () => {
       try {
         await api('DELETE', `/api/courses/${id}`);
-        showToast('Course deleted');
+        showToast(tr('course_deleted'));
         reloadAfter(300);
       } catch (err) { showToast(err.message, 'error'); }
     });

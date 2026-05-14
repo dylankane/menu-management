@@ -20,6 +20,23 @@
     return str;
   }
 
+  // Translate any UI key using dot notation (e.g. 'common.tooltip_view').
+  function tUI(key, vars) {
+    const parts = key.split('.');
+    let node = UI_TRANS;
+    for (let i = 0; i < parts.length; i++) {
+      if (node == null || typeof node !== 'object') { node = undefined; break; }
+      node = node[parts[i]];
+    }
+    let str = (node !== undefined && node !== null) ? String(node) : key;
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        str = str.replace('{' + k + '}', vars[k]);
+      });
+    }
+    return str;
+  }
+
   // ── HTML escape ──────────────────────────────────────────────────────────
   function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

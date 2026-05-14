@@ -54,7 +54,7 @@
             <div class="discount-group">
               <label class="smb-avail-switch smb-avail-switch--brand">
                 <input type="checkbox" id="smHasDiscount" name="has_discount" onchange="toggleSmDiscount()">
-                <span class="smb-avail-label" id="smDiscountLabel">Off</span>
+                <span class="smb-avail-label" id="smDiscountLabel"><%= t('common.off') %></span>
               </label>
               <div id="smDiscountFields" class="discount-fields hidden">
                 <div class="form-group">
@@ -81,7 +81,7 @@
           <div id="smCurrentImageWrap" class="image-preview hidden">
             <img id="smCurrentImage" src="" alt="" class="table-thumb table-thumb--clickable"
                  onclick="openSmLightbox(this.src)" />
-            <span class="image-preview__label">Current image — upload new to replace</span>
+            <span class="image-preview__label"><%= t('modal.image_current') %></span>
             <button type="button" class="image-preview__clear" onclick="clearImagePreview('smImage','smCurrentImageWrap')" aria-label="Remove">&times;</button>
           </div>
         </div>
@@ -91,16 +91,16 @@
             <span class="modal-toggle-label">Availability</span>
             <label class="smb-avail-switch">
               <input type="checkbox" id="smIsAvailable" name="is_available" checked
-                     onchange="updateModalToggle('smIsAvailable', 'smAvailLabel', 'Live', 'Off')">
-              <span class="smb-avail-label smb-avail-label--on" id="smAvailLabel">Live</span>
+                     onchange="updateModalToggle('smIsAvailable', 'smAvailLabel', tUI('common.live'), tUI('common.off'))">
+              <span class="smb-avail-label smb-avail-label--on" id="smAvailLabel"><%= t('common.live') %></span>
             </label>
           </div>
           <div class="modal-toggle-item">
             <span class="modal-toggle-label">Chef's Special</span>
             <label class="smb-avail-switch smb-avail-switch--brand">
               <input type="checkbox" id="smIsSpecial" name="is_special"
-                     onchange="updateModalToggle('smIsSpecial', 'smSpecialLabel', 'Special', 'Off')">
-              <span class="smb-avail-label" id="smSpecialLabel">Off</span>
+                     onchange="updateModalToggle('smIsSpecial', 'smSpecialLabel', tUI('common.special'), tUI('common.off'))">
+              <span class="smb-avail-label" id="smSpecialLabel"><%= t('common.off') %></span>
             </label>
           </div>
         </div>
@@ -162,8 +162,8 @@
 
       </div>
       <div class="modal__footer">
-        <button type="button" onclick="_handleSmModalClose()" class="btn btn--secondary">Cancel</button>
-        <button type="submit" class="btn btn--primary">Save</button>
+        <button type="button" onclick="_handleSmModalClose()" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+        <button type="submit" class="btn btn--primary"><%= t('modal.btn_save') %></button>
       </div>
     </form>
   </div>
@@ -182,7 +182,7 @@
     const checked = document.getElementById('smHasDiscount').checked;
     document.getElementById('smDiscountFields').classList.toggle('hidden', !checked);
     const label = document.getElementById('smDiscountLabel');
-    label.textContent = checked ? 'On' : 'Off';
+    label.textContent = checked ? tUI('common.on') : tUI('common.off');
     label.className   = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
   }
 
@@ -199,15 +199,15 @@
   }
 
   function openCreateModal() {
-    document.getElementById('setMenuModalTitle').textContent = 'Create Set Menu';
+    document.getElementById('setMenuModalTitle').textContent = tUI('modal.title_create_set_menu');
     document.getElementById('setMenuId').value = '';
     document.getElementById('setMenuForm').reset();
     document.getElementById('smCurrentImageWrap').classList.add('hidden');
     document.getElementById('smDiscountFields').classList.add('hidden');
-    updateModalToggle('smIsAvailable', 'smAvailLabel', 'Live', 'Off');
-    updateModalToggle('smIsSpecial',   'smSpecialLabel', 'Special', 'Off');
+    updateModalToggle('smIsAvailable', 'smAvailLabel', tUI('common.live'), tUI('common.off'));
+    updateModalToggle('smIsSpecial',   'smSpecialLabel', tUI('common.special'), tUI('common.off'));
     const lbl = document.getElementById('smDiscountLabel');
-    lbl.textContent = 'Off';
+    lbl.textContent = tUI('common.off');
     lbl.className   = 'smb-avail-label smb-avail-label--off';
     document.querySelectorAll('.sm-cat-leaf-cb, .sm-cat-child-cb').forEach(cb => { cb.checked = false; });
     document.querySelectorAll('.sm-cat-parent-cb').forEach(cb => { cb.checked = false; });
@@ -221,7 +221,7 @@
     const sm = SM_DATA.find(s => s.id === activeSmId);
     if (!sm) return;
 
-    document.getElementById('setMenuModalTitle').textContent = 'Edit Set Menu';
+    document.getElementById('setMenuModalTitle').textContent = tUI('modal.title_edit_set_menu');
     document.getElementById('setMenuId').value               = sm.id;
     document.getElementById('smPrice').value                 = Number(sm.price).toFixed(2);
     document.getElementById('smIsAvailable').checked         = sm.is_available;
@@ -230,10 +230,10 @@
     document.getElementById('smDiscountType').value          = sm.discount_type  || 'percent';
     document.getElementById('smDiscountValue').value         = sm.discount_value ? Number(sm.discount_value).toFixed(2) : '';
     document.getElementById('smDiscountFields').classList.toggle('hidden', !sm.has_discount);
-    updateModalToggle('smIsAvailable', 'smAvailLabel',   'Live',    'Off');
-    updateModalToggle('smIsSpecial',   'smSpecialLabel', 'Special', 'Off');
+    updateModalToggle('smIsAvailable', 'smAvailLabel',   tUI('common.live'),    tUI('common.off'));
+    updateModalToggle('smIsSpecial',   'smSpecialLabel', tUI('common.special'), tUI('common.off'));
     const lbl = document.getElementById('smDiscountLabel');
-    lbl.textContent = sm.has_discount ? 'On' : 'Off';
+    lbl.textContent = sm.has_discount ? tUI('common.on') : tUI('common.off');
     lbl.className   = `smb-avail-label smb-avail-label--${sm.has_discount ? 'on' : 'off'}`;
 
     const byLang = {};
@@ -272,7 +272,7 @@
     const method = id ? 'PUT' : 'POST';
     try {
       const { data } = await api(method, url, fd);
-      showToast(id ? 'Set menu updated' : 'Set menu created');
+      showToast(tr(id ? 'set_menu_updated' : 'set_menu_created'));
       closeModal('setMenuModal');
       const cb = window._onSmSaved;
       window._onSmSaved    = null;
@@ -309,10 +309,10 @@
   async function confirmDeleteSm() {
     if (!activeSmId) return;
     const sm = SM_DATA.find(s => s.id === activeSmId);
-    confirmDelete(`Delete "${getName(sm?.translations)}"? This cannot be undone.`, async () => {
+    confirmDelete(tUI('modal.confirm_delete_named', { name: getName(sm?.translations) }), async () => {
       try {
         await api('DELETE', `/api/set-menus/${activeSmId}`);
-        showToast('Set menu deleted');
+        showToast(tr('set_menu_deleted'));
         reloadAfter(300);
       } catch (err) { showToast(err.message, 'error'); }
     });

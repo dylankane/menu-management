@@ -51,7 +51,7 @@
     <div class="card table-card">
       <div class="card__header card__header--brand">
         <h3 class="card__title"><%= t('page.menu_items.card_title') %></h3>
-        <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search & filter">
+        <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="<%= t('common.tooltip_search_filter') %>">
           <svg class="icon" style="width:1.1rem;height:1.1rem;"><use href="/admin/icons/sprite.svg#search"></use></svg>
         </button>
         <button onclick="openAddDishModal()" class="btn btn--pill btn--outline-accent-on-dark btn--sm"><%= t('page.menu_items.btn_create') %></button>
@@ -182,17 +182,17 @@
                         <%= item.is_available ? t('common.live') : t('common.off') %>
                       </span>
                     </label>
-                    <% if (isEjsUnreachable(item)) { %><span class="smb-dish__badge">Unassigned</span><% } %>
+                    <% if (isEjsUnreachable(item)) { %><span class="smb-dish__badge"><%= t('common.unassigned') %></span><% } %>
                   </div>
                 </td>
                 <td class="col-details col-align-center">
-                  <button class="btn-view" onclick="openViewModal(<%= item.id %>)" title="View details">
+                  <button class="btn-view" onclick="openViewModal(<%= item.id %>)" title="<%= t('common.tooltip_view') %>">
                     <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
                     <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                   </button>
                 </td>
                 <td class="col-delete col-align-center">
-                  <button class="btn-delete" onclick="deleteItem(<%= item.id %>, '<%= itemName(item).replace(/'/g, "\\'") %>')" title="Delete">
+                  <button class="btn-delete" onclick="deleteItem(<%= item.id %>, '<%= itemName(item).replace(/'/g, "\\'") %>')" title="<%= t('common.tooltip_delete') %>">
                     <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"/>
                       <line x1="15" y1="9" x2="9" y2="15"/>
@@ -394,10 +394,10 @@
           `<label class="smb-avail-switch" onclick="toggleAvailability(${item.id}, ${item.is_available})">` +
             `<input type="checkbox" ${item.is_available ? 'checked' : ''} readonly tabindex="-1" />` +
             `<span class="smb-avail-label smb-avail-label--${item.is_available ? 'on' : 'off'}">` +
-              `${item.is_available ? 'Live' : 'Off'}` +
+              `${item.is_available ? tUI('common.live') : tUI('common.off')}` +
             `</span>` +
           `</label>` +
-          (unreachable ? `<span class="smb-dish__badge">Unassigned</span>` : '') +
+          (unreachable ? `<span class="smb-dish__badge">${tUI('common.unassigned')}</span>` : '') +
         `</div>`;
     }
 

@@ -151,10 +151,10 @@
     <div class="card table-card">
       <div class="card__header card__header--brand">
         <h3 class="card__title"><%= t('page.gc.members.card_all_members') %></h3>
-        <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="Search">
+        <button type="button" class="filter-toggle" id="filterToggle" onclick="toggleFilterBar()" title="<%= t('common.tooltip_search') %>">
           <svg class="icon"><use href="/admin/icons/sprite.svg#search"></use></svg>
         </button>
-        <a href="/admin/gourmet-club/communications" class="card__header-icon" title="Mailing list export">
+        <a href="/admin/gourmet-club/communications" class="card__header-icon" title="<%= t('common.tooltip_mailing') %>">
           <svg class="icon"><use href="/admin/icons/sprite.svg#download"></use></svg>
         </a>
       </div>
@@ -243,13 +243,13 @@
                   </label>
                 </td>
                 <td class="col-align-center">
-                  <button class="btn-view" onclick="openGcView(<%= m.id %>)" title="View member">
+                  <button class="btn-view" onclick="openGcView(<%= m.id %>)" title="<%= t('common.tooltip_view_member') %>">
                     <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
                     <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
                   </button>
                 </td>
                 <td class="col-delete col-align-center">
-                  <button class="btn-delete" onclick="deleteMember(<%= m.id %>, '<%= m.name.replace(/'/g, "\\'") %>')" title="Delete">
+                  <button class="btn-delete" onclick="deleteMember(<%= m.id %>, '<%= m.name.replace(/'/g, "\\'") %>')" title="<%= t('common.tooltip_delete') %>">
                     <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"/>
                       <line x1="15" y1="9" x2="9" y2="15"/>
@@ -286,11 +286,11 @@
         </div>
         <label class="smb-avail-switch" onclick="gcToggleActive(event)">
           <input type="checkbox" id="gcViewActiveCheck" tabindex="-1" />
-          <span class="smb-avail-label smb-avail-label--off" id="gcViewActiveLabel">Inactive</span>
+          <span class="smb-avail-label smb-avail-label--off" id="gcViewActiveLabel"><%= t('page.gc.members.inactive_label') %></span>
         </label>
         <label class="smb-avail-switch" onclick="gcToggleConsent(event)">
           <input type="checkbox" id="gcViewConsentCheck" tabindex="-1" />
-          <span class="smb-avail-label smb-avail-label--off" id="gcViewConsentLabel">No consent</span>
+          <span class="smb-avail-label smb-avail-label--off" id="gcViewConsentLabel"><%= t('common.no_consent') %></span>
         </label>
       </div>
 
@@ -327,7 +327,7 @@
           <span class="gc-visit-count" id="gcViewVisitCount">0</span>
         </div>
         <div id="gcViewVisitList" class="gc-visit-list">
-          <p class="gc-visit-list__empty">No visits recorded yet.</p>
+          <p class="gc-visit-list__empty"><%= t('page.gc.members.no_visits') %></p>
         </div>
         <div class="gc-log-form">
           <div class="form-grid-2">
@@ -337,7 +337,7 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="gcLogNotes"><%= t('common.notes') %></label>
-              <input type="text" id="gcLogNotes" class="form-input" placeholder="Optional note..." />
+              <input type="text" id="gcLogNotes" class="form-input" placeholder="<%= t('page.gc.members.placeholder_visit_note') %>" />
             </div>
           </div>
           <button type="button" class="btn btn--pill btn--outline-brand btn--sm" onclick="gcLogVisit()"><%= t('page.gc.members.btn_log_visit') %></button>
@@ -479,7 +479,7 @@
   // ── Add member ───────────────────────────────────────────────────────────────
   async function addMember() {
     const name = document.getElementById('gcName').value.trim();
-    if (!name) { showToast('Name is required', 'error'); return; }
+    if (!name) { showToast(tr('name_required'), 'error'); return; }
     const body = {
       name,
       email:             document.getElementById('gcEmail').value.trim()  || null,
@@ -491,7 +491,7 @@
     };
     try {
       await api('POST', '/api/gourmet-club/members', body);
-      showToast('Member added');
+      showToast(tr('member_added'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }
@@ -511,7 +511,7 @@
     if (!confirm(`Delete member "${name}"? This cannot be undone.`)) return;
     try {
       await api('DELETE', `/api/gourmet-club/members/${id}`);
-      showToast('Member deleted');
+      showToast(tr('member_deleted'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }
@@ -527,19 +527,19 @@
     document.getElementById('gcViewAvatar').textContent = m.name.charAt(0).toUpperCase();
 
     document.getElementById('gcViewBadges').innerHTML = m.marketing_consent
-      ? '<span class="gc-badge gc-badge--consent">Consented</span>'
-      : '<span class="gc-badge gc-badge--muted">No consent</span>';
+      ? `<span class="gc-badge gc-badge--consent">${tUI('common.consented')}</span>`
+      : `<span class="gc-badge gc-badge--muted">${tUI('common.no_consent')}</span>`;
 
     const check = document.getElementById('gcViewActiveCheck');
     const label = document.getElementById('gcViewActiveLabel');
     check.checked     = m.is_active;
-    label.textContent = m.is_active ? 'Active' : 'Inactive';
+    label.textContent = m.is_active ? tUI('page.gc.members.active_label') : tUI('page.gc.members.inactive_label');
     label.className   = `smb-avail-label ${m.is_active ? 'smb-avail-label--on' : 'smb-avail-label--off'}`;
 
     const consentCheck = document.getElementById('gcViewConsentCheck');
     const consentLabel = document.getElementById('gcViewConsentLabel');
     consentCheck.checked     = m.marketing_consent;
-    consentLabel.textContent = m.marketing_consent ? 'Consent' : 'No consent';
+    consentLabel.textContent = m.marketing_consent ? tUI('common.consent') : tUI('common.no_consent');
     consentLabel.className   = `smb-avail-label ${m.marketing_consent ? 'smb-avail-label--on' : 'smb-avail-label--off'}`;
 
     document.getElementById('gcViewEmail').innerHTML = m.email
@@ -551,7 +551,7 @@
     document.getElementById('gcViewJoined').textContent   =
       new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     document.getElementById('gcViewSource').textContent   =
-      ({ admin: 'Admin entry', qr_menu: 'QR sign-up', reservation: 'Reservation' })[m.source] || m.source || '—';
+      ({ admin: tUI('page.gc.members.source_admin'), qr_menu: tUI('page.gc.members.source_qr'), reservation: tUI('page.gc.members.source_reservation') })[m.source] || m.source || '—';
 
     const notesRow = document.getElementById('gcViewNotesRow');
     if (m.notes) {
@@ -571,38 +571,38 @@
   async function loadGcVisits(id) {
     const list    = document.getElementById('gcViewVisitList');
     const countEl = document.getElementById('gcViewVisitCount');
-    list.innerHTML = '<p class="gc-visit-list__empty">Loading...</p>';
+    list.innerHTML = `<p class="gc-visit-list__empty">${tUI('common.loading')}</p>`;
     try {
       const res    = await api('GET', `/api/gourmet-club/members/${id}/visits`);
       const visits = res.data.visits;
       countEl.textContent = visits.length;
       if (visits.length === 0) {
-        list.innerHTML = '<p class="gc-visit-list__empty">No visits recorded yet.</p>';
+        list.innerHTML = `<p class="gc-visit-list__empty">${tUI('page.gc.members.no_visits')}</p>`;
       } else {
         list.innerHTML = visits.map(v => `
           <div class="gc-visit-item" data-id="${v.id}">
             <span class="gc-visit-item__date">${new Date(v.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
             ${v.notes ? `<span class="gc-visit-item__notes">${esc(v.notes)}</span>` : ''}
             ${v.user  ? `<span class="gc-visit-item__by">by ${esc(v.user.name)}</span>` : ''}
-            <button class="btn-delete gc-visit-item__del" onclick="gcDeleteVisit(${v.id})" title="Remove">
+            <button class="btn-delete gc-visit-item__del" onclick="gcDeleteVisit(${v.id})" title="${tUI('common.tooltip_remove')}">
               <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
             </button>
           </div>
         `).join('');
       }
     } catch {
-      list.innerHTML = '<p class="gc-visit-list__empty">Failed to load visits.</p>';
+      list.innerHTML = `<p class="gc-visit-list__empty">${tUI('modal.failed_load_visits')}</p>`;
     }
   }
 
   async function gcLogVisit() {
     const date  = document.getElementById('gcLogDate').value;
     const notes = document.getElementById('gcLogNotes').value.trim();
-    if (!date) { showToast('Date is required', 'error'); return; }
+    if (!date) { showToast(tr('error_select_date'), 'error'); return; }
     if (!gcCurrentMemberId) return;
     try {
       await api('POST', `/api/gourmet-club/members/${gcCurrentMemberId}/visits`, { date, notes: notes || null });
-      showToast('Visit logged');
+      showToast(tr('visit_added'));
       document.getElementById('gcLogNotes').value = '';
       const row = document.querySelector(`#membersBody tr[data-id="${gcCurrentMemberId}"]`);
       if (row) {
@@ -614,10 +614,10 @@
   }
 
   async function gcDeleteVisit(visitId) {
-    if (!confirm('Remove this visit?')) return;
+    if (!confirm(tUI('modal.confirm_delete'))) return;
     try {
       await api('DELETE', `/api/gourmet-club/visits/${visitId}`);
-      showToast('Visit removed');
+      showToast(tr('visit_deleted'));
       const row = document.querySelector(`#membersBody tr[data-id="${gcCurrentMemberId}"]`);
       if (row) {
         const el = row.querySelector('.gc-visit-count');
@@ -638,11 +638,11 @@
       const check = document.getElementById('gcViewActiveCheck');
       const label = document.getElementById('gcViewActiveLabel');
       check.checked     = newVal;
-      label.textContent = newVal ? 'Active' : 'Inactive';
+      label.textContent = newVal ? tUI('page.gc.members.active_label') : tUI('page.gc.members.inactive_label');
       label.className   = `smb-avail-label ${newVal ? 'smb-avail-label--on' : 'smb-avail-label--off'}`;
       const row = document.querySelector(`#membersBody tr[data-id="${gcCurrentMemberId}"]`);
       if (row) row.dataset.active = String(newVal);
-      showToast(`Member ${newVal ? 'activated' : 'deactivated'}`);
+      showToast(tr(newVal ? 'member_activated' : 'member_deactivated'));
     } catch (err) { showToast(err.message, 'error'); }
   }
 
@@ -651,7 +651,7 @@
     const check = document.getElementById('gcConsent');
     const label = document.getElementById('gcConsentLabel');
     check.checked     = !check.checked;
-    label.textContent = check.checked ? 'Consent' : 'No consent';
+    label.textContent = check.checked ? tUI('common.consent') : tUI('common.no_consent');
     label.className   = `smb-avail-label ${check.checked ? 'smb-avail-label--on' : 'smb-avail-label--off'}`;
   }
 
@@ -666,12 +666,12 @@
       const check = document.getElementById('gcViewConsentCheck');
       const label = document.getElementById('gcViewConsentLabel');
       check.checked     = newVal;
-      label.textContent = newVal ? 'Consent' : 'No consent';
+      label.textContent = newVal ? tUI('common.consent') : tUI('common.no_consent');
       label.className   = `smb-avail-label ${newVal ? 'smb-avail-label--on' : 'smb-avail-label--off'}`;
       document.getElementById('gcViewBadges').innerHTML = newVal
-        ? '<span class="gc-badge gc-badge--consent">Consented</span>'
-        : '<span class="gc-badge gc-badge--muted">No consent</span>';
-      showToast(`Consent ${newVal ? 'granted' : 'removed'}`);
+        ? `<span class="gc-badge gc-badge--consent">${tUI('common.consented')}</span>`
+        : `<span class="gc-badge gc-badge--muted">${tUI('common.no_consent')}</span>`;
+      showToast(tr(newVal ? 'consent_granted' : 'consent_removed'));
     } catch (err) { showToast(err.message, 'error'); }
   }
 
@@ -695,7 +695,7 @@
   async function saveGcEdit() {
     const id   = parseInt(document.getElementById('gcEditId').value, 10);
     const name = document.getElementById('gcEditName').value.trim();
-    if (!name) { showToast('Name is required', 'error'); return; }
+    if (!name) { showToast(tr('name_required'), 'error'); return; }
     const body = {
       name,
       email:             document.getElementById('gcEditEmail').value.trim() || null,
@@ -708,7 +708,7 @@
     };
     try {
       await api('PUT', `/api/gourmet-club/members/${id}`, body);
-      showToast('Member updated');
+      showToast(tr('member_updated'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }

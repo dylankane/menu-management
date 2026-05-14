@@ -6,7 +6,7 @@
 <div id="addItemModal" class="modal-overlay hidden">
   <div class="modal modal--lg" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title" id="addItemModalTitle">Add Item</h3>
+      <h3 class="modal__title" id="addItemModalTitle"><%= t('modal.title_add_item') %></h3>
       <button onclick="closeModal('addItemModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
@@ -18,7 +18,7 @@
       </div>
 
       <div class="form-group">
-        <input type="text" id="addItemSearch" placeholder="Search items…"
+        <input type="text" id="addItemSearch" placeholder="<%= t('modal.search_placeholder_items') %>"
                oninput="filterItemSearch()" class="form-input" />
       </div>
 
@@ -26,7 +26,7 @@
       <div id="addItemList" class="add-to-cat-list"></div>
 
       <div class="modal-create-action" id="addItemCreateAction">
-        <button type="button" class="btn btn--pill link--slide" onclick="swapToItemModal()">+ Create Item</button>
+        <button type="button" class="btn btn--pill link--slide" onclick="swapToItemModal()"><%= t('page.menu_items.btn_create') %></button>
       </div>
 
       <!-- Per-language notes — shown after an item is selected when showNotes is true -->
@@ -57,8 +57,8 @@
 
     </div>
     <div class="modal__footer">
-      <button onclick="closeModal('addItemModal')" class="btn btn--secondary">Cancel</button>
-      <button onclick="submitAddItem()" class="btn btn--primary">Add Item</button>
+      <button onclick="closeModal('addItemModal')" class="btn btn--secondary"><%= t('common.cancel') %></button>
+      <button onclick="submitAddItem()" class="btn btn--primary"><%= t('modal.title_add_item') %></button>
     </div>
   </div>
 </div>
@@ -74,7 +74,7 @@
     _selectedItemId   = null;
     _selectedItemType = null;
 
-    document.getElementById('addItemModalTitle').textContent = _addItemConfig.title || 'Add Item';
+    document.getElementById('addItemModalTitle').textContent = _addItemConfig.title || tUI('modal.title_add_item');
 
     // Section / course dropdown
     const sectionWrap   = document.getElementById('addItemSectionWrap');
@@ -135,7 +135,7 @@
   }
 
   async function submitAddItem() {
-    if (!_selectedItemId) return showToast('Select an item first', 'error');
+    if (!_selectedItemId) return showToast(tUI('modal.validation_select_item'), 'error');
     if (!_addItemConfig?.onSubmit) return;
 
     const sectionWrap = document.getElementById('addItemSectionWrap');
@@ -143,7 +143,7 @@
     let sectionId;
     if (useSelector) {
       sectionId = parseInt(document.getElementById('addItemSectionSelect').value);
-      if (!sectionId) return showToast('Please select a section', 'error');
+      if (!sectionId) return showToast(tUI('modal.validation_select_section'), 'error');
     } else {
       sectionId = _addItemConfig.sectionId ?? null;
     }

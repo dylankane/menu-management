@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Support', restaurantName, section: 'admin' }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.support.title'), restaurantName, section: 'admin' }) %>
 <body>
 
 <%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <div class="main">
   <header class="page-header page-header--minimal">
-    <h2 class="page-header__title">Support</h2>
+    <h2 class="page-header__title"><%= t('page.support.title') %></h2>
     <%- include('./partials/lang-selector') %>
   </header>
 
@@ -16,10 +16,10 @@
 
       <div class="card support-card">
         <div class="support-card__brand">
-          <img src="/admin/media/logo-light.png" alt="BOCETO" class="support-card__logo" />
+          <img src="/admin/media/logo-dark.png" alt="BOCETO" class="support-card__logo" />
           <span class="support-card__name">BOCETO</span>
         </div>
-        <p class="support-card__tagline">Technical support, feature requests and platform questions</p>
+        <p class="support-card__tagline"><%= t('page.support.tagline') %></p>
 
         <div class="support-card__contacts">
 
@@ -31,7 +31,7 @@
               </svg>
             </span>
             <span class="support-contact-row__detail">
-              <span class="support-contact-row__label">Email</span>
+              <span class="support-contact-row__label"><%= t('common.email') %></span>
               <span class="support-contact-row__value">indo@boceto42.eu</span>
             </span>
           </a>
@@ -43,7 +43,7 @@
               </svg>
             </span>
             <span class="support-contact-row__detail">
-              <span class="support-contact-row__label">Phone</span>
+              <span class="support-contact-row__label"><%= t('common.phone') %></span>
               <span class="support-contact-row__value">+34 677 473 085</span>
             </span>
           </a>
@@ -66,7 +66,7 @@
     </div>
   </main>
   <footer class="page-legal-footer">
-    <a href="/admin/privacy">Legal &amp; Privacy <svg class="icon page-legal-footer__icon"><use href="/admin/icons/sprite.svg#arrow-up-right"></use></svg></a>
+    <a href="/admin/privacy"><%= t('common.legal_privacy') %> <svg class="icon page-legal-footer__icon"><use href="/admin/icons/sprite.svg#arrow-up-right"></use></svg></a>
   </footer>
 </div>
 

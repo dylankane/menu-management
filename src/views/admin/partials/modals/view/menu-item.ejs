@@ -73,8 +73,8 @@
     </div>
 
     <div class="modal__footer">
-      <button onclick="closeModal('itemViewModal')" class="btn btn--secondary">Close</button>
-      <button onclick="_itemViewToEdit()" class="btn btn--primary">Edit Item</button>
+      <button onclick="closeModal('itemViewModal')" class="btn btn--secondary"><%= t('common.close') %></button>
+      <button onclick="_itemViewToEdit()" class="btn btn--primary"><%= t('modal.btn_edit_item') %></button>
     </div>
 
   </div>
@@ -153,7 +153,7 @@
     const badgesEl = document.getElementById('itemViewBadges');
     badgesEl.innerHTML =
       `<span class="smb-avail smb-avail--${item.is_available ? 'on' : 'off'}"></span>` +
-      `<span class="smb-avail-label">${item.is_available ? 'Live' : 'Off'}</span>` +
+      `<span class="smb-avail-label">${item.is_available ? tUI('common.live') : tUI('common.off')}</span>` +
       (item.is_special ? `&nbsp;&nbsp;<span class="tag">Chef's Special</span>` : '');
 
     // Notes — always visible, dash when empty

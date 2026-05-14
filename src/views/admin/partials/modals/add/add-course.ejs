@@ -4,16 +4,16 @@
 <div id="addCourseToSmModal" class="modal-overlay hidden">
   <div class="modal modal--lg" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title">Add Course</h3>
+      <h3 class="modal__title"><%= t('modal.title_add_course') %></h3>
       <button onclick="closeModal('addCourseToSmModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
       <div class="form-group">
-        <input type="text" id="addCourseSearch" placeholder="Search courses…" oninput="filterCourseSearch()" class="form-input" />
+        <input type="text" id="addCourseSearch" placeholder="<%= t('modal.search_placeholder_courses') %>" oninput="filterCourseSearch()" class="form-input" />
       </div>
       <div id="addCourseList" class="add-to-cat-list"></div>
       <div class="modal-create-action">
-        <button type="button" class="btn btn--pill link--slide" onclick="swapToCourseModal()">+ Create Course</button>
+        <button type="button" class="btn btn--pill link--slide" onclick="swapToCourseModal()"><%= t('modal.btn_create_course') %></button>
       </div>
       <div id="addCourseNoteWrap" class="modal-note-wrap hidden">
         <h4 class="modal-section-title">Add A Note</h4>
@@ -33,7 +33,7 @@
                   Note for this course (<%= lang.toUpperCase() %>) <span class="hint">— optional</span>
                 </label>
                 <input type="text" id="addCourseNote_<%= lang %>" class="form-input form-input--sm"
-                  placeholder="e.g. Please choose one dish…" />
+                  placeholder="<%= t('modal.placeholder_note') %>" />
               </div>
             </div>
           <% }) %>
@@ -41,8 +41,8 @@
       </div>
     </div>
     <div class="modal__footer">
-      <button onclick="closeModal('addCourseToSmModal')" class="btn btn--secondary">Cancel</button>
-      <button onclick="submitAddCourseToSm()" class="btn btn--primary">Add Course</button>
+      <button onclick="closeModal('addCourseToSmModal')" class="btn btn--secondary"><%= t('common.cancel') %></button>
+      <button onclick="submitAddCourseToSm()" class="btn btn--primary"><%= t('modal.title_add_course') %></button>
     </div>
   </div>
 </div>
@@ -58,7 +58,7 @@
     const list    = document.getElementById('addCourseList');
 
     if (available.length === 0) {
-      list.innerHTML = '<div class="smb-panel__empty">All courses already added to this set menu</div>';
+      list.innerHTML = `<div class="smb-panel__empty">${tUI('modal.all_courses_added')}</div>`;
     } else {
       list.innerHTML = available.map(c => `
         <div class="add-to-cat-item" data-course-id="${c.id}"
@@ -96,7 +96,7 @@
   }
 
   async function submitAddCourseToSm() {
-    if (!_selectedCourseId) return showToast('Select a course first', 'error');
+    if (!_selectedCourseId) return showToast(tUI('modal.validation_select_course'), 'error');
     const notes = {};
     LANGS.forEach(lang => {
       const val = document.getElementById(`addCourseNote_${lang}`)?.value.trim();

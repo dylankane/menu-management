@@ -3,13 +3,13 @@
 <div id="addToCatModal" class="modal-overlay hidden">
   <div class="modal modal--lg" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title" id="addToCatModalTitle">Add Dish to Category</h3>
+      <h3 class="modal__title" id="addToCatModalTitle"><%= t('modal.add_dish_generic') %></h3>
       <button onclick="closeModal('addToCatModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
       <input type="hidden" id="addToCatCatId" />
       <div class="form-group">
-        <input type="text" id="addToCatSearch" placeholder="Search items…" oninput="filterAddToCatDishes()" class="form-input" />
+        <input type="text" id="addToCatSearch" placeholder="<%= t('modal.search_placeholder_items') %>" oninput="filterAddToCatDishes()" class="form-input" />
       </div>
       <div id="addToCatList" class="add-to-cat-list" style="max-height:16rem;overflow-y:auto;">
         <% allItems.forEach(item => {
@@ -22,12 +22,12 @@
         <% }) %>
       </div>
       <div class="modal-create-action">
-        <button type="button" class="btn btn--pill link--slide" onclick="swapToCreateFromAddToCat()">+ Create Item</button>
+        <button type="button" class="btn btn--pill link--slide" onclick="swapToCreateFromAddToCat()"><%= t('page.menu_items.btn_create') %></button>
       </div>
     </div>
     <div class="modal__footer">
-      <button type="button" onclick="closeModal('addToCatModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitAddToCategory()" class="btn btn--primary">Add to Category</button>
+      <button type="button" onclick="closeModal('addToCatModal')" class="btn btn--secondary"><%= t('common.cancel') %></button>
+      <button type="button" onclick="submitAddToCategory()" class="btn btn--primary"><%= t('modal.btn_add_to_category') %></button>
     </div>
   </div>
 </div>
@@ -38,7 +38,7 @@
   function openAddToCatModal(catId, catNameStr) {
     document.getElementById('addToCatCatId').value = catId;
     document.getElementById('addToCatModalTitle').textContent =
-      catNameStr ? `Add Dish to "${catNameStr}"` : 'Add Dish to Category';
+      catNameStr ? tUI('modal.add_dish_to', { name: catNameStr }) : tUI('modal.add_dish_generic');
     document.getElementById('addToCatSearch').value = '';
     _addToCatSelectedId = null;
     document.querySelectorAll('#addToCatList .add-to-cat-item').forEach(el => {
@@ -62,13 +62,13 @@
   }
 
   async function submitAddToCategory() {
-    if (!_addToCatSelectedId) return showToast('Select a dish first', 'error');
+    if (!_addToCatSelectedId) return showToast(tUI('modal.validation_select_dish'), 'error');
     const catId = document.getElementById('addToCatCatId').value;
     try {
       await api('POST', `/api/menu-items/${_addToCatSelectedId}/add-to-category`, {
         category_id: parseInt(catId),
       });
-      showToast('Dish added to category');
+      showToast(tr('item_added_to_category'));
       closeModal('addToCatModal');
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }

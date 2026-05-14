@@ -24,15 +24,15 @@
             <div class="form-group" style="margin-top:0.5rem;">
               <label class="form-label">(<%= lang.toUpperCase() %>)</label>
               <input type="text" id="noteInput_<%= lang %>" class="form-input"
-                placeholder="e.g. Please choose one dish…" />
+                placeholder="<%= t('modal.placeholder_note') %>" />
             </div>
           </div>
         <% }) %>
       </div>
     </div>
     <div class="modal__footer">
-      <button onclick="closeModal('noteModal')" class="btn btn--secondary">Cancel</button>
-      <button onclick="submitNote()" class="btn btn--primary">Save Note</button>
+      <button onclick="closeModal('noteModal')" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+      <button onclick="submitNote()" class="btn btn--primary"><%= t('modal.btn_save_note') %></button>
     </div>
   </div>
 </div>
@@ -43,9 +43,8 @@
     document.getElementById('noteType').value   = type;
 
     if (type === 'course') {
-      document.getElementById('noteModalTitle').textContent = 'Edit Course Note';
-      document.getElementById('noteModalHint').textContent  =
-        'This note is shown under the course name on the customer menu for this set menu only.';
+      document.getElementById('noteModalTitle').textContent = tUI('modal.title_edit_note_course');
+      document.getElementById('noteModalHint').textContent  = tUI('modal.note_hint_course');
       const sm  = SM_DATA.find(s => s.id === activeSmId);
       const smc = sm?.courses.find(c => c.id === targetId);
       LANGS.forEach(lang => {
@@ -54,9 +53,8 @@
         if (el) el.value = t?.notes || '';
       });
     } else {
-      document.getElementById('noteModalTitle').textContent = 'Edit Item Note';
-      document.getElementById('noteModalHint').textContent  =
-        'This note is shown under the item name on the customer menu for this set menu only.';
+      document.getElementById('noteModalTitle').textContent = tUI('modal.title_edit_note_item');
+      document.getElementById('noteModalHint').textContent  = tUI('modal.note_hint_item');
       const sm  = SM_DATA.find(s => s.id === activeSmId);
       const smd = [...(sm?.courses || []).flatMap(c => c.dishes), ...(sm?.dishes || [])]
         .find(d => d.id === targetId);
@@ -87,7 +85,7 @@
 
     try {
       await api(method, url, body);
-      showToast('Note saved');
+      showToast(tr('note_saved'));
       closeModal('noteModal');
       await refreshAndRender(activeSmId);
     } catch (err) { showToast(err.message, 'error'); }

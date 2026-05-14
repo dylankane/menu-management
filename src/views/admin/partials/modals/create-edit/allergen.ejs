@@ -5,7 +5,7 @@
 <div id="addAllergenModal" class="modal-overlay hidden">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title">Add Allergen</h3>
+      <h3 class="modal__title"><%= t('page.tags.modal_add_allergen') %></h3>
       <button onclick="closeModal('addAllergenModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body">
@@ -29,8 +29,8 @@
       </div>
     </div>
     <div class="modal__footer">
-      <button type="button" onclick="closeModal('addAllergenModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitAddAllergen()" class="btn btn--primary">Save</button>
+      <button type="button" onclick="closeModal('addAllergenModal')" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+      <button type="button" onclick="submitAddAllergen()" class="btn btn--primary"><%= t('modal.btn_save') %></button>
     </div>
   </div>
 </div>
@@ -39,7 +39,7 @@
 <div id="editAllergenModal" class="modal-overlay hidden">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal__header">
-      <h3 class="modal__title">Edit Allergen</h3>
+      <h3 class="modal__title"><%= t('page.tags.modal_edit_allergen') %></h3>
       <button onclick="closeModal('editAllergenModal')" class="modal__close">&times;</button>
     </div>
     <div class="modal__body" data-lang-container>
@@ -62,8 +62,8 @@
       <% }) %>
     </div>
     <div class="modal__footer">
-      <button type="button" onclick="closeModal('editAllergenModal')" class="btn btn--secondary">Cancel</button>
-      <button type="button" onclick="submitEditAllergen()" class="btn btn--primary">Save Changes</button>
+      <button type="button" onclick="closeModal('editAllergenModal')" class="btn btn--secondary"><%= t('modal.btn_cancel') %></button>
+      <button type="button" onclick="submitEditAllergen()" class="btn btn--primary"><%= t('modal.btn_save_changes') %></button>
     </div>
   </div>
 </div>
@@ -99,7 +99,7 @@
     });
     try {
       await api('POST', '/api/allergens', body);
-      showToast('Allergen added');
+      showToast(tr('allergen_added'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }
@@ -113,16 +113,16 @@
     });
     try {
       await api('PUT', `/api/allergens/${id}`, body);
-      showToast('Allergen updated');
+      showToast(tr('allergen_updated'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }
 
   async function deleteAllergen(id, name) {
-    confirmDelete(`Delete allergen "${name}"?`, async () => {
+    confirmDelete(tUI('modal.confirm_delete_named', { name }), async () => {
       try {
         await api('DELETE', `/api/allergens/${id}`);
-        showToast('Allergen deleted');
+        showToast(tr('allergen_deleted'));
         reloadAfter();
       } catch (err) { showToast(err.message, 'error'); }
     });

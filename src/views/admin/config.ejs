@@ -1,71 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
-<%- include('../partials/head', { title: 'Config', restaurantName, section: 'admin' }) %>
+<html lang="<%= uiLang %>">
+<%- include('../partials/head', { title: t('page.config.title'), restaurantName, section: 'admin' }) %>
 <body>
 
 <%- include('./partials/sidebar', { current, user, restaurantName }) %>
 
 <div class="main">
-  <header class="page-header">
-    <h2 class="page-header__title">Config</h2>
+  <header class="page-header page-header--minimal">
+    <h2 class="page-header__title"><%= t('page.config.title') %></h2>
+    <%- include('./partials/lang-selector') %>
   </header>
 
   <main class="page-body">
     <div class="card config-card">
       <div class="card__header card__header--accent">
-        <h3 class="card__title">Client Features</h3>
+        <h3 class="card__title"><%= t('page.config.card_features') %></h3>
       </div>
       <div class="card__body">
 
         <div class="config-row">
           <div class="config-row__info">
-            <p class="config-row__name">Menu</p>
-            <p class="config-row__desc">Customer-facing menu, menu builder, items, set menus and categories.</p>
+            <p class="config-row__name"><%= t('page.config.menu_name') %></p>
+            <p class="config-row__desc"><%= t('page.config.menu_desc') %></p>
           </div>
           <label class="smb-avail-switch">
             <input type="checkbox" id="cfgMenu"
                    <%= account.has_menu !== false ? 'checked' : '' %>
                    onchange="updateLabel('cfgMenuLabel', this.checked)">
             <span class="smb-avail-label smb-avail-label--<%= account.has_menu !== false ? 'on' : 'off' %>" id="cfgMenuLabel">
-              <%= account.has_menu !== false ? 'On' : 'Off' %>
+              <%= account.has_menu !== false ? t('common.on') : t('common.off') %>
             </span>
           </label>
         </div>
 
         <div class="config-row">
           <div class="config-row__info">
-            <p class="config-row__name">Restaurant Hub</p>
-            <p class="config-row__desc">Manage restaurant identity, contact info, opening hours and announcements.</p>
+            <p class="config-row__name"><%= t('page.config.hub_name') %></p>
+            <p class="config-row__desc"><%= t('page.config.hub_desc') %></p>
           </div>
           <label class="smb-avail-switch">
             <input type="checkbox" id="cfgRestaurantHub"
                    <%= account.has_restaurant_hub ? 'checked' : '' %>
                    onchange="updateLabel('cfgRestaurantHubLabel', this.checked)">
             <span class="smb-avail-label smb-avail-label--<%= account.has_restaurant_hub ? 'on' : 'off' %>" id="cfgRestaurantHubLabel">
-              <%= account.has_restaurant_hub ? 'On' : 'Off' %>
+              <%= account.has_restaurant_hub ? t('common.on') : t('common.off') %>
             </span>
           </label>
         </div>
 
         <div class="config-row">
           <div class="config-row__info">
-            <p class="config-row__name">Gourmet Club</p>
-            <p class="config-row__desc">Loyalty and membership platform for valued guests.</p>
+            <p class="config-row__name"><%= t('page.config.gc_name') %></p>
+            <p class="config-row__desc"><%= t('page.config.gc_desc') %></p>
           </div>
           <label class="smb-avail-switch">
             <input type="checkbox" id="cfgGourmetClub"
                    <%= account.has_gourmet_club ? 'checked' : '' %>
                    onchange="updateLabel('cfgGourmetClubLabel', this.checked)">
             <span class="smb-avail-label smb-avail-label--<%= account.has_gourmet_club ? 'on' : 'off' %>" id="cfgGourmetClubLabel">
-              <%= account.has_gourmet_club ? 'On' : 'Off' %>
+              <%= account.has_gourmet_club ? t('common.on') : t('common.off') %>
             </span>
           </label>
         </div>
 
         <div class="config-row">
           <div class="config-row__info">
-            <p class="config-row__name">Max Languages</p>
-            <p class="config-row__desc">Maximum number of languages the client can enable for their menu. Minimum 2.</p>
+            <p class="config-row__name"><%= t('page.config.max_lang_name') %></p>
+            <p class="config-row__desc"><%= t('page.config.max_lang_desc') %></p>
           </div>
           <input type="number" id="cfgMaxLanguages" class="form-input config-row__number"
                  value="<%= account.max_languages ?? 3 %>" min="2" max="10" />
@@ -73,7 +74,7 @@
 
       </div>
       <div class="card__footer form-footer">
-        <button onclick="saveConfig()" class="btn btn--primary">Save</button>
+        <button onclick="saveConfig()" class="btn btn--primary"><%= t('common.save') %></button>
       </div>
     </div>
   </main>
@@ -83,7 +84,7 @@
 <script>
   function updateLabel(labelId, checked) {
     const lbl = document.getElementById(labelId);
-    lbl.textContent  = checked ? 'On' : 'Off';
+    lbl.textContent  = checked ? tUI('common.on') : tUI('common.off');
     lbl.className    = `smb-avail-label smb-avail-label--${checked ? 'on' : 'off'}`;
   }
 
@@ -96,7 +97,7 @@
     };
     try {
       await api('PUT', '/api/super-admin/config', body);
-      showToast('Config saved');
+      showToast(tr('config_saved'));
       reloadAfter();
     } catch (err) { showToast(err.message, 'error'); }
   }
