@@ -127,7 +127,10 @@
         <!-- Sticky header -->
         <div class="smb-header">
           <div class="smb-header__row">
-            <h3 class="smb-header__name" id="builder-name">—</h3>
+            <div class="smb-header__title-group">
+              <h3 class="smb-header__name" id="builder-name">—</h3>
+              <p class="smb-header__desc hidden" id="builder-desc"></p>
+            </div>
             <span class="smb-header__count" id="builder-count"></span>
             <div id="builder-langs" class="tag-list smb-header__langs"></div>
             <label class="smb-avail-switch" title="<%= t('common.tooltip_toggle_avail') %>">
@@ -315,6 +318,11 @@ function renderBuilder(cat) {
 
   // Header name + count
   document.getElementById('builder-name').textContent = getName(cat.translations);
+  const descEl   = document.getElementById('builder-desc');
+  const descTr   = (cat.translations || []).find(t => t.lang === PRIMARY) || (cat.translations || [])[0];
+  const descText = descTr ? (descTr.description || '') : '';
+  descEl.textContent = descText;
+  descEl.classList.toggle('hidden', !descText);
   if (!cat.parent_id && cat.children && cat.children.length > 0) {
     const subsCount = cat.children.length;
     document.getElementById('builder-count').textContent =
@@ -518,7 +526,7 @@ Sortable.create(document.getElementById('builder-cats'), {
       display_order: i,
     }));
     api('PATCH', '/api/categories/reorder', { items })
-      .catch(err => showToast(err.message, 'error'));
+      .catch(err => showToast(apiError(err), 'error'));
   },
 });
 
@@ -540,7 +548,7 @@ function initSortables(catId) {
           }
           refreshSidebar();
         })
-        .catch(err => showToast(err.message, 'error'));
+        .catch(err => showToast(apiError(err), 'error'));
     },
     onItemEnd(evt) {
       const fromCatId = parseInt(evt.from.dataset.catId);
@@ -560,7 +568,7 @@ function initSortables(catId) {
             adjustSubCount(toCatId,   +1, false);
           })
           .catch(err => {
-            showToast(err.status === 409 ? UI_MESSAGES.itemAlreadyInCategory : UI_MESSAGES.genericError, 'error');
+            showToast(apiError(err), 'error');
             setTimeout(() => location.reload(), 3500);
           });
         } else {
@@ -578,7 +586,7 @@ function initSortables(catId) {
             adjustSubCount(toCatId,   +1, true);
           })
           .catch(err => {
-            showToast(err.status === 409 ? UI_MESSAGES.itemAlreadyInCategory : UI_MESSAGES.genericError, 'error');
+            showToast(apiError(err), 'error');
             setTimeout(() => location.reload(), 3500);
           });
         } else {
@@ -597,7 +605,7 @@ function reorderDishList(listEl) {
   }));
   if (!items.length) return;
   api('PATCH', '/api/menu-items/reorder', { category_id: catId, items })
-    .catch(err => showToast(err.message, 'error'));
+    .catch(err => showToast(apiError(err), 'error'));
 }
 
 function reorderSetMenuList(listEl) {
@@ -608,7 +616,7 @@ function reorderSetMenuList(listEl) {
   }));
   if (!items.length) return;
   api('PATCH', '/api/set-menus/reorder-in-category', { category_id: catId, items })
-    .catch(err => showToast(err.message, 'error'));
+    .catch(err => showToast(apiError(err), 'error'));
 }
 
 function adjustSubCount(catId, delta, isSetMenu) {
@@ -659,7 +667,7 @@ async function toggleAvailability() {
     refreshBuilderBody();
   } catch (err) {
     chk.checked = !chk.checked;
-    showToast(err.message, 'error');
+    showToast(apiError(err), 'error');
   }
 }
 
@@ -716,7 +724,7 @@ function openAddToCatModal(catId, catNameStr) {
         }
         reloadAfter();
       } catch (err) {
-        showToast(err.status === 409 ? UI_MESSAGES.itemAlreadyInCategory : err.message, 'error');
+        showToast(apiError(err), 'error');
       }
     },
   });
@@ -728,7 +736,7 @@ function removeItemFromCat(itemId, catId, name, location) {
       await api('DELETE', `/api/menu-items/${itemId}/categories/${catId}`);
       showToast(tr('item_removed_from_category'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   });
 }
 
@@ -738,7 +746,7 @@ function removeSetMenuFromCat(setMenuId, catId, name, location) {
       await api('DELETE', `/api/set-menus/${setMenuId}/categories/${catId}`);
       showToast(tr('set_menu_removed_from_category'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   });
 }
 
@@ -756,7 +764,7 @@ async function toggleCategoryStatus(id, checked) {
     showToast(tr(checked ? 'category_live' : 'category_hidden'));
     refreshSidebar();
     refreshBuilderBody();
-  } catch (err) { showToast(err.message, 'error'); }
+  } catch (err) { showToast(apiError(err), 'error'); }
 }
 
 async function toggleSubAvailability(subId, checked) {
@@ -781,7 +789,7 @@ async function toggleSubAvailability(subId, checked) {
       const chk = courseEl.querySelector('input[type="checkbox"]');
       if (chk) chk.checked = !checked;
     }
-    showToast(err.message, 'error');
+    showToast(apiError(err), 'error');
   }
 }
 
@@ -793,7 +801,26 @@ async function openBuilderItemView(itemId) {
     const idx  = ITEMS_DATA.findIndex(i => i.id === item.id);
     if (idx !== -1) ITEMS_DATA[idx] = item; else ITEMS_DATA.push(item);
     openViewModal(itemId);
-  } catch (err) { showToast(err.message, 'error'); }
+  } catch (err) { showToast(apiError(err), 'error'); }
+}
+
+function updateTableRow(updatedItem) {
+  const idx = ALL_ITEMS.findIndex(i => i.id === updatedItem.id);
+  if (idx !== -1) ALL_ITEMS[idx] = updatedItem; else ALL_ITEMS.push(updatedItem);
+  for (const cat of CATS_DATA) {
+    for (const mic of (cat.menu_item_categories || [])) {
+      if (mic.menu_item && mic.menu_item.id === updatedItem.id) mic.menu_item = updatedItem;
+    }
+    for (const sub of (cat.children || [])) {
+      for (const mic of (sub.menu_item_categories || [])) {
+        if (mic.menu_item && mic.menu_item.id === updatedItem.id) mic.menu_item = updatedItem;
+      }
+    }
+  }
+  if (activeCatId) {
+    const cat = findCategory(activeCatId);
+    if (cat) renderBuilder(cat);
+  }
 }
 
 async function openBuilderSmView(setMenuId) {
@@ -801,7 +828,7 @@ async function openBuilderSmView(setMenuId) {
     const r = await api('GET', `/api/set-menus/${setMenuId}`);
     SM_DATA = [r.data.setMenu];
     openSmViewModal(setMenuId);
-  } catch (err) { showToast(err.message, 'error'); }
+  } catch (err) { showToast(apiError(err), 'error'); }
 }
 
 // Redirect "Edit Set Menu" in the view modal to the set-menus page

@@ -159,7 +159,7 @@
     try {
       await _addItemConfig.onSubmit(_selectedItemId, _selectedItemType, { sectionId, notes });
       closeModal('addItemModal');
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Swap to item creation modal ───────────────────────────────────────────────

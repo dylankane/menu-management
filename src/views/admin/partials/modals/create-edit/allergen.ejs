@@ -101,7 +101,7 @@
       await api('POST', '/api/allergens', body);
       showToast(tr('allergen_added'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function submitEditAllergen() {
@@ -115,7 +115,7 @@
       await api('PUT', `/api/allergens/${id}`, body);
       showToast(tr('allergen_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function deleteAllergen(id, name) {
@@ -124,7 +124,7 @@
         await api('DELETE', `/api/allergens/${id}`);
         showToast(tr('allergen_deleted'));
         reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
+      } catch (err) { showToast(apiError(err), 'error'); }
     });
   }
 </script>

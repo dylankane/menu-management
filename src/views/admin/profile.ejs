@@ -189,7 +189,7 @@
       });
       showToast(tr('profile_updated'));
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(apiError(err), 'error');
     }
   }
 
@@ -210,7 +210,7 @@
       document.getElementById('newPassword').value     = '';
       document.getElementById('confirmPassword').value = '';
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(apiError(err), 'error');
     }
   }
 
@@ -243,7 +243,7 @@
       closeAddUserModal();
       reloadAfter();
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(apiError(err), 'error');
     }
   }
 
@@ -254,7 +254,7 @@
         showToast(tr('user_deleted'));
         reloadAfter();
       } catch (err) {
-        showToast(err.message, 'error');
+        showToast(apiError(err), 'error');
       }
     });
   }

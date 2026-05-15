@@ -88,6 +88,6 @@
       showToast(tr('note_saved'));
       closeModal('noteModal');
       await refreshAndRender(activeSmId);
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 </script>

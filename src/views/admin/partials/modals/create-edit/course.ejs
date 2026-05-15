@@ -81,14 +81,16 @@
       const { data } = await api(method, url, body);
       showToast(tr(id ? 'course_updated' : 'course_added'));
       closeModal('courseModal');
-      if (!id && typeof window._onCourseSaved === 'function') {
+      if (typeof window._onCourseSaved === 'function') {
         const cb = window._onCourseSaved;
         window._onCourseSaved = null;
         cb(data.course);
+      } else if (typeof onCourseModalSaved === 'function') {
+        onCourseModalSaved(data.course);
       } else {
         reloadAfter(300);
       }
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function deleteCourse(id, name) {
@@ -97,7 +99,7 @@
         await api('DELETE', `/api/courses/${id}`);
         showToast(tr('course_deleted'));
         reloadAfter(300);
-      } catch (err) { showToast(err.message, 'error'); }
+      } catch (err) { showToast(apiError(err), 'error'); }
     });
   }
 </script>

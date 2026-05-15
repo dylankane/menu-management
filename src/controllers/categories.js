@@ -2,7 +2,7 @@
 
 const prisma = require('../config/database');
 const { AppError } = require('../utils/errors');
-const { extractTranslations, slugify, toSentenceCase } = require('../utils/controllerHelpers');
+const { extractTranslations, slugify } = require('../utils/controllerHelpers');
 
 const WITH_TRANSLATIONS = {
   translations: { orderBy: { lang: 'asc' } },
@@ -56,8 +56,7 @@ async function create(req, res, next) {
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? (settings.enabled_languages) : ['en', 'es'];
 
-    const CASE_RULES = { name: 'title', description: 'sentence', public_notes: 'sentence' };
-    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes'], CASE_RULES);
+    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
 
     // Derive slug: use supplied slug, or auto-generate from en → es → first translation name
     const slugTranslation = translations.find(t => t.lang === 'en')
@@ -73,7 +72,7 @@ async function create(req, res, next) {
         parent_id:     parent_id ? parseInt(parent_id) : null,
         display_order: display_order ? parseInt(display_order) : 0,
         image_url:     req.uploadedFile || null,
-        notes:         req.body.notes ? toSentenceCase(req.body.notes.trim()) : null,
+        notes:         req.body.notes || null,
         translations: {
           create: translations.filter(t => t.name || t.description),
         },
@@ -121,7 +120,7 @@ async function update(req, res, next) {
     if (is_active          !== undefined) scalarData.is_active     = is_active === 'true' || is_active === true;
     if (rawSlug)                          scalarData.slug           = slugify(rawSlug);
     if (parent_id          !== undefined) scalarData.parent_id      = (!parent_id || parent_id === 'null') ? null : parseInt(parent_id);
-    if (req.body.notes     !== undefined) scalarData.notes          = req.body.notes ? toSentenceCase(req.body.notes.trim()) : null;
+    if (req.body.notes     !== undefined) scalarData.notes          = req.body.notes || null;
     if (req.uploadedFile)                 scalarData.image_url      = req.uploadedFile;
 
     await prisma.$transaction(async (tx) => {
@@ -138,8 +137,7 @@ async function update(req, res, next) {
         });
       }
 
-      const CASE_RULES = { name: 'title', description: 'sentence', public_notes: 'sentence' };
-      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes'], CASE_RULES);
+      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
       for (const t of translations) {
         if (t.name !== undefined || t.description !== undefined || t.public_notes !== undefined) {
           await tx.categoryTranslation.upsert({

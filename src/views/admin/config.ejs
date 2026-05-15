@@ -99,7 +99,7 @@
       await api('PUT', '/api/super-admin/config', body);
       showToast(tr('config_saved'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 </script>
 

@@ -3455,11 +3455,28 @@ svg.icon--empty-state {
   flex-shrink: 0;
 }
 
+.smb-header__title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
+}
+
 .smb-header__name {
   font-size: var(--font-size-xl);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.smb-header__desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
 }
 
 .smb-header__price {

@@ -94,19 +94,61 @@
 
   function sanitiseClientError(message) {
     const TECHNICAL_PATTERNS = [/prisma/i, /unique constraint/i, /foreign key/i, /p\d{4}/i, /stack trace/i, /at Object\./i];
+    const e = UI_TRANS.errors || {};
     if (!message || message.length > 120 || TECHNICAL_PATTERNS.some(function (p) { return p.test(message); })) {
-      return (UI_TRANS.modal && UI_TRANS.modal.generic_error) || 'Something went wrong — please try again.';
+      return e.server_error || 'Something went wrong — please refresh and try again.';
     }
     return message;
   }
 
-  // ── UI message library ────────────────────────────────────────────────────
+  // ── Centralised API error → human-readable translated message ─────────────
+  function apiError(err) {
+    const msg = (err.message || '').toLowerCase();
+    const e   = UI_TRANS.errors || {};
+
+    if (msg.includes('already in this category') || msg.includes('already in that category'))
+      return e.already_in_category        || 'That item is already in this category.';
+    if (msg.includes('set menu is already in this category'))
+      return e.set_menu_already_in_category || 'That set menu is already in this category.';
+    if (msg.includes('already in the set menu'))
+      return e.dish_already_in_set_menu   || 'This dish is already in this set menu.';
+    if (msg.includes('subcategor'))
+      return e.has_subcategories          || 'Please remove all subcategories before deleting.';
+    if (msg.includes('in use by a set menu'))
+      return e.course_in_use              || 'This course is in use by a set menu.';
+    if (msg.includes('has courses'))
+      return e.set_menu_has_courses       || 'Please assign the dish to a course first.';
+    if (msg.includes('protected'))
+      return e.protected_category         || 'This item is protected and cannot be deleted.';
+    if (msg.includes('nest more than one level') || msg.includes('only be nested one level'))
+      return e.cannot_nest_deeper         || 'Categories can only be one level deep.';
+    if (msg.includes('current password') || msg.includes('password is incorrect'))
+      return e.password_incorrect         || 'The current password is incorrect.';
+    if (msg.includes('cannot delete your own'))
+      return e.cannot_delete_self         || 'You cannot delete your own account.';
+    if (msg.includes('email already in use'))
+      return e.email_in_use               || 'That email address is already in use.';
+    if (msg.includes('slug already exists') || msg.includes('category with that slug'))
+      return e.slug_exists                || 'A category with that name already exists.';
+    if (msg.includes('invalid email or password'))
+      return e.invalid_login              || 'Incorrect email or password.';
+    if (msg.includes('override already exists for that date'))
+      return e.date_override_exists       || 'There is already an entry for that date.';
+    if (msg.includes('primary language'))
+      return e.primary_language_locked    || 'The primary language cannot be removed.';
+    if (msg.includes('locked language'))
+      return e.language_locked            || 'This language cannot be removed.';
+
+    if (err.status === 404) return e.not_found      || 'Item not found.';
+    if (err.status === 409) return e.conflict       || 'This already exists.';
+    if (err.status === 403) return e.forbidden      || 'Access denied.';
+    if (err.status === 401) return e.session_expired || 'Please log in again.';
+    if (err.status === 400) return e.bad_request    || 'Please check your entries.';
+    return e.server_error || 'Something went wrong — please refresh and try again.';
+  }
+
   const UI_MESSAGES = {
-    itemAlreadyInCategory:    (UI_TRANS.modal && UI_TRANS.modal.item_already_in_category)    || 'That item is already in this category.',
-    setMenuAlreadyInCategory: (UI_TRANS.modal && UI_TRANS.modal.set_menu_already_in_category) || 'That set menu is already in this category.',
-    cannotDelete:             (UI_TRANS.modal && UI_TRANS.modal.cannot_delete)               || 'This item is protected and cannot be deleted.',
-    hasChildren:              (UI_TRANS.modal && UI_TRANS.modal.has_children)                || 'Remove all subcategories before deleting.',
-    genericError:             (UI_TRANS.modal && UI_TRANS.modal.generic_error)               || 'Something went wrong — please refresh and try again.',
+    genericError: (UI_TRANS.errors && UI_TRANS.errors.server_error) || 'Something went wrong — please refresh and try again.',
   };
 
   // ── Confirm delete ────────────────────────────────────────────────────────
@@ -180,25 +222,7 @@
     if (primaryPanel) primaryPanel.classList.add('lang-panel--active');
   }
 
-  // ── Auto-capitalise ───────────────────────────────────────────────────────
-  function toTitleCase(str) {
-    return str.replace(/\S+/g, function (w) { return w.charAt(0).toUpperCase() + w.slice(1); });
-  }
 
-  function toSentenceCase(str) {
-    return str
-      .trim()
-      .replace(/(^\s*|[.!?]\s+)([a-z])/g, function (_, prefix, ch) { return prefix + ch.toUpperCase(); })
-      .replace(/^([a-z])/, function (ch) { return ch.toUpperCase(); });
-  }
-
-  document.addEventListener('blur', function (e) {
-    const mode = e.target.dataset.capitalize;
-    if (!mode) return;
-    const val = e.target.value;
-    if (!val.trim()) return;
-    e.target.value = mode === 'title' ? toTitleCase(val) : toSentenceCase(val);
-  }, true);
 </script>
 
 <script src="/admin/js/ui-lang.js"></script>

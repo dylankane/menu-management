@@ -264,6 +264,10 @@ function selectSetMenu(id) {
   showDetailTab();
 }
 
+function onCourseModalSaved() {
+  if (activeSmId) refreshAndRender(activeSmId);
+}
+
 // ── Refresh from API ──────────────────────────────────────────────────────────
 async function refreshAndRender(smId) {
   try {
@@ -274,7 +278,7 @@ async function refreshAndRender(smId) {
     else SM_DATA.push(data.setMenu);
     renderBuilder(data.setMenu);
     updatePanelItem(data.setMenu);
-  } catch (e) { showToast(UI_MESSAGES.genericError, 'error'); }
+  } catch (e) { showToast(apiError(e), 'error'); }
 }
 
 function updatePanelItem(sm) {
@@ -406,7 +410,7 @@ function initSortables(smId) {
     scrollEl:         document.getElementById('smb-body'),
     onSectionReorder(items) {
       api('PATCH', `/api/set-menus/${smId}/courses/reorder`, { items })
-        .catch(err => showToast(err.message, 'error'));
+        .catch(err => showToast(apiError(err), 'error'));
     },
     onItemEnd(evt) {
       const fromId  = evt.from.dataset.smcId;
@@ -417,7 +421,7 @@ function initSortables(smId) {
         const newSmcId = (toId === 'none') ? null : parseInt(toId);
         api('PUT', `/api/set-menus/${smId}/dishes/${entryId}`, { set_menu_course_id: newSmcId })
           .then(() => reorderDishList(evt.to, smId))
-          .catch(err => { showToast(err.message, 'error'); refreshAndRender(smId); });
+          .catch(err => { showToast(apiError(err), 'error'); refreshAndRender(smId); });
       } else {
         reorderDishList(evt.to, smId);
       }
@@ -432,7 +436,7 @@ function reorderDishList(listEl, smId) {
   }));
   if (!items.length) return;
   api('PATCH', `/api/set-menus/${smId}/dishes/reorder`, { items })
-    .catch(err => showToast(err.message, 'error'));
+    .catch(err => showToast(apiError(err), 'error'));
 }
 
 // ── Availability toggles ──────────────────────────────────────────────────────
@@ -466,7 +470,7 @@ async function toggleSmAvail(smId, checked) {
   } catch (err) {
     const cb = document.querySelector(`.smb-item[data-sm-id="${smId}"] input[type="checkbox"]`);
     if (cb) cb.checked = !checked;
-    showToast(err.message, 'error');
+    showToast(apiError(err), 'error');
   }
 }
 
@@ -516,7 +520,7 @@ async function removeDish(smId, entryId, name, location) {
       await api('DELETE', `/api/set-menus/${smId}/dishes/${entryId}`);
       showToast(tr('item_removed'));
       await refreshAndRender(smId);
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   });
 }
 
@@ -545,7 +549,7 @@ async function addCourseToSm(courseId, notes) {
     }
 
     await refreshAndRender(activeSmId);
-  } catch (err) { showToast(err.message, 'error'); }
+  } catch (err) { showToast(apiError(err), 'error'); }
 }
 
 async function removeCourse(smId, smcId, name, location) {
@@ -554,7 +558,7 @@ async function removeCourse(smId, smcId, name, location) {
       await api('DELETE', `/api/set-menus/${smId}/courses/${smcId}`);
       showToast(tr('course_removed'));
       await refreshAndRender(smId);
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   });
 }
 

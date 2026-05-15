@@ -71,7 +71,7 @@
       showToast(tr('item_added_to_category'));
       closeModal('addToCatModal');
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   let _addToCatSwapReturnId = null;

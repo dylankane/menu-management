@@ -224,7 +224,7 @@
     try {
       await api('PUT', '/api/client-account', body);
       showToast(tr('account_saved'));
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function addLang() {
@@ -233,7 +233,7 @@
       await api('POST', '/api/settings/languages', { lang });
       showToast(tr('lang_added', { lang: lang.toUpperCase() }));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   let pendingRemoveLang = null;
@@ -252,7 +252,7 @@
       showToast(tr('lang_removed', { lang: pendingRemoveLang.toUpperCase() }));
       closeModal('removeLangModal');
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 </script>
 

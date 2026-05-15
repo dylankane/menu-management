@@ -479,7 +479,7 @@
       await api('POST', '/api/gourmet-club/members', body);
       showToast(tr('member_added'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Toggle consent (table row) ────────────────────────────────────────────────
@@ -489,7 +489,7 @@
       const m = MEMBERS_DATA.find(x => x.id === id);
       if (m) m.marketing_consent = !current;
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Delete member ─────────────────────────────────────────────────────────────
@@ -499,7 +499,7 @@
       await api('DELETE', `/api/gourmet-club/members/${id}`);
       showToast(tr('member_deleted'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── View member modal ─────────────────────────────────────────────────────────
@@ -596,7 +596,7 @@
         if (el) el.textContent = (parseInt(el.textContent, 10) || 0) + 1;
       }
       loadGcVisits(gcCurrentMemberId);
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function gcDeleteVisit(visitId) {
@@ -610,7 +610,7 @@
         if (el) el.textContent = Math.max(0, (parseInt(el.textContent, 10) || 0) - 1);
       }
       loadGcVisits(gcCurrentMemberId);
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function gcToggleActive(event) {
@@ -629,7 +629,7 @@
       const row = document.querySelector(`#membersBody tr[data-id="${gcCurrentMemberId}"]`);
       if (row) row.dataset.active = String(newVal);
       showToast(tr(newVal ? 'member_activated' : 'member_deactivated'));
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   function gcToggleAddConsent(event) {
@@ -658,7 +658,7 @@
         ? `<span class="gc-badge gc-badge--consent">${tUI('common.consented')}</span>`
         : `<span class="gc-badge gc-badge--muted">${tUI('common.no_consent')}</span>`;
       showToast(tr(newVal ? 'consent_granted' : 'consent_removed'));
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Edit member modal ─────────────────────────────────────────────────────────
@@ -696,7 +696,7 @@
       await api('PUT', `/api/gourmet-club/members/${id}`, body);
       showToast(tr('member_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Paper form upload ─────────────────────────────────────────────────────────
@@ -710,7 +710,7 @@
       if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Upload failed'); }
       showToast(tUI('page.gc.members.toast_form_uploaded').replace('{side}', tUI('page.gc.members.label_' + side)));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Paper form lightbox ───────────────────────────────────────────────────────

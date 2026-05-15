@@ -457,11 +457,11 @@
     <div class="modal__body">
       <div class="form-group">
         <label class="form-label"><%= t('page.restaurant.label_name') %></label>
-        <input type="text" id="annTitle" value="<%= announcement.title || '' %>" class="form-input" data-capitalize="sentence" />
+        <input type="text" id="annTitle" value="<%= announcement.title || '' %>" class="form-input" />
       </div>
       <div class="form-group">
         <label class="form-label"><%= t('page.restaurant.modal_ann_label_body') %></label>
-        <textarea id="annBody" rows="3" class="form-textarea" data-capitalize="sentence"><%= announcement.body || '' %></textarea>
+        <textarea id="annBody" rows="3" class="form-textarea"><%= announcement.body || '' %></textarea>
       </div>
       <div class="image-upload-row">
         <div class="image-upload-input">
@@ -540,7 +540,7 @@
       await api('PUT', '/api/settings', fd);
       showToast(tr('identity_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Opening Hours ────────────────────────────────────────────────────────────
@@ -626,7 +626,7 @@
       await api('PUT', '/api/restaurant/opening-hours', { hours });
       showToast(tr('hours_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Overrides ────────────────────────────────────────────────────────────────
@@ -669,7 +669,7 @@
       });
       showToast(tr('override_added'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function deleteOverride(id) {
@@ -678,7 +678,7 @@
         await api('DELETE', `/api/restaurant/opening-hours/overrides/${id}`);
         showToast(tr('override_deleted'));
         reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
+      } catch (err) { showToast(apiError(err), 'error'); }
     });
   }
 
@@ -704,7 +704,7 @@
       await api('PUT', '/api/restaurant/contact', body);
       showToast(tr('contact_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   // ── Announcement ─────────────────────────────────────────────────────────────
@@ -735,7 +735,7 @@
       await api('PUT', '/api/restaurant/announcement', fd);
       showToast(tr('announcement_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   initTimeInputs();
@@ -749,7 +749,7 @@
       showToast(active ? tr('announcement_live') : tr('announcement_hidden'));
     } catch (err) {
       document.getElementById('annActiveToggle').checked = !active;
-      showToast(err.message, 'error');
+      showToast(apiError(err), 'error');
     }
   }
 </script>

@@ -159,7 +159,7 @@
       await api('POST', '/api/courses', body);
       showToast(tr('course_added'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function submitEditCourse() {
@@ -173,7 +173,7 @@
       await api('PUT', `/api/courses/${id}`, body);
       showToast(tr('course_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function deleteCourse(id, name) {
@@ -182,7 +182,7 @@
         await api('DELETE', `/api/courses/${id}`);
         showToast(tr('course_deleted'));
         reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
+      } catch (err) { showToast(apiError(err), 'error'); }
     });
   }
 </script>

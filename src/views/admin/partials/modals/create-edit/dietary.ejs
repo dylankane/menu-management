@@ -101,7 +101,7 @@
       await api('POST', '/api/dietary', body);
       showToast(tr('dietary_added'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function submitEditDietary() {
@@ -115,7 +115,7 @@
       await api('PUT', `/api/dietary/${id}`, body);
       showToast(tr('dietary_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function deleteDietary(id, name) {
@@ -124,7 +124,7 @@
         await api('DELETE', `/api/dietary/${id}`);
         showToast(tr('dietary_deleted'));
         reloadAfter();
-      } catch (err) { showToast(err.message, 'error'); }
+      } catch (err) { showToast(apiError(err), 'error'); }
     });
   }
 </script>

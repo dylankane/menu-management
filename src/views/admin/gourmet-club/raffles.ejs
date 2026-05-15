@@ -332,7 +332,7 @@
       const isInactive = result.data?.raffle?.status === 'inactive';
       showToast(tr(isInactive ? 'raffle_created_inactive' : 'raffle_created_live'));
       reloadAfter(isInactive ? 1400 : 600);
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function toggleRaffleStatus(id, currentStatus) {
@@ -345,7 +345,7 @@
       await api('PUT', `/api/gourmet-club/raffles/${id}`, { status: newStatus });
       showToast(tr(newStatus === 'active' ? 'raffle_live' : 'raffle_off'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   function openEditRaffleModal(id) {
@@ -412,7 +412,7 @@
       await api('PUT', `/api/gourmet-club/raffles/${id}`, fd);
       showToast(tr('raffle_updated'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function drawRaffle(id) {
@@ -424,7 +424,7 @@
       const winner = res.data.raffle.winner;
       showToast(tr('raffle_winner', { name: winner.name }));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 
   async function deleteRaffle(id) {
@@ -435,7 +435,7 @@
       await api('DELETE', `/api/gourmet-club/raffles/${id}`);
       showToast(tr('raffle_deleted'));
       reloadAfter();
-    } catch (err) { showToast(err.message, 'error'); }
+    } catch (err) { showToast(apiError(err), 'error'); }
   }
 </script>
 
