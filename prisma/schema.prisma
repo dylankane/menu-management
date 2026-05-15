@@ -396,7 +396,7 @@ model SetMenuCourse {
   notes         String? // Internal admin notes — not shown to customers
 
   set_menu     SetMenu                  @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
-  course       Course                   @relation(fields: [course_id],   references: [id], onDelete: Restrict)
+  course       Course                   @relation(fields: [course_id],   references: [id], onDelete: Cascade)
   translations SetMenuCourseTranslation[]
   dishes       SetMenuDish[]
 
@@ -427,7 +427,7 @@ model SetMenuDish {
   display_order      Int  @default(0)
 
   set_menu        SetMenu        @relation(fields: [set_menu_id],        references: [id], onDelete: Cascade)
-  dish            MenuItem       @relation(fields: [dish_id],            references: [id], onDelete: Restrict)
+  dish            MenuItem       @relation(fields: [dish_id],            references: [id], onDelete: Cascade)
   set_menu_course SetMenuCourse? @relation(fields: [set_menu_course_id], references: [id], onDelete: SetNull)
   translations    SetMenuDishTranslation[]
 
