@@ -18,7 +18,7 @@ function requireAuth(req, res, next) {
 
     if (!token) {
       // API requests get a JSON 401; page requests get redirected to login
-      if (req.path.startsWith('/api/')) {
+      if (req.originalUrl.startsWith('/api/')) {
         throw new AppError('Authentication required', 401);
       }
       return res.redirect('/admin/login');
@@ -30,7 +30,7 @@ function requireAuth(req, res, next) {
     if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
       // Clear the stale cookie
       res.clearCookie('token');
-      if (req.path.startsWith('/api/')) {
+      if (req.originalUrl.startsWith('/api/')) {
         return res.status(401).json({ error: 'Session expired, please log in again' });
       }
       return res.redirect('/admin/login');
@@ -41,10 +41,10 @@ function requireAuth(req, res, next) {
 
 function requireSuperAdmin(req, res, next) {
   if (req.user?.role !== 'super_admin') {
-    if (req.path.startsWith('/api/')) {
+    if (req.originalUrl.startsWith('/api/')) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    const isAdmin = req.path.startsWith('/admin');
+    const isAdmin = req.originalUrl.startsWith('/admin');
     return res.status(403).render('shared/403', {
       restaurantName: process.env.RESTAURANT_NAME || 'Restaurant',
       returnUrl:      isAdmin ? '/admin' : '/menu',

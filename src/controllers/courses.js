@@ -4,6 +4,8 @@ const prisma = require('../config/database');
 const { AppError } = require('../utils/errors');
 const { extractTranslations } = require('../utils/controllerHelpers');
 
+const CASE_RULES = { name: 'title' };
+
 const WITH_TRANSLATIONS = { translations: { orderBy: { lang: 'asc' } } };
 
 // GET /api/courses
@@ -27,7 +29,7 @@ async function create(req, res, next) {
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? (settings.enabled_languages) : ['en', 'es'];
 
-    const translations = extractTranslations(req.body, langs, ['name'])
+    const translations = extractTranslations(req.body, langs, ['name'], CASE_RULES)
       .filter(t => t.name);
 
     const course = await prisma.course.create({
@@ -61,7 +63,7 @@ async function update(req, res, next) {
         await tx.course.update({ where: { id }, data: { display_order: parseInt(display_order) } });
       }
 
-      const translations = extractTranslations(req.body, langs, ['name']);
+      const translations = extractTranslations(req.body, langs, ['name'], CASE_RULES);
       for (const t of translations) {
         if (t.name) {
           await tx.courseTranslation.upsert({
