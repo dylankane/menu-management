@@ -1,0 +1,21 @@
+<!-- ── Remove Confirmation Modal ───────────────────────────────────────────── -->
+<!-- Opened via confirmRemove(message, callback) defined in scripts.ejs        -->
+<div id="confirmRemoveModal" class="modal-overlay hidden">
+  <div class="modal modal--sm" onclick="event.stopPropagation()">
+
+    <div class="modal__header">
+      <h3 id="confirmRemoveTitle" class="modal__title">—</h3>
+      <button onclick="closeModal('confirmRemoveModal')" class="modal__close">&times;</button>
+    </div>
+
+    <div class="modal__body modal__body--compact">
+      <p id="confirmRemoveDetail" class="confirm-remove__detail"></p>
+    </div>
+
+    <div class="modal__footer">
+      <button onclick="closeModal('confirmRemoveModal')" class="btn btn--secondary"><%= t('common.cancel') %></button>
+      <button id="confirmRemoveBtn" onclick="_confirmRemoveExecute()" class="btn btn--outline-danger"><%= t('common.remove') %></button>
+    </div>
+
+  </div>
+</div>

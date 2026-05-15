@@ -85,7 +85,8 @@
     "loading": "Loading...",
     "optional": "Optional",
     "price": "Price",
-    "warning": "Warning"
+    "warning": "Warning",
+    "remove": "Remove"
   },
   "toast": {
     "account_saved": "Account saved",
@@ -674,6 +675,9 @@
     "label_always_badge": "always",
     "placeholder_note_item": "e.g. Contains nuts, Ask server for info…",
     "label_dietary_tags": "Dietary Tags",
-    "option_none_top_level": "— None (top-level) —"
+    "option_none_top_level": "— None (top-level) —",
+    "delete_warning": "Once deleted, this cannot be recovered.",
+    "confirm_remove_title": "Remove \"{name}\"?",
+    "confirm_remove_body": "Do you want to remove \"{name}\" from {location}?"
   }
 }

@@ -284,7 +284,11 @@ router.get('/menu-items', async (req, res, next) => {
           categories:      { include: { category: { include: { translations: true } } } },
           allergens:       { include: { allergen: { include: { translations: true } } } },
           dietary:         { include: { dietary_tag: { include: { translations: true } } } },
-          set_menu_dishes: { select: { id: true } },
+          set_menu_dishes: {
+            select: {
+              set_menu: { select: { id: true, translations: { select: { lang: true, name: true } } } },
+            },
+          },
         },
         orderBy: { created_at: 'desc' },
       }),

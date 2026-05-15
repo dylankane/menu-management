@@ -3,6 +3,9 @@
 <!-- Toast notification container -->
 <div id="toast" class="toast hidden"></div>
 
+<%- include('./modals/confirm-delete') %>
+<%- include('./modals/confirm-remove') %>
+
 <script>
   // ── UI translations (server-injected) ─────────────────────────────────────
   window.UI_TRANS = <%- JSON.stringify(uiStrings || {}) %>;
@@ -62,6 +65,7 @@
   }
   document.addEventListener('click', function (e) {
     if (e.target.classList.contains('modal-overlay')) {
+      if (e.target.querySelector('input, textarea, select')) return;
       e.target.classList.add('hidden');
       document.body.style.overflow = '';
     }
@@ -106,10 +110,42 @@
   };
 
   // ── Confirm delete ────────────────────────────────────────────────────────
-  function confirmDelete(message, callback) {
-    if (window.confirm(message || (UI_TRANS.modal && UI_TRANS.modal.confirm_delete) || 'Are you sure you want to delete this?')) {
-      callback();
+  let _confirmDeleteCallback = null;
+
+  function confirmDelete(message, callback, opts) {
+    _confirmDeleteCallback = callback;
+    document.getElementById('confirmDeleteTitle').textContent = message;
+    const detail = document.getElementById('confirmDeleteDetail');
+    if (opts && opts.detail) {
+      detail.textContent = opts.detail;
+      detail.classList.remove('hidden');
+    } else {
+      detail.classList.add('hidden');
+      detail.textContent = '';
     }
+    openModal('confirmDeleteModal');
+  }
+
+  function _confirmDeleteExecute() {
+    closeModal('confirmDeleteModal');
+    if (_confirmDeleteCallback) _confirmDeleteCallback();
+    _confirmDeleteCallback = null;
+  }
+
+  // ── Confirm remove (soft unlink — not a permanent delete) ─────────────────
+  let _confirmRemoveCallback = null;
+
+  function confirmRemove(itemName, location, callback) {
+    _confirmRemoveCallback = callback;
+    document.getElementById('confirmRemoveTitle').textContent = tUI('modal.confirm_remove_title', { name: itemName });
+    document.getElementById('confirmRemoveDetail').textContent = tUI('modal.confirm_remove_body', { name: itemName, location: location });
+    openModal('confirmRemoveModal');
+  }
+
+  function _confirmRemoveExecute() {
+    closeModal('confirmRemoveModal');
+    if (_confirmRemoveCallback) _confirmRemoveCallback();
+    _confirmRemoveCallback = null;
   }
 
   // ── Reload after short delay ──────────────────────────────────────────────

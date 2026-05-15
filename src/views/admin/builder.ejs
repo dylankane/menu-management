@@ -452,7 +452,9 @@ function renderDirectItemsSection(dishes, setMenus, catId, isActive = true) {
 
 function renderDishRow(mic, catId) {
   const itemData = ALL_ITEMS.find(i => i.id === mic.menu_item.id);
-  const isOff       = itemData && !itemData.is_available;
+  const isOff    = itemData && !itemData.is_available;
+  const catData  = CATS_DATA.find(c => c.id === catId);
+  const catName  = catData ? getName(catData.translations) : '';
   return `
     <div class="smb-dish${isOff ? ' smb-dish--inactive' : ''}" data-item-id="${mic.menu_item.id}">
       <span class="bl-handle bl-handle--dish" title="${tUI('common.tooltip_drag_move')}">&#8801;</span>
@@ -465,7 +467,7 @@ function renderDishRow(mic, catId) {
           <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
           <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
         </button>
-        <button class="btn-remove" onclick="removeItemFromCat(${mic.menu_item.id}, ${catId})" title="${tUI('common.tooltip_remove_from_cat')}">
+        <button class="btn-remove" data-item-name="${esc(getName(mic.menu_item.translations))}" data-location="${esc(catName)}" onclick="removeItemFromCat(${mic.menu_item.id}, ${catId}, this.dataset.itemName, this.dataset.location)" title="${tUI('common.tooltip_remove_from_cat')}">
           <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
@@ -475,8 +477,10 @@ function renderDishRow(mic, catId) {
 }
 
 function renderSetMenuRow(smc, catId) {
-  const smData = ALL_SET_MENUS.find(s => s.id === smc.set_menu.id);
-  const isOff       = smData && !smData.is_available;
+  const smData  = ALL_SET_MENUS.find(s => s.id === smc.set_menu.id);
+  const isOff   = smData && !smData.is_available;
+  const catData = CATS_DATA.find(c => c.id === catId);
+  const catName = catData ? getName(catData.translations) : '';
   return `
     <div class="smb-dish${isOff ? ' smb-dish--inactive' : ''}" data-set-menu-id="${smc.set_menu.id}">
       <span class="bl-handle bl-handle--dish" title="${tUI('common.tooltip_drag_move')}">&#8801;</span>
@@ -490,7 +494,7 @@ function renderSetMenuRow(smc, catId) {
           <svg class="icon icon-closed"><use href="/admin/icons/sprite.svg#eye-closed"></use></svg>
           <svg class="icon icon-open"><use href="/admin/icons/sprite.svg#eye-open"></use></svg>
         </button>
-        <button class="btn-remove" onclick="removeSetMenuFromCat(${smc.set_menu.id}, ${catId})" title="${tUI('common.tooltip_remove_from_cat')}">
+        <button class="btn-remove" data-item-name="${esc(getName(smc.set_menu.translations))}" data-location="${esc(catName)}" onclick="removeSetMenuFromCat(${smc.set_menu.id}, ${catId}, this.dataset.itemName, this.dataset.location)" title="${tUI('common.tooltip_remove_from_cat')}">
           <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
@@ -718,8 +722,8 @@ function openAddToCatModal(catId, catNameStr) {
   });
 }
 
-function removeItemFromCat(itemId, catId) {
-  confirmDelete(tUI('modal.confirm_remove_item'), async () => {
+function removeItemFromCat(itemId, catId, name, location) {
+  confirmRemove(name, location, async () => {
     try {
       await api('DELETE', `/api/menu-items/${itemId}/categories/${catId}`);
       showToast(tr('item_removed_from_category'));
@@ -728,8 +732,8 @@ function removeItemFromCat(itemId, catId) {
   });
 }
 
-function removeSetMenuFromCat(setMenuId, catId) {
-  confirmDelete(tUI('modal.confirm_remove_set_menu'), async () => {
+function removeSetMenuFromCat(setMenuId, catId, name, location) {
+  confirmRemove(name, location, async () => {
     try {
       await api('DELETE', `/api/set-menus/${setMenuId}/categories/${catId}`);
       showToast(tr('set_menu_removed_from_category'));

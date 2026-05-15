@@ -2,7 +2,7 @@
   "nav": {
     "overview": "Resumen",
     "admin_dashboard": "Panel de Administración",
-    "menu": "Menú",
+    "menu": "La Carta",
     "builder": "Constructor",
     "menu_items": "Platos",
     "set_menus": "Menús Degustación",
@@ -85,7 +85,8 @@
     "loading": "Cargando...",
     "optional": "Opcional",
     "price": "Precio",
-    "warning": "Advertencia"
+    "warning": "Advertencia",
+    "remove": "Quitar"
   },
   "toast": {
     "account_saved": "Cuenta guardada",
@@ -183,7 +184,7 @@
   "page": {
     "dashboard": {
       "title": "Resumen",
-      "tab_menu": "Menú",
+      "tab_menu": "La Carta",
       "tab_hub": "Hub del Restaurante",
       "tab_gc": "Club Gourmet",
       "stat_menu_items": "Platos",
@@ -674,6 +675,9 @@
     "label_always_badge": "siempre",
     "placeholder_note_item": "p. ej. Contiene frutos secos, Pregunta al camarero…",
     "label_dietary_tags": "Etiquetas dietéticas",
-    "option_none_top_level": "— Ninguna (nivel superior) —"
+    "option_none_top_level": "— Ninguna (nivel superior) —",
+    "delete_warning": "Una vez eliminado, no podrá recuperarse.",
+    "confirm_remove_title": "¿Quitar \"{name}\"?",
+    "confirm_remove_body": "¿Quieres quitar \"{name}\" de {location}?"
   }
 }

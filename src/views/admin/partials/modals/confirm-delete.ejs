@@ -1,0 +1,23 @@
+<!-- ── Delete Confirmation Modal ──────────────────────────────────────────── -->
+<!-- Opened via confirmDelete(message, callback, opts?) defined in scripts.ejs -->
+<!-- opts: { detail: string } — optional extra warning line shown in body      -->
+<div id="confirmDeleteModal" class="modal-overlay hidden">
+  <div class="modal modal--sm" onclick="event.stopPropagation()">
+
+    <div class="modal__header modal__header--danger">
+      <h3 id="confirmDeleteTitle" class="modal__title">—</h3>
+      <button onclick="closeModal('confirmDeleteModal')" class="modal__close">&times;</button>
+    </div>
+
+    <div class="modal__body modal__body--compact">
+      <p class="confirm-delete__warning"><%= t('modal.delete_warning') %></p>
+      <p id="confirmDeleteDetail" class="confirm-delete__detail hidden"></p>
+    </div>
+
+    <div class="modal__footer">
+      <button onclick="closeModal('confirmDeleteModal')" class="btn btn--secondary"><%= t('common.cancel') %></button>
+      <button id="confirmDeleteBtn" onclick="_confirmDeleteExecute()" class="btn btn--danger"><%= t('common.delete') %></button>
+    </div>
+
+  </div>
+</div>

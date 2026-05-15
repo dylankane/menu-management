@@ -129,10 +129,10 @@
                         <div class="breadcrumb-text"><%= catName(c.category) %></div>
                       <% } %>
                     <% }); %>
-                    <% if (item.is_special) { %>
+                    <% (item.set_menu_dishes || []).forEach(smd => { %>
                       <% hasContent = true; %>
-                      <div class="breadcrumb-text"><%= t('page.menu_items.col_chefs_special') %></div>
-                    <% } %>
+                      <div class="breadcrumb-text"><span class="breadcrumb-muted"><%= t('nav.set_menus') %><span class="breadcrumb-sep"> › </span></span><%= tagName(smd.set_menu.translations) %></div>
+                    <% }); %>
                     <% if (!hasContent) { %>
                       <span class="cell-empty">—</span>
                     <% } %>
@@ -140,7 +140,7 @@
                 </td>
                 <td class="col-translations col-align-center">
                   <div class="tag-list">
-                    <% const translatedLangs = (item.translations || []).filter(t => t.name && t.description).map(t => t.lang); %>
+                    <% const translatedLangs = (item.translations || []).filter(t => t.name).map(t => t.lang); %>
                     <% translatedLangs.forEach(lang => { %>
                       <span class="tag tag--lang"><%= lang.toUpperCase() %></span>
                     <% }); %>
@@ -339,7 +339,11 @@
           inner += `<div class="breadcrumb-text">${esc(catName)}</div>`;
         }
       });
-      if (item.is_special) { hasContent = true; inner += `<div class="breadcrumb-text">${tUI('modal.label_special')}</div>`; }
+      (item.set_menu_dishes || []).forEach(smd => {
+        hasContent = true;
+        const smTrans = (smd.set_menu.translations || []).find(t => t.lang === PRIMARY) || (smd.set_menu.translations || [])[0] || {};
+        inner += `<div class="breadcrumb-text"><span class="breadcrumb-muted">${esc(tUI('nav.set_menus'))}<span class="breadcrumb-sep"> › </span></span>${esc(smTrans.name || '?')}</div>`;
+      });
       if (!hasContent) inner = `<span class="cell-empty">—</span>`;
       catCell.innerHTML = `<div class="category-breadcrumbs">${inner}</div>`;
     }
@@ -347,7 +351,7 @@
     // Translations
     const transCell = row.querySelector('.col-translations');
     if (transCell) {
-      const translatedLangs = (item.translations || []).filter(t => t.name && t.description).map(t => t.lang);
+      const translatedLangs = (item.translations || []).filter(t => t.name).map(t => t.lang);
       transCell.innerHTML = `<div class="tag-list">` +
         (translatedLangs.length
           ? translatedLangs.map(l => `<span class="tag tag--lang">${esc(l.toUpperCase())}</span>`).join('')

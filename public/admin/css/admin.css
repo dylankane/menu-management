@@ -1747,6 +1747,36 @@ a.sidebar__section-title {
   max-width: 43.75rem;
 }
 
+.modal--sm {
+  max-width: 24rem;
+}
+
+.modal__header--danger {
+  background: var(--danger);
+}
+
+.modal__header--danger .modal__title,
+.modal__header--danger .modal__close {
+  color: var(--text-inverse);
+}
+
+.modal__body--compact {
+  padding: 1.25rem 1.5rem;
+  gap: 0.5rem;
+}
+
+.confirm-delete__warning {
+  font-size: var(--font-size-sm);
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.confirm-delete__detail,
+.confirm-remove__detail {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
 .modal__header {
   padding: 0.875rem 1.5rem;
   background: var(--brand);
@@ -1758,7 +1788,6 @@ a.sidebar__section-title {
 
 .modal__title {
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
   color: var(--accent);
 }
 

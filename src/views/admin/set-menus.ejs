@@ -355,7 +355,7 @@ function renderCourseSection(smc, smId) {
         <div class="smb-course__actions">
           <button onclick="openSmAddItemModal(${smc.id})" class="btn btn--pill link--slide btn--sm">${tUI('page.builder.btn_add_to_sub')}</button>
           ${noteBtn}
-          <button class="btn-remove" onclick="removeCourse(${smId}, ${smc.id}, '${esc(getName(smc.course.translations))}')" title="${tUI('common.tooltip_remove_from_sm')}">
+          <button class="btn-remove" data-course-name="${esc(getName(smc.course.translations))}" data-sm-name="${esc(getName(SM_DATA.find(s => s.id === smId)?.translations || []))}" onclick="removeCourse(${smId}, ${smc.id}, this.dataset.courseName, this.dataset.smName)" title="${tUI('common.tooltip_remove_from_sm')}">
             <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
             </svg>
@@ -378,6 +378,8 @@ function renderDishRow(smd, smId) {
   const noteBtn = note
     ? `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('dish', ${smd.id}, null)">${tUI('common.btn_edit_note')}</button>`
     : `<button class="btn btn--pill link--slide btn--sm" onclick="openNoteModal('dish', ${smd.id}, null)">${tUI('common.btn_add_note')}</button>`;
+  const smData  = SM_DATA.find(s => s.id === smId);
+  const smName  = smData ? getName(smData.translations) : '';
 
   return `
     <div class="smb-dish" data-entry-id="${smd.id}">
@@ -386,7 +388,7 @@ function renderDishRow(smd, smId) {
         <span class="smb-dish__name">${esc(getName(smd.dish.translations))}</span>
       </div>
       ${noteBtn}
-      <button class="btn-remove" onclick="removeDish(${smId}, ${smd.id})" title="${tUI('common.tooltip_remove_from_sm')}">
+      <button class="btn-remove" data-dish-name="${esc(getName(smd.dish.translations))}" data-sm-name="${esc(smName)}" onclick="removeDish(${smId}, ${smd.id}, this.dataset.dishName, this.dataset.smName)" title="${tUI('common.tooltip_remove_from_sm')}">
         <svg class="icon icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>
         </svg>
@@ -508,12 +510,14 @@ function openSmAddItemModal(smcId) {
   });
 }
 
-async function removeDish(smId, entryId) {
-  try {
-    await api('DELETE', `/api/set-menus/${smId}/dishes/${entryId}`);
-    showToast(tr('item_removed'));
-    await refreshAndRender(smId);
-  } catch (err) { showToast(err.message, 'error'); }
+async function removeDish(smId, entryId, name, location) {
+  confirmRemove(name, location, async () => {
+    try {
+      await api('DELETE', `/api/set-menus/${smId}/dishes/${entryId}`);
+      showToast(tr('item_removed'));
+      await refreshAndRender(smId);
+    } catch (err) { showToast(err.message, 'error'); }
+  });
 }
 
 // ── Course management ─────────────────────────────────────────────────────────
@@ -544,8 +548,8 @@ async function addCourseToSm(courseId, notes) {
   } catch (err) { showToast(err.message, 'error'); }
 }
 
-async function removeCourse(smId, smcId, name) {
-  confirmDelete(tUI('modal.confirm_remove_course', { name }), async () => {
+async function removeCourse(smId, smcId, name, location) {
+  confirmRemove(name, location, async () => {
     try {
       await api('DELETE', `/api/set-menus/${smId}/courses/${smcId}`);
       showToast(tr('course_removed'));
