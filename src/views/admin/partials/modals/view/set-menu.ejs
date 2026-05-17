@@ -30,10 +30,13 @@
 
           <div class="view-info-row">
             <span class="form-label"><%= t('common.price') %></span>
-            <div class="view-hero__price-row">
-              <span id="smViewPrice" class="item-price"></span>
-              <span id="smViewDiscount" class="item-discount hidden"></span>
-              <span id="smViewFinal" class="view-hero__final hidden"></span>
+            <div>
+              <div class="view-hero__price-row">
+                <span id="smViewPrice" class="item-price"></span>
+                <span id="smViewDiscount" class="item-discount hidden"></span>
+                <span id="smViewFinal" class="view-hero__final hidden"></span>
+              </div>
+              <span id="smViewPriceNote" class="view-section__value--muted hidden"></span>
             </div>
           </div>
 
@@ -133,9 +136,25 @@
     const priceEl = document.getElementById('smViewPrice');
     const discEl  = document.getElementById('smViewDiscount');
     const finalEl = document.getElementById('smViewFinal');
-    priceEl.textContent = '€' + Number(sm.price).toFixed(2);
-    priceEl.classList.toggle('item-price--muted', !!(sm.has_discount && sm.discount_value));
-    if (sm.has_discount && sm.discount_value) {
+    const priceNoteEl = document.getElementById('smViewPriceNote');
+    if (sm.price != null) {
+      priceEl.textContent = '€' + Number(sm.price).toFixed(2);
+      priceEl.classList.toggle('item-price--muted', !!(sm.has_discount && sm.discount_value));
+    } else {
+      priceEl.textContent = '—';
+      priceEl.classList.remove('item-price--muted');
+      discEl.classList.add('hidden');
+      finalEl.classList.add('hidden');
+    }
+    if (priceNoteEl) {
+      if (primaryTrans.price_note) {
+        priceNoteEl.textContent = primaryTrans.price_note;
+        priceNoteEl.classList.remove('hidden');
+      } else {
+        priceNoteEl.classList.add('hidden');
+      }
+    }
+    if (sm.price != null && sm.has_discount && sm.discount_value) {
       const dv  = Number(sm.discount_value);
       const str = sm.discount_type === 'percent' ? `-${dv}%` : `-€${dv.toFixed(2)}`;
       discEl.textContent = str;

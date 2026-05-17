@@ -18,7 +18,7 @@ router.post(
   '/',
   upload('image'),
   [
-    body('price').isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('price').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Price must be a positive number'),
     body('discount_type').optional().isIn(['flat', 'percent']).withMessage('discount_type must be "flat" or "percent"'),
   ],
   validate,
@@ -29,7 +29,7 @@ router.put(
   '/:id',
   upload('image'),
   [
-    body('price').optional().isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+    body('price').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Price must be a positive number'),
     body('discount_type').optional().isIn(['flat', 'percent']).withMessage('discount_type must be "flat" or "percent"'),
   ],
   validate,

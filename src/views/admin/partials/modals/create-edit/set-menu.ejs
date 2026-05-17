@@ -13,7 +13,7 @@
       <h3 id="setMenuModalTitle" class="modal__title">Create Set Menu</h3>
       <button onclick="_handleSmModalClose()" class="modal__close">&times;</button>
     </div>
-    <form id="setMenuForm" onsubmit="submitSetMenu(event)" enctype="multipart/form-data">
+    <form id="setMenuForm" onsubmit="submitSetMenu(event)" enctype="multipart/form-data" novalidate>
       <div class="modal__body">
         <input type="hidden" id="setMenuId" value="" />
 
@@ -40,14 +40,18 @@
                 <label class="form-label"><%= t('modal.label_public_notes').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_shown_to_customers') %></span></label>
                 <textarea name="public_notes_<%= lang %>" id="smPublicNotes_<%= lang %>" rows="2" class="form-textarea"></textarea>
               </div>
+              <div class="form-group">
+                <label class="form-label"><%= t('modal.label_price_note').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_price_note') %></span></label>
+                <input type="text" name="price_note_<%= lang %>" id="smPriceNote_<%= lang %>" class="form-input" />
+              </div>
             </div>
           <% }) %>
         </div>
 
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label"><%= t('modal.label_price') %> <span class="required">*</span></label>
-            <input type="number" id="smPrice" name="price" required step="0.01" min="0" class="form-input" />
+            <label class="form-label"><%= t('modal.label_price') %></label>
+            <input type="number" id="smPrice" name="price" step="0.01" class="form-input" placeholder="—" />
           </div>
           <div class="form-group">
             <label class="form-label"><%= t('modal.label_discount') %></label>
@@ -223,7 +227,7 @@
 
     document.getElementById('setMenuModalTitle').textContent = tUI('modal.title_edit_set_menu');
     document.getElementById('setMenuId').value               = sm.id;
-    document.getElementById('smPrice').value                 = Number(sm.price).toFixed(2);
+    document.getElementById('smPrice').value                 = sm.price != null ? Number(sm.price).toFixed(2) : '';
     document.getElementById('smIsAvailable').checked         = sm.is_available;
     document.getElementById('smIsSpecial').checked           = sm.is_special;
     document.getElementById('smHasDiscount').checked         = sm.has_discount;
@@ -243,6 +247,7 @@
       const n  = document.getElementById(`smName_${lang}`);        if (n)  n.value  = t.name         || '';
       const d  = document.getElementById(`smDesc_${lang}`);        if (d)  d.value  = t.description  || '';
       const pn = document.getElementById(`smPublicNotes_${lang}`); if (pn) pn.value = t.public_notes || '';
+      const pno = document.getElementById(`smPriceNote_${lang}`);  if (pno) pno.value = t.price_note || '';
     });
 
     if (sm.image_url) {

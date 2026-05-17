@@ -17,7 +17,7 @@
           const name = t ? (t.name || '—') : '—';
         %>
           <div class="add-to-cat-item" data-item-id="<%= item.id %>" data-name="<%= name.toLowerCase() %>" onclick="selectAddToCatItem(this)">
-            <%= name %><span class="add-to-cat-item__meta"> — €<%= Number(item.price).toFixed(2) %></span>
+            <%= name %><span class="add-to-cat-item__meta"><% if (item.price != null) { %> — €<%= Number(item.price).toFixed(2) %><% } %></span>
           </div>
         <% }) %>
       </div>
@@ -107,7 +107,7 @@
     el.dataset.itemId = item.id;
     el.dataset.name = name.toLowerCase();
     el.onclick = function() { selectAddToCatItem(this); };
-    el.innerHTML = `${esc(name)}<span class="add-to-cat-item__meta"> — €${Number(item.price).toFixed(2)}</span>`;
+    el.innerHTML = `${esc(name)}<span class="add-to-cat-item__meta">${item.price != null ? ` — €${Number(item.price).toFixed(2)}` : ''}</span>`;
     const list = document.getElementById('addToCatList');
     list.insertBefore(el, list.firstChild);
     document.getElementById('addToCatSearch').value = '';

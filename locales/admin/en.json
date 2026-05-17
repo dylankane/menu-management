@@ -594,6 +594,8 @@
     "label_public_notes": "Public Notes ({lang})",
     "label_display_order": "Display Order",
     "label_price": "Price (€)",
+    "label_price_note": "Price Note ({lang})",
+    "hint_price_note": "(shown to customers when no fixed price, or alongside it)",
     "label_discount": "Discount",
     "label_image": "Image",
     "label_categories": "Categories",

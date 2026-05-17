@@ -62,7 +62,8 @@
       "Bash(Get-ChildItem *)",
       "PowerShell(Select-String -Path \"C:\\\\Users\\\\dylan\\\\menu-management\\\\public\\\\admin\\\\js\\\\sortable.min.js\" -Pattern \"touchstart\" | Select-Object -First 1 | ForEach-Object { \"Found: \" + $_.Line.Substring\\(0, 100\\) })",
       "Bash(Select-Object FullName)",
-      "Bash(grep -E \"\\\\.ejs$\")"
+      "Bash(grep -E \"\\\\.ejs$\")",
+      "PowerShell(ls *)"
     ]
   }
 }

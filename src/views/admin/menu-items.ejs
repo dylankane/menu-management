@@ -162,8 +162,12 @@
                   </div>
                 </td>
                 <td class="col-price col-align-center">
-                  <span class="item-price <%= (item.has_discount && item.discount_value) ? 'item-price--muted' : '' %>">€<%= Number(item.price).toFixed(2) %></span>
-                  <% if (item.has_discount && item.discount_value) { %>
+                  <%
+                    const itemPriceNote = (item.translations || []).find(t => t.lang === primary)?.price_note || (item.translations || [])[0]?.price_note || null;
+                  %>
+                  <span class="item-price <%= (item.has_discount && item.discount_value && item.price != null) ? 'item-price--muted' : '' %>"><%= item.price != null ? '€' + Number(item.price).toFixed(2) : '—' %></span>
+                  <% if (itemPriceNote) { %><br/><span class="view-section__value--muted"><%= itemPriceNote %></span><% } %>
+                  <% if (item.has_discount && item.discount_value && item.price != null) { %>
                     <%
                       const dv = Number(item.discount_value);
                       let finalPrice = Number(item.price);
@@ -376,8 +380,10 @@
     // Price
     const priceCell = row.querySelector('.col-price');
     if (priceCell) {
-      const hasDiscount = item.has_discount && item.discount_value;
-      let html = `<span class="item-price${hasDiscount ? ' item-price--muted' : ''}">€${Number(item.price).toFixed(2)}</span>`;
+      const hasDiscount = item.has_discount && item.discount_value && item.price != null;
+      const itemPriceNote = (item.translations || []).find(t => t.lang === PRIMARY)?.price_note || (item.translations || [])[0]?.price_note || null;
+      const priceStr = item.price != null ? `€${Number(item.price).toFixed(2)}` : '—';
+      let html = `<span class="item-price${hasDiscount ? ' item-price--muted' : ''}">${priceStr}</span>`;
       if (hasDiscount) {
         const dv = Number(item.discount_value);
         let final = Number(item.price);
@@ -388,6 +394,7 @@
         html += `<br/><span class="item-discount">-${discStr}</span>`;
         html += `<br/><span class="item-price">€${final.toFixed(2)}</span>`;
       }
+      if (itemPriceNote) html += `<br/><span class="view-section__value--muted">${esc(itemPriceNote)}</span>`;
       priceCell.innerHTML = html;
     }
 

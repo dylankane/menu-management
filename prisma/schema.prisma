@@ -261,7 +261,7 @@ model CategoryTranslation {
 // All user-facing text lives in MenuItemTranslation.
 model MenuItem {
   id             Int      @id @default(autoincrement())
-  price          Decimal  @db.Decimal(10, 2)
+  price          Decimal? @db.Decimal(10, 2)
   image_url      String?
   has_discount   Boolean  @default(false)
   discount_type  String?  // "flat" | "percent"
@@ -287,6 +287,7 @@ model MenuItemTranslation {
   name         String?
   description  String?
   public_notes String?
+  price_note   String?
 
   menu_item MenuItem @relation(fields: [menu_item_id], references: [id], onDelete: Cascade)
 
@@ -336,7 +337,7 @@ model MenuItemDietary {
 // availability, categories, and internal course/dish structure.
 model SetMenu {
   id             Int      @id @default(autoincrement())
-  price          Decimal  @db.Decimal(10, 2)
+  price          Decimal? @db.Decimal(10, 2)
   image_url      String?
   has_discount   Boolean  @default(false)
   discount_type  String?  // "flat" | "percent"
@@ -362,6 +363,7 @@ model SetMenuTranslation {
   name         String?
   description  String?
   public_notes String?
+  price_note   String?
 
   set_menu SetMenu @relation(fields: [set_menu_id], references: [id], onDelete: Cascade)
 

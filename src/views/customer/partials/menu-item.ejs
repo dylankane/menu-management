@@ -1,11 +1,11 @@
-<% 
+<%
   const itemTrans = pickT(item.translations);
   const itemName = itemTrans.name || 'Menu Item';
   const itemDescription = itemTrans.description || '';
   const itemPublicNotes = itemTrans.public_notes || '';
-  
-  const finalPrice = item.has_discount 
-    ? (item.discount_type === 'percent' 
+
+  const finalPrice = item.has_discount
+    ? (item.discount_type === 'percent'
         ? parseFloat(item.price) * (1 - parseFloat(item.discount_value) / 100)
         : parseFloat(item.price) - parseFloat(item.discount_value))
     : parseFloat(item.price);

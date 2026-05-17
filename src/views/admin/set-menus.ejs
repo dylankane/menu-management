@@ -75,7 +75,11 @@
           <div class="smb-item<%= !sm.is_available ? ' smb-item--inactive' : '' %>" data-sm-id="<%= sm.id %>">
             <div class="smb-item__info" onclick="selectSetMenu(<%= sm.id %>)">
               <span class="smb-item__name"><%= tName(sm.translations) %></span>
-              <span class="smb-item__price">€<%= Number(sm.price).toFixed(2) %></span>
+              <%
+                const smListPriceNote = (sm.translations || []).find(t => t.lang === primary)?.price_note || (sm.translations || [])[0]?.price_note || null;
+              %>
+              <span class="smb-item__price"><%= sm.price != null ? '€' + Number(sm.price).toFixed(2) : '—' %></span>
+              <% if (smListPriceNote) { %><span class="smb-item__price view-section__value--muted"><%= smListPriceNote %></span><% } %>
               <span class="smb-dish__badge<%= isSmEjsUnreachable(sm) ? '' : ' hidden' %>"><%= t('common.unassigned') %></span>
             </div>
             <label class="smb-avail-switch" title="<%= t('common.tooltip_toggle_avail') %>">
@@ -285,7 +289,19 @@ function updatePanelItem(sm) {
   const el = document.querySelector(`.smb-item[data-sm-id="${sm.id}"]`);
   if (!el) return;
   el.querySelector('.smb-item__name').textContent = getName(sm.translations);
-  el.querySelector('.smb-item__price').textContent = `€${Number(sm.price).toFixed(2)}`;
+  const smPanelPriceNote = (sm.translations || []).find(t => t.lang === PRIMARY)?.price_note || (sm.translations || [])[0]?.price_note || null;
+  el.querySelector('.smb-item__price').textContent = sm.price != null ? `€${Number(sm.price).toFixed(2)}` : '—';
+  let smNoteEl = el.querySelector('.smb-item__price-note');
+  if (smPanelPriceNote) {
+    if (!smNoteEl) {
+      smNoteEl = document.createElement('span');
+      smNoteEl.className = 'smb-item__price smb-item__price-note view-section__value--muted';
+      el.querySelector('.smb-item__info').insertBefore(smNoteEl, el.querySelector('.smb-dish__badge'));
+    }
+    smNoteEl.textContent = smPanelPriceNote;
+  } else if (smNoteEl) {
+    smNoteEl.remove();
+  }
   el.classList.toggle('smb-item--inactive', !sm.is_available);
   const badge = el.querySelector('.smb-dish__badge');
   if (badge) badge.classList.toggle('hidden', !isSmUnreachable(sm));
@@ -302,7 +318,7 @@ function renderBuilder(sm) {
   document.getElementById('smb-content').classList.remove('hidden');
 
   document.getElementById('smb-name').textContent  = getName(sm.translations);
-  document.getElementById('smb-price').textContent = `€${Number(sm.price).toFixed(2)}`;
+  document.getElementById('smb-price').textContent = sm.price != null ? `€${Number(sm.price).toFixed(2)}` : '—';
 
   const chk = document.getElementById('smb-avail-chk');
   chk.checked = sm.is_available;
@@ -490,7 +506,7 @@ function openSmAddItemModal(smcId) {
   const items = ALL_DISHES.map(d => ({
     id:   d.id,
     name: getName(d.translations),
-    meta: `€${Number(d.price).toFixed(2)}`,
+    meta: d.price != null ? `€${Number(d.price).toFixed(2)}` : '—',
     type: 'dish',
   }));
 

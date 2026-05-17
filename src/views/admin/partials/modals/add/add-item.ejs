@@ -193,7 +193,7 @@
   function injectAndSelectItem(item) {
     const t    = (item.translations || []).find(t => t.lang === PRIMARY) || (item.translations || [])[0];
     const name = t?.name || '—';
-    const meta = `€${Number(item.price).toFixed(2)}`;
+    const meta = item.price != null ? `€${Number(item.price).toFixed(2)}` : '—';
     const el   = document.createElement('div');
     el.className           = 'add-to-cat-item';
     el.dataset.itemId      = item.id;

@@ -7,7 +7,7 @@
       <button onclick="_handleItemModalClose()" class="modal__close">&times;</button>
     </div>
 
-    <form id="itemForm" onsubmit="submitDishForm(event)" enctype="multipart/form-data">
+    <form id="itemForm" onsubmit="submitDishForm(event)" enctype="multipart/form-data" novalidate>
       <div class="modal__body">
         <input type="hidden" id="itemId" value="" />
 
@@ -34,6 +34,10 @@
                 <label class="form-label"><%= t('modal.label_public_notes').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_shown_to_customers') %></span></label>
                 <textarea name="public_notes_<%= lang %>" id="itemPublicNotes_<%= lang %>" rows="2" class="form-textarea"></textarea>
               </div>
+              <div class="form-group">
+                <label class="form-label"><%= t('modal.label_price_note').replace('{lang}', lang.toUpperCase()) %> <span class="hint"><%= t('modal.hint_price_note') %></span></label>
+                <input type="text" name="price_note_<%= lang %>" id="itemPriceNote_<%= lang %>" class="form-input" />
+              </div>
             </div>
           <% }) %>
         </div>
@@ -45,8 +49,8 @@
 
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label"><%= t('modal.label_price') %> <span class="required">*</span></label>
-            <input type="number" id="itemPrice" name="price" required step="0.01" min="0" class="form-input" />
+            <label class="form-label"><%= t('modal.label_price') %></label>
+            <input type="number" id="itemPrice" name="price" step="0.01" class="form-input" placeholder="—" />
           </div>
           <div class="form-group">
             <label class="form-label"><%= t('modal.label_discount') %></label>
@@ -244,7 +248,7 @@
   function openEditDishModal(item) {
     document.getElementById('itemModalTitle').textContent = tUI('modal.title_edit_item');
     document.getElementById('itemId').value              = item.id;
-    document.getElementById('itemPrice').value           = Number(item.price).toFixed(2);
+    document.getElementById('itemPrice').value           = item.price != null ? Number(item.price).toFixed(2) : '';
     document.getElementById('itemIsAvailable').checked   = item.is_available;
     document.getElementById('itemIsSpecial').checked     = item.is_special;
     document.getElementById('itemHasDiscount').checked   = item.has_discount;
@@ -262,6 +266,7 @@
       const n  = document.getElementById(`itemName_${lang}`);        if (n)  n.value  = t.name         || '';
       const d  = document.getElementById(`itemDesc_${lang}`);        if (d)  d.value  = t.description  || '';
       const pn = document.getElementById(`itemPublicNotes_${lang}`); if (pn) pn.value = t.public_notes || '';
+      const pno = document.getElementById(`itemPriceNote_${lang}`);  if (pno) pno.value = t.price_note || '';
     });
     document.getElementById('itemNotes').value = item.notes || '';
 

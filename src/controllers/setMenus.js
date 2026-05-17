@@ -64,11 +64,11 @@ async function create(req, res, next) {
 
     const settings = await prisma.restaurantSettings.findFirst();
     const langs    = settings ? settings.enabled_languages : ['en', 'es'];
-    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
+    const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes', 'price_note']);
 
     const setMenu = await prisma.setMenu.create({
       data: {
-        price:          parseFloat(price),
+        price:          (price !== '' && price != null) ? parseFloat(price) : null,
         image_url:      req.uploadedFile || null,
         is_available:   parseBool(is_available, true),
         is_special:     parseBool(is_special, false),
@@ -77,7 +77,7 @@ async function create(req, res, next) {
         discount_value: discount_value ? parseFloat(discount_value) : null,
         notes:          req.body.notes || null,
         translations: {
-          create: translations.filter(t => t.name || t.description),
+          create: translations.filter(t => t.name || t.description || t.price_note),
         },
         categories: parseIds(category_ids).length
           ? { create: parseIds(category_ids).map((cid, i) => ({ category_id: cid, display_order: i })) }
@@ -105,7 +105,7 @@ async function update(req, res, next) {
 
     await prisma.$transaction(async (tx) => {
       const scalarData = {};
-      if (price !== undefined)           scalarData.price        = parseFloat(price);
+      if (price !== undefined)           scalarData.price        = (price !== '' && price != null) ? parseFloat(price) : null;
       if (req.uploadedFile)              scalarData.image_url    = req.uploadedFile;
       if (req.body.notes !== undefined)  scalarData.notes        = req.body.notes || null;
       const formSubmit = price !== undefined;
@@ -117,13 +117,13 @@ async function update(req, res, next) {
 
       await tx.setMenu.update({ where: { id }, data: scalarData });
 
-      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes']);
+      const translations = extractTranslations(req.body, langs, ['name', 'description', 'public_notes', 'price_note']);
       for (const t of translations) {
-        if (t.name !== undefined || t.description !== undefined || t.public_notes !== undefined) {
+        if (t.name !== undefined || t.description !== undefined || t.public_notes !== undefined || t.price_note !== undefined) {
           await tx.setMenuTranslation.upsert({
             where:  { set_menu_id_lang: { set_menu_id: id, lang: t.lang } },
-            update: { name: t.name, description: t.description, public_notes: t.public_notes },
-            create: { set_menu_id: id, lang: t.lang, name: t.name, description: t.description, public_notes: t.public_notes },
+            update: { name: t.name, description: t.description, public_notes: t.public_notes, price_note: t.price_note },
+            create: { set_menu_id: id, lang: t.lang, name: t.name, description: t.description, public_notes: t.public_notes, price_note: t.price_note },
           });
         }
       }

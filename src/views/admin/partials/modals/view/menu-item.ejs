@@ -32,10 +32,13 @@
 
           <div class="view-info-row">
             <span class="form-label"><%= t('common.price') %></span>
-            <div class="view-hero__price-row">
-              <span id="itemViewPrice" class="item-price"></span>
-              <span id="itemViewDiscount" class="item-discount hidden"></span>
-              <span id="itemViewFinalPrice" class="view-hero__final hidden"></span>
+            <div>
+              <div class="view-hero__price-row">
+                <span id="itemViewPrice" class="item-price"></span>
+                <span id="itemViewDiscount" class="item-discount hidden"></span>
+                <span id="itemViewFinalPrice" class="view-hero__final hidden"></span>
+              </div>
+              <span id="itemViewPriceNote" class="view-section__value--muted hidden"></span>
             </div>
           </div>
 
@@ -130,11 +133,27 @@
 
     // Price & discount
     const priceEl = document.getElementById('itemViewPrice');
-    priceEl.textContent = '€' + Number(item.price).toFixed(2);
-    priceEl.classList.toggle('item-price--muted', !!(item.has_discount && item.discount_value));
     const discountEl = document.getElementById('itemViewDiscount');
     const finalEl    = document.getElementById('itemViewFinalPrice');
-    if (item.has_discount && item.discount_value) {
+    const priceNoteEl = document.getElementById('itemViewPriceNote');
+    if (item.price != null) {
+      priceEl.textContent = '€' + Number(item.price).toFixed(2);
+      priceEl.classList.toggle('item-price--muted', !!(item.has_discount && item.discount_value));
+    } else {
+      priceEl.textContent = '—';
+      priceEl.classList.remove('item-price--muted');
+      discountEl.classList.add('hidden');
+      finalEl.classList.add('hidden');
+    }
+    if (priceNoteEl) {
+      if (primaryTrans.price_note) {
+        priceNoteEl.textContent = primaryTrans.price_note;
+        priceNoteEl.classList.remove('hidden');
+      } else {
+        priceNoteEl.classList.add('hidden');
+      }
+    }
+    if (item.price != null && item.has_discount && item.discount_value) {
       const dv  = Number(item.discount_value);
       const str = item.discount_type === 'percent' ? `-${dv}%` : `-€${dv.toFixed(2)}`;
       discountEl.textContent = str;
