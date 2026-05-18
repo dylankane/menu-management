@@ -210,10 +210,12 @@
           panelName.textContent = getName(updatedCat.translations);
         }
 
-        // Re-render builder detail if this is the active category
+        // Re-render builder detail
         if (typeof activeCatId !== 'undefined' && activeCatId === updatedCat.id && typeof renderBuilder === 'function') {
           activeCatName = getName(updatedCat.translations);
           renderBuilder(updatedCat);
+        } else if (typeof refreshBuilderBody === 'function') {
+          refreshBuilderBody();
         }
 
         _viewingCat = updatedCat;
