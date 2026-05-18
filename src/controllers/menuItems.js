@@ -11,8 +11,9 @@ const FULL_INCLUDE = {
     include: { category: { include: { translations: true } } },
     orderBy: { display_order: 'asc' },
   },
-  allergens: { include: { allergen: { include: { translations: true } } } },
-  dietary:   { include: { dietary_tag: { include: { translations: true } } } },
+  allergens:       { include: { allergen:    { include: { translations: true } } } },
+  dietary:         { include: { dietary_tag: { include: { translations: true } } } },
+  set_menu_dishes: { include: { set_menu:    { include: { translations: true } } } },
 };
 
 // GET /api/menu-items
@@ -149,8 +150,8 @@ async function update(req, res, next) {
         }
       }
 
-      if (category_ids !== undefined) {
-        const newIds      = parseIds(category_ids);
+      if (category_ids !== undefined || formSubmit) {
+        const newIds      = category_ids !== undefined ? parseIds(category_ids) : [];
         const existing    = await tx.menuItemCategory.findMany({
           where:  { menu_item_id: id },
           select: { category_id: true },
