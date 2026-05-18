@@ -426,6 +426,13 @@ function initSortables(smId) {
     scrollEl:         document.getElementById('smb-body'),
     onSectionReorder(items) {
       api('PATCH', `/api/set-menus/${smId}/courses/reorder`, { items })
+        .then(() => {
+          const sm = SM_DATA.find(s => s.id === smId);
+          if (sm?.courses) {
+            const order = new Map(items.map(({ id, display_order }) => [id, display_order]));
+            sm.courses.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+          }
+        })
         .catch(err => showToast(apiError(err), 'error'));
     },
     onItemEnd(evt) {
@@ -446,12 +453,24 @@ function initSortables(smId) {
 }
 
 function reorderDishList(listEl, smId) {
+  const smcId = listEl.dataset.smcId;
   const items = [...listEl.querySelectorAll(':scope > .smb-dish')].map((el, i) => ({
     id:            parseInt(el.dataset.entryId),
     display_order: i,
   }));
   if (!items.length) return;
   api('PATCH', `/api/set-menus/${smId}/dishes/reorder`, { items })
+    .then(() => {
+      const sm = SM_DATA.find(s => s.id === smId);
+      if (!sm) return;
+      const order = new Map(items.map(({ id, display_order }) => [id, display_order]));
+      if (smcId === 'none') {
+        if (sm.dishes) sm.dishes.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      } else {
+        const smc = (sm.courses || []).find(c => c.id === parseInt(smcId));
+        if (smc?.dishes) smc.dishes.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+      }
+    })
     .catch(err => showToast(apiError(err), 'error'));
 }
 

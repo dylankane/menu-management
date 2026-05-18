@@ -605,6 +605,13 @@ function reorderDishList(listEl) {
   }));
   if (!items.length) return;
   api('PATCH', '/api/menu-items/reorder', { category_id: catId, items })
+    .then(() => {
+      const cat = findCategory(catId);
+      if (cat?.menu_item_categories) {
+        const order = new Map(items.map(({ menu_item_id, display_order }) => [menu_item_id, display_order]));
+        cat.menu_item_categories.sort((a, b) => (order.get(a.menu_item.id) ?? 0) - (order.get(b.menu_item.id) ?? 0));
+      }
+    })
     .catch(err => showToast(apiError(err), 'error'));
 }
 
@@ -616,6 +623,13 @@ function reorderSetMenuList(listEl) {
   }));
   if (!items.length) return;
   api('PATCH', '/api/set-menus/reorder-in-category', { category_id: catId, items })
+    .then(() => {
+      const cat = findCategory(catId);
+      if (cat?.set_menu_categories) {
+        const order = new Map(items.map(({ set_menu_id, display_order }) => [set_menu_id, display_order]));
+        cat.set_menu_categories.sort((a, b) => (order.get(a.set_menu.id) ?? 0) - (order.get(b.set_menu.id) ?? 0));
+      }
+    })
     .catch(err => showToast(apiError(err), 'error'));
 }
 
