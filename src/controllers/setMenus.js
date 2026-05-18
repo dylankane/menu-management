@@ -129,12 +129,27 @@ async function update(req, res, next) {
       }
 
       if (category_ids !== undefined) {
-        await tx.setMenuCategory.deleteMany({ where: { set_menu_id: id } });
-        if (parseIds(category_ids).length) {
-          await tx.setMenuCategory.createMany({
-            data: parseIds(category_ids).map((cid, i) => ({
-              set_menu_id: id, category_id: cid, display_order: i,
-            })),
+        const newIds      = parseIds(category_ids);
+        const existing    = await tx.setMenuCategory.findMany({
+          where:  { set_menu_id: id },
+          select: { category_id: true },
+        });
+        const existingIds = existing.map(e => e.category_id);
+        const toRemove    = existingIds.filter(cid => !newIds.includes(cid));
+        const toAdd       = newIds.filter(cid => !existingIds.includes(cid));
+
+        if (toRemove.length) {
+          await tx.setMenuCategory.deleteMany({
+            where: { set_menu_id: id, category_id: { in: toRemove } },
+          });
+        }
+        for (const cid of toAdd) {
+          const { _max } = await tx.setMenuCategory.aggregate({
+            where: { category_id: cid },
+            _max:  { display_order: true },
+          });
+          await tx.setMenuCategory.create({
+            data: { set_menu_id: id, category_id: cid, display_order: (_max.display_order ?? -1) + 1 },
           });
         }
       }
